@@ -1,0 +1,37 @@
+# Stage 2 local process manifest for the Windows start/stop script.
+# 只描述"如何启动"；不包含密钥。端口必须与 workers.yaml 保持一致（脚本会校验）。
+version: 1
+
+gateway:
+  # 局域网访问地址：同网段成员通过 http://192.168.12.54:8000 访问网关。
+  host: "192.168.12.54"
+  port: 8000
+  app: "serving.gateway.main:app"
+  startup_timeout_s: 60
+
+workers:
+  rf:
+    module_dir: "01-rf"
+    script: "api_flask_server.py"
+    port: 8101
+    startup_timeout_s: 90
+  fasttext:
+    module_dir: "02-fasttext"
+    script: "api_flask_server.py"
+    port: 8103
+    startup_timeout_s: 60
+  bert:
+    module_dir: "03-bert"
+    script: "api_flask_server.py"
+    port: 8104
+    startup_timeout_s: 150
+  llm:
+    module_dir: "04-LLM"
+    script: "api_flask_server.py"
+    port: 8105
+    startup_timeout_s: 60
+  distill:
+    module_dir: "05-distill"
+    script: "api_flask_server.py"
+    port: 8106
+    startup_timeout_s: 120

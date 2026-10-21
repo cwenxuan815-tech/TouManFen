@@ -1,0 +1,56 @@
+# ========== Python ==========
+__pycache__/
+*.py[cod]
+*.egg-info/
+.ipynb_checkpoints/
+
+# ========== IDE ==========
+.idea/
+.vscode/
+*.iml
+
+# ========== 密钥（务必不要提交） ==========
+.env
+04-LLM/.env
+*.env.local
+
+# ========== 预训练模型（9.27GB，工程外同级目录引用，不入库） ==========
+PretrainedModel/
+
+# ========== 训练产物（体积大，不入库） ==========
+save_model/*
+!save_model/.gitkeep
+*.pkl
+*.pt
+*.bin
+*.h5
+*.msgpack
+*.ot
+
+# ========== 数据中间产物 ==========
+01-rf/data/process_*.csv
+02-fasttext/data/process_*.txt
+# 模块内的数据副本由 tools/prepare_data.py 从 00-data/data 生成，不入库（避免三份重复）
+05-distill/cache/
+05-distill/data/
+06-prune/data/
+03-bert/data/
+01-rf/data/
+
+# ========== 日志与结果 ==========
+*.log
+log/
+03-bert/log/
+result/*.csv
+01-rf/result/*.csv
+!result/.gitkeep
+
+# ========== 工具缓存与运行态（本机生成，不入库） ==========
+.pnpm-store/
+node_modules/
+frontend/dist/
+serving/logs/
+serving/run/
+*.tsbuildinfo
+*.tmp
+*.bak

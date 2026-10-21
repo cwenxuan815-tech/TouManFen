@@ -1,0 +1,54 @@
+# Stage 2 gateway worker registry.
+# 只描述传输/生命周期，不包含任何密钥；密钥只由各 worker 自己读取。
+version: 1
+
+# 只读探测参数（毫秒）
+probe_timeout_ms: 1000
+status_cache_ms: 2000
+
+workers:
+  rf:
+    base_url: "http://192.168.12.54:8101"
+    predict_path: "/predict_api"
+    health_path: "/healthz"
+    ready_path: "/readyz"
+    metadata_path: "/metadata"
+    timeout_ms: 10000
+    enabled: true
+    probe: "http_ready"
+  fasttext:
+    base_url: "http://192.168.12.54:8103"
+    predict_path: "/predict_api"
+    health_path: "/healthz"
+    ready_path: "/readyz"
+    metadata_path: "/metadata"
+    timeout_ms: 10000
+    enabled: true
+    probe: "http_ready"
+  bert:
+    base_url: "http://192.168.12.54:8104"
+    predict_path: "/predict_api"
+    health_path: "/healthz"
+    ready_path: "/readyz"
+    metadata_path: "/metadata"
+    timeout_ms: 10000
+    enabled: true
+    probe: "http_ready"
+  llm:
+    base_url: "http://192.168.12.54:8105"
+    predict_path: "/predict_api"
+    health_path: "/healthz"
+    ready_path: "/readyz"
+    metadata_path: "/metadata"
+    timeout_ms: 15000
+    enabled: true
+    probe: "http_ready"
+  distill:
+    base_url: "http://192.168.12.54:8106"
+    predict_path: "/predict_api"
+    health_path: "/healthz"
+    ready_path: "/readyz"
+    metadata_path: "/metadata"
+    timeout_ms: 10000
+    enabled: true
+    probe: "http_ready"

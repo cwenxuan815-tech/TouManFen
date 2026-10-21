@@ -1,0 +1,45 @@
+# Stage 3 model registry.
+# 类别白名单唯一来源：00-data/data/class.txt（行序即类别 ID 0..9）。
+version: 1
+
+default_model: "fasttext"
+
+api:
+  # 阶段 3 分类接口的标题上限（Python Unicode 字符数）。
+  max_title_chars: 200
+
+classes:
+  file: "00-data/data/class.txt"
+  expected_count: 10
+
+models:
+  rf:
+    worker: "rf"
+    display_name: "随机森林"
+    model_version: null
+    enabled: true
+    compare_by_default: true
+  fasttext:
+    worker: "fasttext"
+    display_name: "fastText"
+    model_version: null
+    enabled: true
+    compare_by_default: true
+  bert:
+    worker: "bert"
+    display_name: "BERT"
+    model_version: null
+    enabled: true
+    compare_by_default: true
+  llm:
+    worker: "llm"
+    display_name: "大模型"
+    model_version: null
+    enabled: true
+    compare_by_default: true
+  distill:
+    worker: "distill"
+    display_name: "蒸馏 BiLSTM"
+    model_version: null
+    enabled: true
+    compare_by_default: true

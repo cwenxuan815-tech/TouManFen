@@ -1,0 +1,31 @@
+# 统一换行与文本/二进制判定，避免 Windows 上反复出现 CRLF 警告与无意义 diff
+# 文本：仓库内统一存 LF
+* text=auto
+*.py text eol=lf
+*.ts text eol=lf
+*.vue text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+
+# Windows 脚本必须保持 CRLF（cmd.exe / Windows PowerShell 5.1 解析更稳）
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 原始数据按原样保存，不做换行归一化（避免影响 fastText 等训练输入）
+00-data/data/*.txt -text
+
+# 二进制资源不做文本处理
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pptx binary
+*.docx binary
+*.xlsx binary

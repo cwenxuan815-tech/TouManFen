@@ -1,0 +1,32 @@
+# 依赖清单
+# =====================================================================
+# 重要约束（详见 README「已知约束」）：
+#   1. Python 建议 3.10 / 3.11（fastText 的 Windows 预编译轮子只到 cp312）
+#   2. numpy 必须 <2：fasttext 的 FastText.py 用了 np.array(..., copy=False)，
+#      NumPy 2.x 会抛 "Unable to avoid copy while creating an array as requested"
+#   3. transformers 必须 <5：5.x 已移除 tokenizer.batch_encode_plus，
+#      本工程的 data_preprocessing.py / *_predict_service.py 依赖该接口
+# =====================================================================
+
+numpy<2
+pandas
+jieba
+scikit-learn==1.7.*        # 与 numpy<2 + Python3.10 兼容的组合
+tqdm
+flask
+requests
+streamlit
+python-dotenv
+openai>=1.0
+
+# 深度学习（本机无 NVIDIA GPU，装 CPU 版即可；有 GPU 时按官方指引装 CUDA 版）
+#   pip install torch --index-url https://download.pytorch.org/whl/cpu
+torch
+transformers<5
+
+# fastText：不要装 `fasttext`（PyPI 无 Windows 轮子，需要 MSVC 编译），
+# 用社区预编译包 fasttext-wheel
+fasttext-wheel
+
+# 可选：画图（00-data/eda/data_eda.py 用到）
+matplotlib
