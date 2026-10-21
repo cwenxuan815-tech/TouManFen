@@ -2,11 +2,13 @@
 
 把中文新闻标题自动分到 10 个频道（`finance, realty, stocks, education, science, society, politics, sports, game, entertainment`），覆盖一条完整链路：
 
-> 数据准备 → 随机森林基线 → fastText → BERT 微调 → 大模型（DeepSeek）→ 模型压缩（量化 / 蒸馏 / 剪枝）→ 统一服务层 → Vue 前端
+> 数据准备 → 随机森林基线 → fastText → BERT 微调 → 大模型（DeepSeek）→ 模型压缩（量化 / 蒸馏 / 剪枝）→ 统一服务层（FastAPI 网关 + 模型适配层）→ Vue 前端
 
 项目已从「课程参考代码」整理为一个可训练、可评估、可服务、可局域网访问的验证型工程。**当前定位是本地/局域网验证环境，不是生产系统**（无鉴权、无 HTTPS、无数据库、无容器化，详见「已知限制」）。
 
-> **文档状态（2026-10-20 晚）**：已按当前代码、配置与验证记录核对能力状态；文中"已实现"与"已验证"分别标注，历史验证均注明日期与来源。本次只更新文档，未改代码/数据/配置/密钥，未初始化 Git。
+> **文档状态（2026-10-21）**：代码已重构为「统一模型适配层 + 统一 worker 预测契约 + 可配置网络」，并完成 mock/真实服务/前端构建验证；学习档案已重排为 v1–v5（v3 前端 / v4 Git / v5 适配层重构）。历史文档中的固定 IP 与旧架构描述仅作历史记录。
+>
+> **当前运行状态（2026-10-21）**：以 **LAN 模式**运行，监听 `192.168.12.54:5173/8000/8101/8103~8106`，`/api/v1/readyz = ok（5/5 up）`；前端 `http://192.168.12.54:5173`；本次重构改动**未 commit**（HEAD `9f81e05`）。
 
 ---
 
@@ -22,12 +24,14 @@
 | 非结构化剪枝 30% | ✅ | **0.9294**（-0.13），体积不变（结论已按实测修正） |
 | 蒸馏 BiLSTM（v1 / v2 / v2b） | ✅ | v2b **0.9074**，36.7 MB，13 s/万条（10.6× 压缩） |
 | 大模型分类（DeepSeek） | ✅ 已实现；部分验证 | 零样本 + 10 类白名单校验；2026-10-19 Streamlit 联调、2026-10-20 16:22–18:06 经网关的 16 次 `model_call=ok`（0.5–4.0 s）均有真实调用记录；验证脚本只用 mock；未做准确性/成本/稳定性系统评估 |
-| 5 个 Flask 模型服务 | ✅ | 8101/8103/8104/8105/8106，统一 `POST /predict_api` |
+| 5 个 Flask 模型服务 | ✅ | 8101/8103/8104/8105/8106，统一 `POST /predict_api`；入口为薄壳，共用 `tmf_common.PredictService` 契约 |
 | FastAPI 统一网关 | ✅ | 8000；模型清单、健康探测、单模型分类、多模型对比、统计 |
+| 统一模型适配层 | ✅ | `serving/adapters/`：`ModelAdapter` 协议 + `HttpWorkerAdapter` / `LlmAdapter`；业务层只依赖协议 |
+| 统一 worker 预测契约 | ✅ | 5 个模型统一「加载 → 标题校验 → 推理 → 白名单校验 → 结果」；保留旧 `predict(dict)`/`/predict_api` 兼容 |
 | Vue 3 单页前端 | ✅ 已实现；接口层已验证 | 5173；单模型 / 多模型对比、LLM opt-in、错误与请求编号；未做真实浏览器人工视觉验收 |
-| 局域网访问 | ✅ | 网关、worker、前端统一监听 `192.168.12.54` |
+| 本地/LAN 可配置地址 | ✅ | 默认 `127.0.0.1`；LAN 通过环境变量覆盖（`TMF_BIND_HOST` 等），运行路径无固定 IP |
 | 一键启停（Windows） | ✅ | `启动TMF.bat` / `停止TMF.bat`，可重复执行；后端 stop 于 2026-10-20 18:17 经日志确认 |
-| 自动化验收脚本 | ✅ 已实现；已验证（历史） | `verify_stage2.py`（35 项）、`verify_stage3.py`（skip/mock 两模式）；2026-10-20 记录 RESULT PASS，**本次文档核对未复跑** |
+| 自动化验收脚本 | ✅ 已实现；已验证 | `verify_refactor_gateway.py` / `verify_refactor_workers.py` / `verify_stage2.py`（35 项）/ `verify_stage3.py`；2026-10-21 重构后均 RESULT PASS |
 
 **主口径**：除蒸馏 v2b（清洗集训练，唯一例外）外，服务端模型均由**未清洗的 180,000 条**训练；量化 / 剪枝由 BERT 派生。指标为独立 `test.txt`（1 万条）实测，详见 [docs/实测指标.md](docs/实测指标.md)。
 
@@ -39,7 +43,8 @@
 |---|---|
 | 前端 | Vue `3.5.44` + TypeScript `5.9.3` + Vite `8.3.4`（rolldown）+ `vue-tsc 3.3.13`；原生 `fetch`，无路由/状态库/UI 库 |
 | 统一网关 | Python 3.10.9 + FastAPI `0.150.0` + Starlette `1.7.0` + **Pydantic v2** + httpx `0.28.1` + Uvicorn `0.54.0` + PyYAML `6.0.3` |
-| 模型服务 | Flask `3.1.3` 单进程（`debug=False`），每模块一个 `api_flask_server.py` + `*_predict_service.py` |
+| 模型适配层 | `serving/adapters/`：`ModelAdapter` 协议 + `HttpWorkerAdapter` / `LlmAdapter`；网关业务层只依赖协议，适配器不加载模型、不读密钥 |
+| 模型服务 | Flask `3.1.3` 单进程（`debug=False`），每模块一个薄入口 `api_flask_server.py` + 统一 `PredictService`（`tmf_common/`） |
 | 大模型 | `openai>=1.0` SDK（OpenAI 兼容协议）→ DeepSeek `deepseek-chat`，可切 Qwen / 智谱；`python-dotenv` 管理密钥 |
 | 算法 | torch `2.14.1+cpu`、transformers `4.57.6`（`bert-base-chinese`）、scikit-learn `1.7.2`、fasttext-wheel `0.9.2`、jieba、pandas、numpy |
 | 旧版页面 | 各模块仍保留 Streamlit `app_streamlit.py`（`py3109` 环境未安装 Streamlit，主前端为 Vue） |
@@ -49,26 +54,31 @@
 
 ## 三、系统架构
 
-### 3.1 运行拓扑（当前默认，局域网）
+### 3.1 运行拓扑（当前默认，本地单机）
 
 ```text
-浏览器（同网段成员）
-  │  http://192.168.12.54:5173
+浏览器
+  │  http://127.0.0.1:5173
   ▼
-Vite 开发服务器 :5173（Vue 3 SPA）
+Vite 开发服务器 :5173（Vue 3 + TypeScript SPA）
   │  fetch  /api/v1/models · /classify · /compare
   ▼
 FastAPI 统一网关 :8000（serving/gateway，不 import torch/transformers）
-  ├── Flask worker :8101  随机森林
-  ├── Flask worker :8103  fastText
-  ├── Flask worker :8104  BERT
-  ├── Flask worker :8105  大模型 → DeepSeek / Qwen / 智谱（外部 API）
-  └── Flask worker :8106  蒸馏 BiLSTM
+  │  业务层只依赖 ModelAdapter 协议；composition root 装配适配器
+  ▼
+serving/adapters/
+  ├── HttpWorkerAdapter ──HTTP──> Flask worker :8101 随机森林
+  │                              Flask worker :8103 fastText
+  │                              Flask worker :8104 BERT
+  │                              Flask worker :8106 蒸馏 BiLSTM
+  └── LlmAdapter ────────HTTP──> Flask worker :8105 大模型 → DeepSeek / Qwen / 智谱（外部 API）
         （06-prune 无在线服务，仅离线实验）
 ```
 
 - 前端只访问网关，不直接访问 worker；worker 地址、超时、错误归一化由网关统一管理。
 - 网关通过 `serving/config/workers.yaml` 调用 worker，通过 `models.yaml` 维护模型清单。
+- 5 个 worker 仍以独立进程运行（依赖隔离/故障隔离）；`api_flask_server.py` 只是薄壳，路由/校验/白名单/错误格式由 `tmf_common.flask_shell` + `PredictService` 统一。
+- 监听地址与端口默认 `127.0.0.1`，局域网通过环境变量覆盖（见 5.5），源码/配置中不写死某台机器的 IP。
 - 进程由 `serving/scripts/stage2.ps1` 管理，状态写入 `serving/run/stage2-state.json`，日志在 `serving/logs/`。
 
 ### 3.2 训练 / 实验链路
@@ -95,23 +105,29 @@ TouManFenClassifier/
 │   ├── data/                 train.txt(18万) dev.txt(1万) test.txt(1万)
 │   │                         class.txt stopwords.txt train.clean.txt clean_report.md
 │   └── eda/                  config.py  data_eda.py
-├── 01-rf/                    随机森林：config / 预处理 / 训练 / 预测服务 / Flask / Streamlit
-├── 02-fasttext/              fastText 四模型 + 预测服务 / Flask / Streamlit
+├── 01-rf/                    随机森林：config / 预处理 / 训练 / 预测服务（统一契约）/ 薄 Flask / Streamlit
+├── 02-fasttext/              fastText 四模型 + 预测服务 / 薄 Flask / Streamlit
 ├── 03-bert/                  BERT 微调、评估、预测服务、量化（模型量化_DQ.py）、log/
-├── 04-LLM/                   DeepSeek/Qwen/智谱脚本、llm_predict_service、Flask、.env(.example)
+├── 04-LLM/                   DeepSeek/Qwen/智谱脚本、llm_predict_service、薄 Flask、.env(.example)
 ├── 05-distill/               教师/学生模型、model_distll.py(v1)、distill_v2.py(v2/v2b)、cache/
 ├── 06-prune/                 剪枝/评估脚本（无在线服务）
 ├── frontend/                 Vue 3 SPA：src/{App.vue,api.ts,types.ts,main.ts,style.css}
 │                             package.json  vite.config.ts  index.html  dist/  README.md
+├── tmf_common/               网关与 worker 共享契约/配置（零重依赖）
+│   ├── prediction.py         PredictService 模板 + PredictionResult / 错误类型
+│   ├── flask_shell.py        worker 薄 Flask 入口（/predict_api、健康端点）
+│   └── config.py             host/port/URL/CORS 环境变量解析与校验
 ├── serving/                  统一服务层
+│   ├── adapters/             ModelAdapter 协议 + HttpWorkerAdapter + LlmAdapter
 │   ├── config/               workers.yaml  models.yaml  processes.yaml
 │   ├── gateway/              FastAPI 网关（main.py / routers/ / errors / settings / probes / stats）
-│   ├── models/               registry.py  http_adapter.py（worker 调用适配）
-│   ├── services/             classification.py（分类编排）
+│   ├── models/               registry.py（http_adapter.py 保留为旧名兼容层）
+│   ├── services/             classification.py（只依赖 ModelAdapter 协议）
 │   ├── scripts/              stage2.ps1  validate_config.py  verify_stage2.py
 │   │                         verify_stage3.py  mock_worker.py
+│   │                         verify_refactor_gateway.py  verify_refactor_workers.py
 │   ├── logs/  run/           运行日志与状态（gitignore）
-│   └── README.md             服务能力与边界
+│   └── README.md             服务能力、适配层、配置与验收
 ├── tools/                    prepare_data.py  handoff_models.py
 │                             clean_data.py    patch_fasttext_numpy2.py
 ├── docs/                     工程/指标/联调/前端/基线等 7 份文档
@@ -166,10 +182,10 @@ pnpm install
 停止TMF.bat     # 停止网关 + 5 个 worker + 前端窗口
 ```
 
-- 浏览器打开 **`http://192.168.12.54:5173`**；同网段成员使用同一地址。
-- `启动TMF.bat` 是幂等的：后端已在运行会复用；前端已在运行（5173 上探测到 TMF 页面）会跳过，不会报 `Port 5173 is already in use`。
-- 若其他程序占用 5173，脚本会明确报错；先关闭占用进程或运行停止脚本。
-- 局域网访问需要在 Windows 防火墙放行 TCP `5173`、`8000`、`8101`、`8103~8106` 入站。
+- 浏览器打开 **`http://127.0.0.1:5173`**（本地默认）；局域网访问见 5.5。
+- `启动TMF.bat` 是幂等的：后端已在运行会复用；前端已在运行（探测到 TMF 页面）会跳过，不会报端口占用。
+- 若其他程序占用前端端口，脚本会明确报错；先关闭占用进程或运行停止脚本。
+- 局域网访问需要按 5.5 显式配置监听地址，并在 Windows 防火墙放行对应端口。
 
 ### 5.3 手动分步启动
 
@@ -188,16 +204,46 @@ pnpm dev
 
 | 组件 | 地址 | 说明 |
 |---|---|---|
-| Vue 前端（Vite） | `http://192.168.12.54:5173` | `strictPort: true`，端口占用直接失败 |
-| FastAPI 网关 | `http://192.168.12.54:8000` | 浏览器与前端唯一入口 |
-| RF worker | `http://192.168.12.54:8101` | 随机森林 |
-| fastText worker | `http://192.168.12.54:8103` | 8102 未使用 |
-| BERT worker | `http://192.168.12.54:8104` | fp32 `bert.pkl` |
-| LLM worker | `http://192.168.12.54:8105` | 调用外部 Provider，可能计费 |
-| 蒸馏 worker | `http://192.168.12.54:8106` | v2b 学生模型 |
+| Vue 前端（Vite） | `http://127.0.0.1:5173` | `strictPort: true`，端口占用直接失败 |
+| FastAPI 网关 | `http://127.0.0.1:8000` | 浏览器与前端唯一入口 |
+| RF worker | `http://127.0.0.1:8101` | 随机森林 |
+| fastText worker | `http://127.0.0.1:8103` | 8102 未使用 |
+| BERT worker | `http://127.0.0.1:8104` | fp32 `bert.pkl` |
+| LLM worker | `http://127.0.0.1:8105` | 调用外部 Provider，可能计费 |
+| 蒸馏 worker | `http://127.0.0.1:8106` | v2b 学生模型 |
 | 剪枝 | — | 无在线服务，仅离线脚本 |
 
-> 地址来源：`serving/config/processes.yaml`（网关）、`serving/config/workers.yaml`（worker 调用）、各模块 `api_flask_server.py`（监听）、`frontend/vite.config.ts` + `package.json`（前端）、`frontend/src/api.ts`（API 基址）。**当前绑定的是具体网卡地址而非 `0.0.0.0`**，换机器/换 IP 时需同步修改；如需自适应可改为 `0.0.0.0`。
+> 地址来源：`serving/config/processes.yaml`（网关端口）、`serving/config/workers.yaml`（worker 调用 URL）、`tmf_common/config.py`（环境变量默认/校验）、`frontend/vite.config.ts`（前端监听）、`frontend/src/api.ts`（API 基址）。换机器/换 IP 时**不需要改源码**，按 5.5 用环境变量覆盖即可。
+
+### 5.5 环境配置（本地 / 局域网）
+
+所有可配置项都有本地默认值；局域网通过环境变量覆盖，**不要把某台机器的 IP 写进源码或 YAML**。
+
+| 变量 | 作用 | 默认 |
+|---|---|---|
+| `TMF_BIND_HOST` | 5 个 Flask worker 的监听地址 | `127.0.0.1` |
+| `TMF_GATEWAY_HOST` / `TMF_GATEWAY_PORT` | 网关监听地址 / 端口 | `127.0.0.1` / `8000` |
+| `TMF_FRONTEND_HOST` / `TMF_FRONTEND_PORT` | Vite 监听地址 / 端口 | `127.0.0.1` / `5173` |
+| `TMF_WORKER_HOST` | 网关调用 worker 时使用的主机（端口沿用 YAML） | 取 YAML 中的值（`127.0.0.1`） |
+| `TMF_WORKER_URL_<ID>` | 单个 worker 的完整 URL 覆盖（如 `TMF_WORKER_URL_RF`） | 未设置 |
+| `TMF_WORKER_PORT_<ID>` | 手动启动单个 worker 时的端口覆盖（如 `TMF_WORKER_PORT_RF`） | 各模块默认端口 |
+| `TMF_CORS_ORIGINS` | 追加允许的 CORS 来源（逗号分隔，禁止 `*`） | 默认只含 `http://<frontend-host>:<port>` |
+| `VITE_API_BASE_URL` | 前端访问网关的基址（`.env.local` 可覆盖） | `http://127.0.0.1:8000` |
+
+**局域网示例**（PowerShell，启动前设置；`<LAN_IP>` 换成你的网卡地址）：
+
+```powershell
+$env:TMF_BIND_HOST='0.0.0.0'                 # worker 监听所有网卡
+$env:TMF_GATEWAY_HOST='0.0.0.0'              # 网关监听所有网卡
+$env:TMF_FRONTEND_HOST='0.0.0.0'             # Vite 监听所有网卡
+$env:TMF_WORKER_HOST='<LAN_IP>'              # 网关调用 worker 的目标主机
+$env:VITE_API_BASE_URL='http://<LAN_IP>:8000'
+$env:TMF_CORS_ORIGINS='http://<LAN_IP>:5173'
+```
+
+- **监听地址 ≠ 客户端访问地址**：`0.0.0.0` 只能用于监听，浏览器/网关不能把它当连接目标。
+- CORS 只放行显式来源；LAN 场景必须追加 `TMF_CORS_ORIGINS`（或把 `TMF_FRONTEND_HOST` 设为具体网卡 IP）。
+- 前端也可在 `frontend/.env.local` 写 `VITE_API_BASE_URL`（该文件不入库）。
 
 ---
 
@@ -272,7 +318,7 @@ python run_all.py               # 按序调用各模块脚本
 - 标题上限 200 字符（`TMF_MAX_TITLE_CHARS`）；类别白名单唯一来源 `00-data/data/class.txt`。
 - 请求编号：`X-Request-ID`（`^[A-Za-z0-9._-]{1,64}$`），网关生成/透传并在响应头回显。
 - 错误统一为 `{"request_id": "...", "error": {"code": "...", "message": "...", "details": {...}}}`。
-- CORS 默认只允许 `http://192.168.12.54:5173`；`TMF_CORS_ORIGINS` 可追加明确来源（禁止 `*`）。
+- CORS 默认只允许 `http://<TMF_FRONTEND_HOST>:<TMF_FRONTEND_PORT>`（默认 `http://127.0.0.1:5173`）；`TMF_CORS_ORIGINS` 可追加明确来源（禁止 `*`）。
 - `/compare` 允许部分模型失败：返回 `summary{total,ok,failed,status}` + 逐模型 `results`。
 
 ### 8.2 模型 worker（内部契约）
@@ -283,6 +329,18 @@ python run_all.py               # 按序调用各模块脚本
 | GET | `/healthz` | 进程存活 |
 | GET | `/readyz` | 模型已加载（LLM 仅表示本地服务与客户端已初始化，**不验证密钥**） |
 | GET | `/metadata` | 稳定 `model_id` / 展示名（版本当前为 `null`） |
+
+- 每个入口 `api_flask_server.py` 是薄壳；五个模型共用 `tmf_common/flask_shell.py` 的路由与 `tmf_common/prediction.PredictService` 的「标题校验 → 推理 → 白名单校验 → 结果」流程。
+- 各模型仍保留自己的预处理（jieba / TF-IDF / BERT tokenizer / BiLSTM / LLM Prompt），不强行合并。
+
+### 8.4 模型适配层（网关内部）
+
+| 类型 | 作用 |
+|---|---|
+| `ModelAdapter`（`serving/adapters/protocol.py`） | 网关业务层唯一依赖的协议：`predict(title, request_id) -> AdapterResult`（含 `pred_class` / `latency_ms` / 错误码） |
+| `HttpWorkerAdapter` | 通过 HTTP 调用某个 Flask worker；超时/非 200/非法 JSON/缺字段/非法类别归一化 |
+| `LlmAdapter` | LLM worker 适配器（仍是本地 HTTP；Provider 密钥只在 04-LLM 进程，网关不读取） |
+| 装配位置 | `serving/gateway/main.py` 的 lifespan（composition root）；`ClassificationService` 只接收 `Mapping[str, ModelAdapter]` |
 
 ### 8.3 大模型服务
 
@@ -295,9 +353,14 @@ python run_all.py               # 按序调用各模块脚本
 ## 九、验证与测试
 
 ```powershell
-# 后端验收（先 start）
-E:\AIModels\test\TouManFen\venv-gateway\Scripts\python.exe serving\scripts\verify_stage2.py
-E:\AIModels\test\TouManFen\venv-gateway\Scripts\python.exe serving\scripts\verify_stage3.py --llm-mode skip
+# 配置 / 适配层 / worker 契约（不加载模型、不启动服务）
+$env:PYTHONPATH='E:\AIModels\test\TouManFen\venv-gateway\Lib\site-packages'
+D:\Miniconda3\envs\py3109\python.exe serving\scripts\verify_refactor_gateway.py
+D:\Miniconda3\envs\py3109\python.exe serving\scripts\verify_refactor_workers.py
+
+# 端到端验收（先 start；真实 worker）
+D:\Miniconda3\envs\py3109\python.exe serving\scripts\verify_stage2.py
+D:\Miniconda3\envs\py3109\python.exe serving\scripts\verify_stage3.py --llm-mode skip
 
 # 前端类型检查 + 生产构建
 cd frontend
@@ -305,10 +368,12 @@ pnpm type-check
 pnpm build
 ```
 
-- `verify_stage2.py`：网关 healthz/readyz/models/stats/request-id + 5 个 worker 只读端点 + 4 个本地模型旧 `/predict_api` 契约（脚本含 **35 项**检查；[v2 档案](docs/PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md) 记录 2026-10-20 RESULT PASS / exit 0；**本次文档核对未复跑**）。
-- `verify_stage3.py`：分类/对比/边界/错误码/权限边界；`--llm-mode skip` 不触达 LLM，`--llm-mode mock` 配合 `mock_worker.py`（同日 mock 模式 RESULT PASS；skip 模式为历史/前序记录）。
-- 前端验收：`http://192.168.12.54:5173` 打开后模型列表加载、单模型分类、多模型对比、错误提示与请求编号。**当前证据到接口层与无头浏览器冒烟为止**（无头 Edge 曾检查 DOM 出现模型名、网关日志出现 `GET /api/v1/models 200`，见 [前端归档](docs/前端开发全过程技术归档.md)）；未做真实浏览器人工视觉验收，`compare` 的界面点击路径也未做浏览器验收。
-- 历史运行痕迹（2026-10-20）：17:09–17:10 全量启动 5 个 worker + 网关 → 18:14 最后一条请求 → 18:17 `stage2.ps1 -Action stop` 输出"全部已停止，状态文件已清理"；`serving/logs/gateway.jsonl` 无 `level=ERROR`、无 500。
+- `verify_refactor_gateway.py`：配置默认/覆盖/非法拒绝、`HttpWorkerAdapter`/`LlmAdapter` 全错误路径、fake adapter 注入、网关 6 个 API、request ID、CORS、运行时代码无硬编码 IP（2026-10-21 本机 **RESULT PASS**）。
+- `verify_refactor_workers.py`：`PredictService` 模板、历史兼容 JSON、Flask 薄壳端点、未就绪 503、5 个 worker 入口静态检查（2026-10-21 本机 **RESULT PASS**）。
+- `verify_stage2.py`：网关只读端点 + 5 个 worker 健康端点 + 4 个本地模型旧 `/predict_api` 契约（**35 项**；2026-10-21 重构后真实服务 **RESULT PASS**）。
+- `verify_stage3.py`：分类/对比/边界/错误码；2026-10-21 真实服务 `--llm-mode skip` **RESULT PASS**；`--llm-mode mock` 在 5 个 mock worker 栈上 **RESULT PASS**（含 LLM 错误/超时映射，不访问真实 Provider）。
+- 前端：2026-10-21 `pnpm type-check` 与 `pnpm build` 通过（`dist/` 已重建）。
+- 已知边界：未做真实浏览器人工视觉验收；`compare` 的界面点击路径未验收（接口层已验证）。
 
 ---
 
@@ -325,20 +390,24 @@ pnpm build
 | `TMF_USE_CLEAN` / `TMF_KEEP_IDX` / `TMF_INIT_STUDENT` | 蒸馏清洗集 / 清洗索引 / 学生初始化 | `05-distill/` |
 | `TMF_LLM_PROVIDER` | `deepseek` / `qwen` / `zhipu` | 默认 `deepseek` |
 | `TMF_LLM_TOTAL_TIMEOUT_S` | LLM 上游总预算（默认 12 s） | `04-LLM/llm_predict_service.py` |
-| `TMF_CORS_ORIGINS` | 追加 CORS 来源（逗号分隔，禁止 `*`） | `serving/gateway/main.py` |
+| `TMF_BIND_HOST` | 5 个 worker 监听地址 | 默认 `127.0.0.1`（`tmf_common/config.py`） |
+| `TMF_GATEWAY_HOST` / `TMF_GATEWAY_PORT` | 网关监听地址/端口 | 默认 `127.0.0.1` / `8000` |
+| `TMF_FRONTEND_HOST` / `TMF_FRONTEND_PORT` | 前端监听地址/端口 | 默认 `127.0.0.1` / `5173` |
+| `TMF_WORKER_HOST` / `TMF_WORKER_URL_<ID>` | 网关调用 worker 的主机/完整 URL 覆盖 | 默认取 `workers.yaml` |
+| `TMF_CORS_ORIGINS` | 追加 CORS 来源（逗号分隔，禁止 `*`） | 默认由前端地址推导（`tmf_common/config.py`） |
 | `TMF_DEFAULT_MODEL` / `TMF_MAX_TITLE_CHARS` | 默认模型 / 标题上限 | 覆盖 `serving/config/models.yaml` |
 | `TMF_WORKERS_FILE` / `TMF_MODELS_FILE` / `TMF_CLASS_FILE` | 覆盖配置文件路径 | 见 `serving/gateway/settings.py` |
 | `TMF_PROBE_TIMEOUT_MS` / `TMF_STATUS_CACHE_MS` | worker 探测超时 / 状态缓存 | 覆盖 `workers.yaml` |
-| `VITE_API_BASE_URL` | 前端 API 基址 | 默认 `http://192.168.12.54:8000`（`.env.example`） |
+| `VITE_API_BASE_URL` | 前端 API 基址 | 默认 `http://127.0.0.1:8000`（`.env.example`） |
 
 ---
 
 ## 十一、关键约束与设计决策
 
 1. **前端只访问网关**：worker 地址、超时、错误归一化集中在网关；网关不 import torch/transformers。
-2. **统一契约**：网关 `/api/v1/*` 返回 `request_id`；worker 统一 `POST /predict_api` + `title` / `pred_class`。
-3. **配置集中在 `serving/config/*.yaml`**：类别唯一来源 `class.txt`；启动前 `validate_config.py` 校验（端口一致性、敏感字段禁止、重复键拒绝）。
-4. **地址硬编码绑定网卡**：当前为 `192.168.12.54`（非 `0.0.0.0`）。IP 变化时需同步：`processes.yaml`、`workers.yaml`、5 个 `api_flask_server.py`、`vite.config.ts`、`package.json`、`api.ts`、`.env.example`、`启动TMF.bat` 探测地址。
+2. **统一契约**：网关 `/api/v1/*` 返回 `request_id`；worker 统一 `POST /predict_api` + `title` / `pred_class`；worker 内部统一 `PredictService` 模板。
+3. **配置集中在 `serving/config/*.yaml` + 环境变量**：类别唯一来源 `class.txt`；启动前 `validate_config.py` 校验（端口一致性、敏感字段禁止、重复键拒绝、网络变量合法性）。
+4. **地址可配置，不写死网卡**：默认 `127.0.0.1`；局域网通过 `TMF_BIND_HOST` / `TMF_GATEWAY_HOST` / `TMF_FRONTEND_HOST` / `TMF_WORKER_HOST` / `TMF_CORS_ORIGINS` 覆盖（见 5.5），源码、YAML、BAT/PS1 中不再有固定 IP。
 5. **CPU-only**：BERT 全量微调 1 epoch 约 5.3 小时；训练产物/断点均在本地，不随仓库分发。
 6. **版本锁定**：`numpy<2`、`transformers<5`、`fasttext-wheel` 三条硬约束；`scikit-learn==1.7.*` 与 Python 3.10 组合。
 7. **网关启动方式**：本机 `venv-gateway` 的 Python 存在 `_ssl` DLL 加载故障，`stage2.ps1` 用 `py3109` 执行网关并从 `venv-gateway\Lib\site-packages` 注入依赖；worker 仍用 `py3109`。
@@ -355,8 +424,8 @@ pnpm build
 - **热搜业务未实现**：按用户要求延期（见 `TODO-联通清单.md`）。
 - **剪枝不压缩体积**：非结构化剪枝 + `prune.remove()` 固化后仍是稠密存储，只提升稀疏度。
 - **量化模型未上服务**：`quantization_model.pkl` 仅离线评估，在线集合仍是 fp32 BERT。
-- **地址绑定具体网卡**：IP 变化会直接导致服务启动/访问失败（见第十一节第 4 条）。
-- **无 Git 仓库**：截至 2026-10-20 晚项目目录仍未 `git init`（工作区无 `.git`），无法用 `git diff` 复核历史；首次提交前需确认 `.gitignore` 已排除模型/密钥/数据副本。
+- **默认仅监听回环地址**：本地单机开箱可用；局域网必须按 5.5 设置 `TMF_BIND_HOST` / `TMF_GATEWAY_HOST` / `TMF_FRONTEND_HOST` / `TMF_CORS_ORIGINS`，否则同网段无法访问。
+- **仓库状态**：工程目录已有 `.git`（2026-10-21 初始化并推送，HEAD `9f81e05`，见 [v4 Git 归档](docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md)）；本次重构改动**尚未提交**，无法用提交历史复核这些改动；提交前需确认 `.gitignore` 已排除模型/密钥/数据副本。
 - **前端未做真实浏览器视觉验收**：仅接口层、无头浏览器冒烟与构建验证；桌面/窄屏观感、交互细节需人工检查；`compare` 的界面点击路径同样未做浏览器验收。
 - **停止脚本**：后端 stop 已于 2026-10-20 18:17 经 `serving/logs/stage2-script.log` 确认"全部已停止，状态文件已清理"；前端窗口关闭按窗口标题匹配，仍建议在普通桌面会话复测一次。
 
@@ -365,14 +434,14 @@ pnpm build
 ## 十三、常见问题排查
 
 1. **5173 打不开 / 端口被占**：重新执行 `启动TMF.bat` 会自动跳过已在运行的前端；若被其他程序占用，脚本会报错，先关闭占用进程或运行 `停止TMF.bat`。
-2. **页面提示“暂时无法连接 TMF 后端”**：① 先确认网关：`curl http://192.168.12.54:8000/api/v1/healthz`；② 打开浏览器控制台，若有 `crypto.randomUUID is not a function` 之类 `TypeError`，说明是局域网 HTTP 非安全上下文问题（已修复，需强制刷新页面）；③ 确认页面与 API 都走局域网地址，不要混用 `127.0.0.1`；④ 确认 CORS 来源与 `TMF_CORS_ORIGINS`。
+2. **页面提示“暂时无法连接 TMF 后端”**：① 先确认网关：`curl http://127.0.0.1:8000/api/v1/healthz`（LAN 用实际网卡 IP）；② 打开浏览器控制台，若有 `crypto.randomUUID is not a function` 之类 `TypeError`，说明是非安全上下文问题（已修复，需强制刷新页面）；③ 确认页面与 API 使用同一个主机（LAN 场景不要混用 `127.0.0.1`）；④ 确认 CORS 来源与 `TMF_CORS_ORIGINS`。
 3. **网关连不上 worker / `readyz` 有 down**：查看 `serving/logs/gateway.err.log` 与 `serving/logs/workers/*.err.log`；确认 worker 端口与 `workers.yaml` 一致；`stage2.ps1 -Action status` 查看归属与状态。
 4. **网关启动不 ready（`_ssl`）**：确认使用 `py3109` 且 `venv-gateway\Lib\site-packages` 存在；查看 `serving/logs/gateway.err.log`；不要用 `taskkill /IM python.exe` 清场。
 5. **fastText 预测报 `Unable to avoid copy...`**：numpy 2.x 兼容问题，执行 `python tools/patch_fasttext_numpy2.py` 或安装 `numpy<2`。
 6. **BERT 报 `batch_encode_plus` 不存在**：`transformers` 装到了 5.x，降到 `<5`。
 7. **`pip install fasttext` 失败**：改用 `fasttext-wheel`。
 8. **LLM 返回 401 / 超时**：检查 `04-LLM/.env` 的 `DEEPSEEK_API_KEY`（或对应 Provider）；联调优先用 mock。
-9. **局域网其他成员打不开**：Windows 防火墙放行 5173/8000/8101/8103~8106 入站；确认同网段、IP 正确、服务绑定 `192.168.12.54`。
+9. **局域网其他成员打不开**：按 5.5 设置监听地址与 CORS，Windows 防火墙放行 5173/8000/8101/8103~8106 入站；确认同网段且客户端使用实际网卡 IP（不要用 `0.0.0.0` 访问）。
 10. **训练很慢**：CPU-only 正常；BERT 支持 `TMF_RESUME` 断点续训，日志在 `03-bert/log/`。
 
 ---
@@ -386,11 +455,13 @@ pnpm build
 | [docs/实测指标.md](docs/实测指标.md) | 主口径对比、清洗实验、方法学说明 |
 | [docs/联调记录.md](docs/联调记录.md) | 5 个模块接口/前端联调记录 |
 | [docs/前端对接说明.md](docs/前端对接说明.md) | API 契约、CORS、启停、LLM 边界 |
-| [docs/前端开发全过程技术归档.md](docs/前端开发全过程技术归档.md) | 前端实现过程、决策、踩坑、复现 |
-| [docs/PROJECT_LEARNING_GUIDE.md](docs/PROJECT_LEARNING_GUIDE.md) | 全项目工程实践与技术学习档案 |
-| [docs/PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md](docs/PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md) | 服务层工程化与集成验证 |
+| [docs/PROJECT_LEARNING_GUIDE.md](docs/PROJECT_LEARNING_GUIDE.md) | v1：早期 Streamlit/模型全流程学习档案（历史） |
+| [docs/PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md](docs/PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md) | v2：服务层工程化与集成验证 |
+| [docs/PROJECT_LEARNING_GUIDE_v3_前端开发全过程技术归档.md](docs/PROJECT_LEARNING_GUIDE_v3_前端开发全过程技术归档.md) | v3：前端开发全过程技术归档（历史记录，IP 为旧默认） |
+| [docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md](docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md) | v4：Git/GitHub 工程归档 |
+| [docs/PROJECT_LEARNING_GUIDE_v5_模型适配层与网络配置重构.md](docs/PROJECT_LEARNING_GUIDE_v5_模型适配层与网络配置重构.md) | v5：适配层、worker 契约与网络配置重构（当前架构） |
 | [docs/阶段0-工程基线报告.md](docs/阶段0-工程基线报告.md) | 环境、依赖、模型基线 |
-| [TODO-联通清单.md](TODO-联通清单.md) | 待办与历史联通记录（2026-10-20 晚已按当前状态回填；历史段落保留） |
+| [TODO-联通清单.md](TODO-联通清单.md) | 待办与历史联通记录（2026-10-21 已按当前状态回填；历史段落保留） |
 
 工作区其他输入资料（与本工程同级）：
 
@@ -409,6 +480,8 @@ pnpm build
 | 2026-10-19 | 5 个模块接口与 Streamlit 前端联调通过；LLM 切换 DeepSeek；fastText × numpy 2 补丁；端口分离与缺参兜底修复 |
 | 2026-10-20 | 新增 FastAPI 统一网关 + Vue 3 前端（单模型/对比）；服务地址整体切换到 `192.168.12.54`（局域网访问）；启动 BAT 增加 5173 幂等探测；修复局域网 HTTP 非安全上下文下 `crypto.randomUUID` 导致的“无法连接后端”；README 系统性重写 |
 | 2026-10-20（晚） | 状态文档核对：回填 `TODO-联通清单.md`、`serving/README.md`、本 README；为阶段 0 报告、联调记录、两份学习档案、工程实施清单加历史基线/状态补记；前端归档与前端对接说明补充构建指纹、`/compare` 网关日志与 stop 验证证据；按网关日志修正"LLM 仅 mock、未经网关验证"的口径（实有 16 次真实成功调用）。**未改代码/数据/配置/密钥，未初始化 Git。** |
+| 2026-10-21 | **架构重构**：新增 `serving/adapters/`（`ModelAdapter` 协议 + `HttpWorkerAdapter` / `LlmAdapter`，网关只依赖协议）；新增 `tmf_common/`（`PredictService` 模板 + 薄 Flask 入口 + 网络配置解析）；5 个模型预测服务统一为 `SERVICE + predict(dict)` 兼容层，`api_flask_server.py` 变为薄壳；移除运行路径中的固定 IP，默认 `127.0.0.1` 并支持环境变量/LAN 覆盖。验证：`verify_refactor_gateway.py` / `verify_refactor_workers.py` / `verify_stage2.py`（真实 35 项）/ `verify_stage3.py --llm-mode skip`（真实）/ `--llm-mode mock`（mock 栈）全部 PASS；前端 type-check + build 通过。 |
+| 2026-10-21（下午） | 学习档案版本重排：前端归档 → `v3`，Git 归档 → `v4`，适配层重构 → `v5`；同步 README 索引与所有文档内链接；更新当前运行状态（LAN 模式）。 |
 
 ---
 
@@ -417,7 +490,7 @@ pnpm build
 - `04-LLM/.env` 含真实 API Key，已 gitignore；本工程源码中不再有明文密钥。历史 Key 曾暴露，建议到各平台重置。
 - **外部资料仍有历史密钥**：`../参考资料/03-笔记/05_LLM实现.md` 与 `../参考代码/gzai6_tmf/04-LLM/`（含 `.env` 与平台示例脚本）不属本工程源码，其中仍含课程阶段的明文 key（联调记录显示旧 key 曾 401，仍按敏感信息处理）；本次未修改这些资料，对外分发/上传前需清理或脱敏。
 - **代码与第三方材料的所有权区分**：项目代码归项目所有者所有，并已由所有者确认可上传；`PretrainedModel/`、`数据/`、`参考资料/` 等数据集、预训练模型与课程资料的来源与许可**未在本工程内核对**，分发/对外发布前需单独确认，本工程不作授权声明。
-- 服务当前绑定局域网地址且**无鉴权**：同网段任何人都能调用 5 个模型（含 LLM 接口，会产生真实费用）。若只需本机使用，可把地址改回 `127.0.0.1`；若只需暴露前端/网关，可只让网关监听局域网、worker 留在回环地址。
+- 服务默认只监听 `127.0.0.1` 且**无鉴权**：按 5.5 改为 LAN 监听后，同网段任何人都能调用 5 个模型（含 LLM 接口，会产生真实费用）。若只需本机使用，保持默认；若只需暴露前端/网关，可只让网关监听局域网、worker 留在回环地址。
 - 代码与模型数据均在本机，训练产物（主口径约 6.7 GB；5 个 `save_model/` 全部文件实测约 10.86 GB）、预训练模型（9.27 GB）、`.env` 均不入库；首次 `git init` 提交前用 `git status` 复查。
 
 ---

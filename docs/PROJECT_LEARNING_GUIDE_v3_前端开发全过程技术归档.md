@@ -1,19 +1,22 @@
-# TMF 前端开发全过程技术归档
+# TMF 前端开发全过程技术归档（v3）
 
 ## 0. 文档信息
 
 | 项目 | 内容 |
 |---|---|
 | 文档目的 | 归档 TMF 从前端规划到首次可运行验证的实现过程、技术决策、问题和复现方法 |
+| 文档版本 | v3-frontend-1.0 |
 | 归档范围 | 用户提出前端开发计划至 2026-10-20 局域网访问改造与两项前端排障结束 |
 | 生成日期 | 2026-10-20（Asia/Shanghai） |
-| 最近更新 | 2026-10-20（局域网访问改造；启动 BAT 幂等修复；`crypto.randomUUID` 非安全上下文修复）；2026-10-20 晚状态回填（构建时间、`/compare` 网关日志、后端 stop 日志） |
+| 最近更新 | 2026-10-20（局域网访问改造；启动 BAT 幂等修复；`crypto.randomUUID` 非安全上下文修复）；2026-10-20 晚状态回填（构建时间、`/compare` 网关日志、后端 stop 日志）；2026-10-21 文档编号调整为 v3 |
 | 项目路径 | `E:\AIModels\test\TouManFen\TouManFenClassifier` |
 | 文档状态 | 持续增量更新；基于当前会话可见记录与当前文件、命令输出核验 |
 | 证据标签 | 【已验证事实】、【历史记录】、【技术分析】、【待确认】 |
-| 相关档案 | [PROJECT_LEARNING_GUIDE.md](PROJECT_LEARNING_GUIDE.md) 记录较早的 Streamlit/模型工程；[PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md](PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md) 记录后端工程化与前端对接准备 |
+| 相关档案 | [PROJECT_LEARNING_GUIDE.md](PROJECT_LEARNING_GUIDE.md) 记录较早的 Streamlit/模型工程；[PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md](PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md) 记录后端工程化与前端对接准备；后续 [v4 Git 归档](PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md)、[v5 适配层重构](PROJECT_LEARNING_GUIDE_v5_模型适配层与网络配置重构.md) |
 
 本档案只记录本轮 Vue 前端相关工作，不替代既有学习指南。按用户要求，以上两份学习指南均未修改。本轮新建本文档；前端代码、启动脚本和后端网关启动路径的修改均发生在本档案写作之前。
+
+> ⚠️ **历史记录（截至 2026-10-20）**：本文中的 `192.168.12.54` 是**当时**的局域网默认地址。2026-10-21 架构重构后，运行配置默认改为 `127.0.0.1`，局域网通过 `TMF_BIND_HOST` / `TMF_GATEWAY_HOST` / `TMF_FRONTEND_HOST` / `TMF_WORKER_HOST` / `TMF_CORS_ORIGINS` 覆盖，源码中不再写死 IP。本文地址仅作历史证据保留，当前配置见 [README.md](../README.md) 5.5 与 [frontend/README.md](../frontend/README.md)。
 
 ### 证据限制
 
@@ -523,6 +526,8 @@ cmd.exe /c "启动TMF.bat < nul"
 | `停止TMF.bat` | 一键停止 | stage2 stop + 前端窗口树 |
 | `docs/PROJECT_LEARNING_GUIDE.md` | 旧 Streamlit/模型全流程归档 | 本轮未改动 |
 | `docs/PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md` | 后端工程化与对接准备归档 | 本轮未改动 |
+| `docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md` | 后续 Git/GitHub 归档 | 后续版本 |
+| `docs/PROJECT_LEARNING_GUIDE_v5_模型适配层与网络配置重构.md` | 后续适配层/网络重构档案 | 后续版本 |
 
 ## 18. 关键操作与命令索引
 
@@ -586,4 +591,4 @@ StartBat     : idempotent (连续两次执行，第二次跳过前端启动)
 
 ## 附录 B：文档更新约定
 
-后续发生前端开发时，可在本文的时间线、决策、问题案例、验证矩阵和遗留项中增量追加。每次更新都应记录新日期、实际执行结果和证据边界；不要将建议操作混写成已经完成的实施。既有两份 `PROJECT_LEARNING_GUIDE` 应继续作为独立历史档案维护。
+后续发生前端开发时，可在本文的时间线、决策、问题案例、验证矩阵和遗留项中增量追加。每次更新都应记录新日期、实际执行结果和证据边界；不要将建议操作混写成已经完成的实施。既有 v1/v2 及后续 v4/v5 档案应继续作为独立历史档案维护。

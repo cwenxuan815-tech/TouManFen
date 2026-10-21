@@ -1,6 +1,6 @@
 # TODO · 联通清单
 
-> **状态回填（2026-10-20 晚）**：本清单写于工程骨架阶段（2026-10-19 前后）。其中"五个 `save_model/` 都是空的""BERT 训练是下一步""Streamlit 是唯一前端"等表述已过期；本版按当前代码、配置与实测记录回填状态。**当前能力、验证边界与启动方式以 [README.md](README.md) 为准**，本清单只保留待办与历史记录。
+> **状态回填（2026-10-21）**：本清单写于工程骨架阶段（2026-10-19 前后）。其中"五个 `save_model/` 都是空的""BERT 训练是下一步""Streamlit 是唯一前端""地址写死"等表述已过期；本版按当前代码、配置与实测记录回填状态，并新增 2026-10-21 适配层/worker 契约/网络配置重构记录。**当前能力、验证边界与启动方式以 [README.md](README.md) 为准**，本清单只保留待办与历史记录。
 > 状态标记：☐ 未开始 / ◐ 部分完成 / ☑ 已完成
 > 证据口径：☑ 表示"存在可追溯记录"；"已实现"与"本次重新验证"是两件事，正文中分别注明。
 
@@ -28,7 +28,7 @@
 
 ## 三、数据与工程化
 
-- ☑ **数据清洗**：已完成并归档 `train.clean.txt`（178,692 条，删除 0.73%：重复标题 809 / 标签冲突 96 / 防泄漏 403），报告见 [00-data/data/clean_report.md](../00-data/data/clean_report.md)；**主口径仍是未清洗的 180,000 条**，清洗集仅用于蒸馏 v2b 与附加实验。
+- ☑ **数据清洗**：已完成并归档 `train.clean.txt`（178,692 条，删除 0.73%：重复标题 809 / 标签冲突 96 / 防泄漏 403），报告见 [00-data/data/clean_report.md](00-data/data/clean_report.md)；**主口径仍是未清洗的 180,000 条**，清洗集仅用于蒸馏 v2b 与附加实验。
 - ☑ **接口/前端联调（2026-10-19，Streamlit 5/5）**：用 Streamlit `AppTest` 真实交互测试，RF / fastText / BERT / LLM(DeepSeek) / 蒸馏五个模块的「前端输入 → HTTP 调后端 → 页面显示预测」全部打通；同时修掉 fastText×numpy2、3 个服务缺参兜底、Flask `debug=True` 孤儿进程、LLM 平台切换与输出校验。详见 [docs/联调记录.md](docs/联调记录.md)。**这是历史记录**：2026-10-20 起主前端为 Vue 3，联调对象改为网关。
 - ☐ **Gitee 提交**：`.gitignore` 已就位（排除 `.env`、`save_model/`、`PretrainedModel/`、`process_*`、模块数据副本）；**截至 2026-10-20 工作区仍无 `.git`**，需 `git init` → 首次提交 → 远端推送，提交前用 `git status` 确认没有大文件/密钥。
 - ☐ **`PretrainedModel` 瘦身**：该目录 9.27 GB，`distilbart-cnn-12-6`（4.08 GB）与各模型的 `tf_model.h5` / `flax_model.msgpack` 对本项目无用，可删除或移到备份盘（未执行）。
@@ -37,11 +37,26 @@
 
 - ☑ **FastAPI 统一网关** `serving/gateway/`：`/api/v1/healthz`、`/readyz`、`/models`、`/stats`、`/classify`、`/compare`；网关只经 HTTP 调用 worker，不加载模型。
 - ☑ **5 个 Flask worker**：8101/8103/8104/8105/8106，统一 `POST /predict_api`，并新增只读 `/healthz`、`/readyz`、`/metadata`。
-- ☑ **Vue 3 + TypeScript + Vite 前端** `frontend/`：单模型分类、多模型对比、模型就绪矩阵、LLM opt-in、错误与请求编号；局域网 `http://192.168.12.54:5173`；`dist/` 构建产物存在（2026-10-20 17:19）。
+- ☑ **Vue 3 + TypeScript + Vite 前端** `frontend/`：单模型分类、多模型对比、模型就绪矩阵、LLM opt-in、错误与请求编号；默认 `http://127.0.0.1:5173`（LAN 用 `TMF_FRONTEND_HOST` 覆盖）；`dist/` 构建产物存在（2026-10-21 16:29 重建）。
 - ☑ **启停与验证脚本**：`serving/scripts/stage2.ps1`（start/stop/status/restart）、`启动TMF.bat` / `停止TMF.bat`、`verify_stage2.py`、`verify_stage3.py`（skip/mock）、`mock_worker.py`、`04-LLM/verify_llm_timeout.py`。
-- ☑ **验证记录（历史，非本次复跑）**：2026-10-20 记录 `verify_stage2.py` / `verify_stage3.py --llm-mode mock` / `verify_llm_timeout.py` 均 RESULT PASS、exit 0（见 v2 档案）；同日 17:10 启动、18:14 最后请求、18:17 `stage2.ps1 -Action stop` 输出"全部已停止，状态文件已清理"。**本次文档核对未重新运行任何验证。**
+- ☑ **验证记录（历史，2026-10-20）**：`verify_stage2.py` / `verify_stage3.py --llm-mode mock` / `verify_llm_timeout.py` 均 RESULT PASS、exit 0（见 v2 档案）；同日 18:17 `stage2.ps1 -Action stop` 输出"全部已停止，状态文件已清理"。**2026-10-21 重构后已重新验证，见第五节。**
 
-## 五、历史记录（保留原文，便于追溯）
+## 五、已完成（2026-10-21：适配层 / worker 契约 / 网络配置）
+
+- ☑ **统一模型适配层** `serving/adapters/`：`ModelAdapter` 协议 + `HttpWorkerAdapter` + `LlmAdapter`；`ClassificationService` 只依赖协议，具体适配器在 `serving/gateway/main.py` 的 lifespan 装配。
+- ☑ **统一 worker 预测契约** `tmf_common/`：`PredictService` 模板（标题校验 → 推理 → 白名单校验 → `pred_class`/`latency_ms`）；5 个 `*_predict_service.py` 统一为 `SERVICE + predict(dict)` 兼容层；`api_flask_server.py` 变为薄壳，原有 `/predict_api` 字段/错误格式保留。
+- ☑ **移除固定 IP**：`workers.yaml`、`processes.yaml`、5 个 `api_flask_server.py`、`stage2.ps1`、`启动TMF.bat`、`vite.config.ts`、`package.json`、`api.ts`、`.env.example`、Streamlit/本地客户端、`run_all.py`、`mock_worker.py`、验证脚本均改为环境变量/配置；默认 `127.0.0.1`。
+- ☑ **配置校验**：`tmf_common/config.py` 校验 host/port/URL/CORS；`validate_config.py` 输出 `bind/gateway/frontend/cors/worker_urls`；非法变量快速失败。
+- ☑ **验证（2026-10-21 本机）**：
+  - `verify_refactor_gateway.py`（44 项）RESULT PASS；
+  - `verify_refactor_workers.py` RESULT PASS；
+  - 真实服务 `verify_stage2.py`（35 项）RESULT PASS；
+  - 真实服务 `verify_stage3.py --llm-mode skip` RESULT PASS；
+  - 5 个 mock worker 栈 `verify_stage3.py --llm-mode mock` RESULT PASS；
+  - `py_compile` 全部改动 Python 通过；前端 `pnpm type-check` / `pnpm build` 通过；
+  - `0.0.0.0` 监听 smoke 通过（mock worker）。
+
+## 六、历史记录（保留原文，便于追溯）
 
 ### 5.1 已完成（本轮骨架）
 
@@ -64,7 +79,7 @@
 - ☑ **蒸馏 BiLSTM v2（改进版）**：BERT 词嵌入 SVD 初始化 + 教师 logits 缓存 + 6 epoch，
   test F1 **0.8974**（+9.5 点），36.7MB（10.6x 压缩）、12s/万条
 - ☑ **数据去重清洗**：180,000 → **178,692**（删除 0.73%：重复 809 / 标签冲突 96 / 防泄漏 403），
-  见 [00-data/data/clean_report.md](../00-data/data/clean_report.md)；清洗索引复用教师缓存（省约 2 小时重算）
+  见 [00-data/data/clean_report.md](00-data/data/clean_report.md)；清洗索引复用教师缓存（省约 2 小时重算）
 - ☑ **蒸馏 BiLSTM v2b（续训 + 清洗数据，当前最优学生）**：再训 2 epoch（40m24s），
   dev **0.9022** / test **0.9074**（+1.0 点，突破 0.90），36.7MB、13s/万条；
   `05-distill/config.py` 默认模型已切 `student_v2b.pkl`，接口复测 5/5
@@ -75,12 +90,15 @@
 - ☑ **最终口径决策**：主口径 = 未清洗数据（服务端模型不变），清洗集作为实验章节呈现；
   详见 docs/实测指标.md 第九、十章，README「口径说明」
 
-## 六、当前待办汇总（2026-10-20 晚）
+## 七、当前待办汇总（2026-10-21）
 
-- ☐ Gitee 首次提交（无 `.git`）
-- ☐ `PretrainedModel` 瘦身（9.27 GB → 可只留 `bert-base-chinese` 必需文件）
-- ◐ `run_all.py` 端到端验证；☐ `tools/evaluate_all.py` 统一评估脚本
+- ☑ **局域网部署（2026-10-21）**：服务以 LAN 模式运行（`192.168.12.54:5173/8000/8101/8103~8106`，readyz 5/5），用户级环境变量与 `frontend/.env.local` 已配置；经 LAN 本机调用 health/models/classify/compare/CORS 全部通过。**外部机器访问未实测**。
+- ☑ **学习档案版本重排（2026-10-21）**：v3=前端归档、v4=Git 归档、v5=适配层重构；README 索引与文档内链接已同步。
+- ☐ 适配层/契约重构后的**浏览器人工视觉验收**（桌面/窄屏）与 `compare` 界面点击路径验收
+- ◐ 完整 LAN 部署外部验收：在另一台同网段机器验证防火墙/CORS/前端访问
 - ☐ 真实 LLM provider 的准确性/费用/稳定性系统评估与抽样评估脚本（已有 2026-10-20 16 次真实调用日志，但未做统计）
-- ☐ 前端浏览器人工视觉验收（桌面/窄屏）；☐ 前端 `compare` 的界面点击路径验收
+- ◐ `run_all.py` 端到端验证；☐ `tools/evaluate_all.py` 统一评估脚本
+- ☐ `PretrainedModel` 瘦身（9.27 GB → 可只留 `bert-base-chinese` 必需文件）
+- ☑ 版本控制：工程目录已有 `.git`（2026-10-21 初始化并推送，见 [docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md](docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md)）；后续提交策略/仓库可见性另行确认
 - ☐ 可选：无泄漏重评（剔除 test 中 110 条与 train 重叠样本）
 - 未实现、**不要记为已具备**：热搜采集/分类、confidence/概率、批量分类、缓存/single-flight/级联、鉴权、数据库/队列、Docker/CI。
