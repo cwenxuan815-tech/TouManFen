@@ -2,7 +2,8 @@
 """阶段 3 轻量验收脚本（不依赖 pytest）。
 
 前提：
-- 网关已启动（默认 192.168.12.54:8000，取自 serving/config/processes.yaml）；
+- 网关已启动（默认 http://127.0.0.1:8000，取自 serving/config/processes.yaml，
+  可用 TMF_GATEWAY_HOST / --base-url 覆盖）；
 - 4 个本地 worker（rf/fasttext/bert/distill）已启动；
 - LLM 模式：
   - `--llm-mode skip`：不测试 LLM，默认 compare 不执行；
@@ -24,6 +25,7 @@ import asyncio
 import copy
 import json
 import logging
+import os
 import sys
 import tempfile
 from pathlib import Path
@@ -33,6 +35,8 @@ import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT))
+
+from tmf_common.config import probe_host, resolve_worker_url  # noqa: E402
 
 from serving.gateway.errors import ApiError  # noqa: E402
 from serving.gateway.settings import load_settings  # noqa: E402
@@ -119,7 +123,7 @@ def unit_checks() -> None:
         registry = ModelRegistry(disabled_settings)
         service = ClassificationService(
             registry=registry,
-            adapter=None,  # 禁用模型在调用适配器之前就会拒绝
+            adapters={},  # 禁用模型在调用适配器之前就会拒绝
             classes=disabled_settings.classes,
             max_title_chars=disabled_settings.max_title_chars,
             stats=StatsCollector(),
@@ -148,8 +152,11 @@ def main() -> int:
     processes = yaml.safe_load(PROCESSES_FILE.read_text(encoding="utf-8"))
     models_config = yaml.safe_load(MODELS_FILE.read_text(encoding="utf-8"))
     gateway = processes["gateway"]
-    base_url = args.base_url or f"http://{gateway['host']}:{gateway['port']}"
-    llm_base_url = f"http://{gateway['host']}:{processes['workers']['llm']['port']}"
+    gateway_host = probe_host(os.environ.get("TMF_GATEWAY_HOST") or gateway["host"])
+    base_url = args.base_url or f"http://{gateway_host}:{gateway['port']}"
+    llm_base_url = resolve_worker_url(
+        f"http://{gateway['host']}:{processes['workers']['llm']['port']}", "llm"
+    )
     classes = load_classes()
     default_compare_order = [
         model_id

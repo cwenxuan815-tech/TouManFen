@@ -1,62 +1,66 @@
-import jieba
-import pickle
-from config import Config
-from sklearn.feature_extraction.text import TfidfVectorizer # TF-IDF类
-from sklearn.ensemble import RandomForestClassifier # 随机森林
+"""随机森林预测服务（统一 PredictService 契约）。
 
-# 1- 加载配置文件
+模型在模块导入时加载一次；``predict(dict)`` 保留为向后兼容的旧接口，
+新代码请使用 ``SERVICE.predict(title)`` 或 ``SERVICE.handle_payload(dict)``。
+
+运行位置：本文件由 ``01-rf/api_flask_server.py`` 导入，进程工作目录为模块目录，
+因此这里显式把工程根加入 ``sys.path``，保证 ``tmf_common`` 可导入且不依赖当前 shell 路径。
+"""
+
+import sys
+from pathlib import Path
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+import jieba  # noqa: E402
+import pickle  # noqa: E402
+
+from config import Config  # noqa: E402
+from sklearn.feature_extraction.text import TfidfVectorizer  # noqa: E402
+from sklearn.ensemble import RandomForestClassifier  # noqa: E402
+
+from tmf_common.prediction import PredictService  # noqa: E402
+
 config = Config()
 
-# 2- 加载训练好的模型
-with open(config.rf_model_path,mode="rb") as f:
-    model:RandomForestClassifier = pickle.load(f)
+with open(config.rf_model_path, mode="rb") as f:
+    _MODEL: RandomForestClassifier = pickle.load(f)
 
-with open(config.tfidf_model_path,mode="rb") as f:
-    tfidf:TfidfVectorizer = pickle.load(f)
+with open(config.tfidf_model_path, mode="rb") as f:
+    _TFIDF: TfidfVectorizer = pickle.load(f)
 
-# 3- 对单条新闻标题进行预测
+with open(config.class_datapath, mode="r", encoding="UTF-8") as f:
+    _CLASSES = [line.strip() for line in f if line.strip()]
+
+
+class RfPredictService(PredictService):
+    """TF-IDF + 随机森林。"""
+
+    model_id = "rf"
+    display_name = "随机森林"
+
+    def __init__(self, classes, model, tfidf):
+        super().__init__(classes)
+        self._model = model
+        self._tfidf = tfidf
+
+    def infer(self, title: str) -> str:
+        # 分词 -> 取前 30 个词 -> 空格分隔 -> TF-IDF -> 随机森林
+        words = " ".join(jieba.lcut(title)[:30])
+        features = self._tfidf.transform([words])
+        pred_index = int(self._model.predict(features)[0])
+        return self.class_list[pred_index]
+
+
+SERVICE = RfPredictService(_CLASSES, _MODEL, _TFIDF)
+
+
 def predict(news_data):
-    """
-    对单条新闻标题进行预测
-    :param news_data: 字典数据类型。结构：{"title":新闻标题内容}
-    :return: 字典。结构：{"title":新闻标题内容,"pred_class":预测的新闻类型}
-    """
-
-    # 1- 取出新闻标题；分词；取前30个词；以空格分隔
-    # 入参兜底：缺 title 时返回结构化错误（而不是抛 KeyError 变成 500）
-    if not isinstance(news_data, dict) or "title" not in news_data:
-        news_data = dict(news_data) if isinstance(news_data, dict) else {}
-        news_data["error"] = "传递的参数中没有title字段"
-        return news_data
-    words = " ".join(jieba.lcut(news_data["title"])[:30])
-
-    # 2- TF-IDF进行处理
-    x = tfidf.transform([words])
-
-    # 3- 预测
-    y_pred_index = model.predict(x)[0]
-    # print(y_pred_index)
-
-    # 4- 读取class.txt文件。处理成字典。字典格式 {0:'finance', 1:'realty'....}
-    id_class_dict = {i:class_name.strip() for i,class_name in enumerate(open(config.class_datapath,mode="r",encoding="UTF-8"))}
-    # print(id_class_dict)
-
-    # 5- 通过预测结果ID获得分类名称
-    pred_class_name = id_class_dict[y_pred_index]
-
-    news_data["pred_class"] = pred_class_name
-
-    return news_data
-
-if __name__ == '__main__':
-    news_data = {"title":"同步A股首秀：港股缩量回调"}
-    result = predict(news_data)
-
-    print(result)
+    """向后兼容：``{"title": ...} -> {"title": ..., "pred_class": ...}``。"""
+    return SERVICE.handle_payload(news_data)
 
 
-
-
-
-
-
+if __name__ == "__main__":
+    print(SERVICE.predict("同步A股首秀：港股缩量回调"))

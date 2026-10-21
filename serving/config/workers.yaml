@@ -1,5 +1,11 @@
 # Stage 2 gateway worker registry.
 # 只描述传输/生命周期，不包含任何密钥；密钥只由各 worker 自己读取。
+#
+# 地址策略：默认值面向本地单机（127.0.0.1）。局域网部署时不要改本文件的固定 IP，
+# 用环境变量覆盖：
+#   TMF_WORKER_HOST=192.168.x.x        # 替换所有 worker 的主机部分（端口不变）
+#   TMF_WORKER_URL_RF=http://...       # 覆盖单个 worker 的完整 base_url
+# 详见 serving/README.md「配置」。
 version: 1
 
 # 只读探测参数（毫秒）
@@ -8,7 +14,7 @@ status_cache_ms: 2000
 
 workers:
   rf:
-    base_url: "http://192.168.12.54:8101"
+    base_url: "http://127.0.0.1:8101"
     predict_path: "/predict_api"
     health_path: "/healthz"
     ready_path: "/readyz"
@@ -17,7 +23,7 @@ workers:
     enabled: true
     probe: "http_ready"
   fasttext:
-    base_url: "http://192.168.12.54:8103"
+    base_url: "http://127.0.0.1:8103"
     predict_path: "/predict_api"
     health_path: "/healthz"
     ready_path: "/readyz"
@@ -26,7 +32,7 @@ workers:
     enabled: true
     probe: "http_ready"
   bert:
-    base_url: "http://192.168.12.54:8104"
+    base_url: "http://127.0.0.1:8104"
     predict_path: "/predict_api"
     health_path: "/healthz"
     ready_path: "/readyz"
@@ -35,7 +41,7 @@ workers:
     enabled: true
     probe: "http_ready"
   llm:
-    base_url: "http://192.168.12.54:8105"
+    base_url: "http://127.0.0.1:8105"
     predict_path: "/predict_api"
     health_path: "/healthz"
     ready_path: "/readyz"
@@ -44,7 +50,7 @@ workers:
     enabled: true
     probe: "http_ready"
   distill:
-    base_url: "http://192.168.12.54:8106"
+    base_url: "http://127.0.0.1:8106"
     predict_path: "/predict_api"
     health_path: "/healthz"
     ready_path: "/readyz"

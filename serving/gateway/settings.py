@@ -20,6 +20,13 @@ from urllib.parse import urlparse
 import yaml
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator
 
+from tmf_common.config import (
+    NetworkConfigError,
+    NetworkSettings,
+    load_network_settings,
+    resolve_worker_url,
+)
+
 from .errors import ConfigError
 
 # serving/gateway/settings.py -> serving/gateway -> serving -> TouManFenClassifier
@@ -155,6 +162,7 @@ class Settings:
     workers_file: Path
     models_file: Path
     classes_file: Path
+    network: NetworkSettings
 
 
 def _resolve_path(value: str | Path) -> Path:
@@ -280,6 +288,21 @@ def load_settings(
     _validate_ids(set(workers_doc.workers), workers_path, "worker")
     _validate_ids(set(models_doc.models), models_path, "model")
 
+    # 环境变量覆盖 worker 地址（源码/配置不写死局域网 IP）：
+    #   TMF_WORKER_HOST      -> 替换所有 worker base_url 的主机部分
+    #   TMF_WORKER_URL_<ID>  -> 覆盖单个 worker 的完整 base_url
+    workers: dict[str, WorkerConfig] = {}
+    for worker_id, worker_cfg in workers_doc.workers.items():
+        try:
+            base_url = resolve_worker_url(worker_cfg.base_url, worker_id)
+        except NetworkConfigError as exc:
+            raise ConfigError(f"{workers_path}:{worker_id}.base_url: {exc}") from exc
+        workers[worker_id] = (
+            worker_cfg
+            if base_url == worker_cfg.base_url
+            else worker_cfg.model_copy(update={"base_url": base_url})
+        )
+
     default_model = os.environ.get("TMF_DEFAULT_MODEL") or models_doc.default_model
     if default_model not in models_doc.models:
         raise ConfigError(f"{models_path}: default_model '{default_model}' 不在 models 中")
@@ -287,11 +310,11 @@ def load_settings(
         raise ConfigError(f"{models_path}: default_model '{default_model}' 处于禁用状态")
 
     for model_id, model in models_doc.models.items():
-        if model.worker not in workers_doc.workers:
+        if model.worker not in workers:
             raise ConfigError(
                 f"{models_path}:{model_id}.worker: 引用了不存在的 worker '{model.worker}'"
             )
-        if model.enabled and not workers_doc.workers[model.worker].enabled:
+        if model.enabled and not workers[model.worker].enabled:
             raise ConfigError(
                 f"{models_path}:{model_id}: 模型启用但其 worker '{model.worker}' 被禁用"
             )
@@ -311,8 +334,13 @@ def load_settings(
         "TMF_MAX_TITLE_CHARS", models_doc.api.max_title_chars, 1, 1000
     )
 
+    try:
+        network = load_network_settings()
+    except NetworkConfigError as exc:
+        raise ConfigError(str(exc)) from exc
+
     return Settings(
-        workers=dict(workers_doc.workers),
+        workers=workers,
         models=dict(models_doc.models),
         classes=classes,
         default_model=default_model,
@@ -322,4 +350,5 @@ def load_settings(
         workers_file=workers_path,
         models_file=models_path,
         classes_file=classes_path,
+        network=network,
     )

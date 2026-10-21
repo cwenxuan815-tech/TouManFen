@@ -5,7 +5,8 @@ import type {
   ModelsResponse,
 } from './types'
 
-const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://192.168.12.54:8000').replace(/\/$/, '')
+// 默认本地单机；局域网或其他地址通过 .env.local 的 VITE_API_BASE_URL 覆盖。
+const API_BASE = (import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000').replace(/\/$/, '')
 const API_PREFIX = '/api/v1'
 
 export class ApiClientError extends Error {
@@ -24,7 +25,7 @@ export class ApiClientError extends Error {
 
 function requestId(): string {
   // crypto.randomUUID() 只在“安全上下文”（HTTPS 或 localhost）可用。
-  // 局域网通常通过 http://192.168.12.54:5173 访问，属于非安全上下文，
+  // 通过非 localhost 的 HTTP 地址（例如局域网 IP）访问时属于非安全上下文，
   // 直接调用会抛 TypeError 并让请求根本没发出去（表现为“无法连接后端”）。
   const cryptoApi = typeof globalThis.crypto !== 'undefined' ? globalThis.crypto : undefined
   if (cryptoApi && typeof cryptoApi.randomUUID === 'function') {

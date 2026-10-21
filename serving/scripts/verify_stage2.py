@@ -13,6 +13,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -20,6 +21,10 @@ import httpx
 import yaml
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+
+from tmf_common.config import probe_host, resolve_worker_url  # noqa: E402
+
 PROCESSES_FILE = PROJECT_ROOT / "serving" / "config" / "processes.yaml"
 WORKERS_FILE = PROJECT_ROOT / "serving" / "config" / "workers.yaml"
 CLASSES_FILE = PROJECT_ROOT / "00-data" / "data" / "class.txt"
@@ -37,7 +42,8 @@ def main() -> int:
     processes = yaml.safe_load(PROCESSES_FILE.read_text(encoding="utf-8"))
     workers_doc = yaml.safe_load(WORKERS_FILE.read_text(encoding="utf-8"))
     gateway = processes["gateway"]
-    base_url = f"http://{gateway['host']}:{gateway['port']}"
+    gateway_host = probe_host(os.environ.get("TMF_GATEWAY_HOST") or gateway["host"])
+    base_url = f"http://{gateway_host}:{gateway['port']}"
     classes = load_classes()
     failures: list[str] = []
 
@@ -131,7 +137,9 @@ def main() -> int:
         check("stats total > 0", body.get("total_requests", 0) > 0, str(body.get("total_requests")))
 
         for name, worker in processes["workers"].items():
-            worker_base = workers_doc["workers"][name]["base_url"].rstrip("/")
+            worker_base = resolve_worker_url(
+                workers_doc["workers"][name]["base_url"], name
+            ).rstrip("/")
             response = safe_get(f"{worker_base}/healthz")
             check(
                 f"{name} healthz",
@@ -157,7 +165,9 @@ def main() -> int:
         # 旧 /predict_api：只对 4 个本地模型做最小验证，不调用 LLM
         title = "北京二手房成交量创年内新高"
         for name in ("rf", "fasttext", "bert", "distill"):
-            worker_base = workers_doc["workers"][name]["base_url"].rstrip("/")
+            worker_base = resolve_worker_url(
+                workers_doc["workers"][name]["base_url"], name
+            ).rstrip("/")
             response = safe_post(f"{worker_base}/predict_api", json={"title": title})
             body = response.json() if response is not None and response.status_code == 200 else {}
             check(

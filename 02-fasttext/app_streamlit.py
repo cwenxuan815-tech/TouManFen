@@ -1,3 +1,4 @@
+import os
 import streamlit as st
 import requests
 import time
@@ -15,7 +16,7 @@ if st.button("提交"):
 
     try:
         # 4- 调用接口
-        url = "http://192.168.12.54:8103/predict_api"
+        url = f"http://{os.environ.get('TMF_WORKER_HOST', '127.0.0.1')}:8103/predict_api"
         response = requests.post(url, json={"title": title})
 
         use_time = time.time() - starttime

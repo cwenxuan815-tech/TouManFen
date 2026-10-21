@@ -9,7 +9,6 @@
 
 from __future__ import annotations
 
-import os
 import re
 import time
 import uuid
@@ -22,6 +21,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from tmf_common.config import NetworkConfigError, load_network_settings
+
 from .errors import (
     ApiError,
     ConfigError,
@@ -33,7 +34,9 @@ from .errors import (
     error_payload,
 )
 from .logging_utils import log_startup_error, setup_logging
-from ..models.http_adapter import WorkerHttpAdapter
+from ..adapters.http_worker import HttpWorkerAdapter
+from ..adapters.llm import LlmAdapter
+from ..adapters.protocol import ModelAdapter
 from ..models.registry import ModelRegistry
 from .probes import WorkerProber
 from .routers import classify as classify_router
@@ -46,23 +49,31 @@ from .stats import StatsCollector
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 GATEWAY_VERSION = "stage3"
-# 仅局域网前端开发来源（Vite dev server）；可通过 TMF_CORS_ORIGINS 追加（逗号分隔，不允许 *）。
-DEFAULT_CORS_ORIGINS = ("http://192.168.12.54:5173",)
 
 
 def _cors_origins() -> list[str]:
-    extras: list[str] = []
-    raw = os.environ.get("TMF_CORS_ORIGINS", "")
-    for item in raw.split(","):
-        origin = item.strip()
-        if not origin:
-            continue
-        if origin == "*" or not origin.startswith(("http://", "https://")):
-            raise ConfigError(
-                "TMF_CORS_ORIGINS 必须是明确的 http(s) 来源，且不允许使用 *"
-            )
-        extras.append(origin)
-    return list(dict.fromkeys([*DEFAULT_CORS_ORIGINS, *extras]))
+    """默认只放行配置的前端来源；TMF_CORS_ORIGINS 可追加明确来源（禁止 *）。"""
+    try:
+        return list(load_network_settings().cors_origins)
+    except NetworkConfigError as exc:
+        raise ConfigError(str(exc)) from exc
+
+
+def _build_adapters(
+    settings, registry: ModelRegistry, client: httpx.AsyncClient
+) -> dict[str, ModelAdapter]:
+    """composition root：在这里选择具体适配器，业务层只依赖 ModelAdapter 协议。"""
+    adapters: dict[str, ModelAdapter] = {}
+    for model_id in settings.models:
+        spec = registry.get(model_id)
+        if spec is None:
+            raise ConfigError(f"模型注册缺失: {model_id}")
+        if model_id == "llm":
+            # LLM 仍是本地 worker；Provider/密钥只存在于 04-LLM 进程。
+            adapters[model_id] = LlmAdapter(spec, settings.classes, client)
+        else:
+            adapters[model_id] = HttpWorkerAdapter(spec, settings.classes, client)
+    return adapters
 
 
 def create_app() -> FastAPI:
@@ -78,15 +89,15 @@ def create_app() -> FastAPI:
         app.state.settings = settings
         app.state.stats = StatsCollector()
         app.state.prober = WorkerProber(settings)
-        # 只调用配置的内网 worker；显式忽略系统代理，避免内网直连被代理拦截。
+        # 只调用配置的 worker；显式忽略系统代理，避免内网直连被代理拦截。
         app.state.http_client = httpx.AsyncClient(trust_env=False)
         registry = ModelRegistry(settings)
-        adapter = WorkerHttpAdapter(settings.classes, app.state.http_client)
+        adapters = _build_adapters(settings, registry, app.state.http_client)
         app.state.registry = registry
-        app.state.adapter = adapter
+        app.state.adapters = adapters
         app.state.classifier = ClassificationService(
             registry=registry,
-            adapter=adapter,
+            adapters=adapters,
             classes=settings.classes,
             max_title_chars=settings.max_title_chars,
             stats=app.state.stats,

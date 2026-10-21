@@ -1,10 +1,15 @@
 # Stage 2 local process manifest for the Windows start/stop script.
 # 只描述"如何启动"；不包含密钥。端口必须与 workers.yaml 保持一致（脚本会校验）。
+#
+# 地址策略：默认本地单机（127.0.0.1）。局域网部署通过环境变量覆盖，不要改死本文件：
+#   TMF_GATEWAY_HOST=192.168.x.x   # 网关监听地址
+#   TMF_GATEWAY_PORT=8000
+#   TMF_BIND_HOST=192.168.x.x      # 5 个 Flask worker 监听地址
+# 详见 README「环境配置」。
 version: 1
 
 gateway:
-  # 局域网访问地址：同网段成员通过 http://192.168.12.54:8000 访问网关。
-  host: "192.168.12.54"
+  host: "127.0.0.1"
   port: 8000
   app: "serving.gateway.main:app"
   startup_timeout_s: 60

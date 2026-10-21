@@ -1,3 +1,5 @@
+import os
+
 import requests
 
 if __name__ == '__main__':
@@ -7,8 +9,9 @@ if __name__ == '__main__':
         if title=="exit":
             break
 
-        # 2- 发送请求
-        url = "http://192.168.12.54:8101/predict_api"
+        # 2- 发送请求（默认本地；局域网用 TMF_WORKER_HOST 覆盖）
+        worker_host = os.environ.get("TMF_WORKER_HOST", "127.0.0.1")
+        url = f"http://{worker_host}:8101/predict_api"
         response = requests.post(url,json={"title":title})
 
         # 3- 输出响应结果

@@ -159,6 +159,43 @@ function Wait-Http {
     return $false
 }
 
+function Get-EnvDefault {
+    param([string]$Name, [string]$Default)
+    $value = [Environment]::GetEnvironmentVariable($Name)
+    if ([string]::IsNullOrWhiteSpace($value)) { return $Default }
+    return $value.Trim()
+}
+
+function Assert-HostValue {
+    param([string]$Name, [string]$Value)
+    if ($Value -notmatch '^[A-Za-z0-9][A-Za-z0-9.-]*$') {
+        Fail "$Name 不是合法的主机名或 IPv4 地址: $Value"
+    }
+}
+
+function Assert-PortValue {
+    param([string]$Name, [string]$Value)
+    $parsed = 0
+    if (-not [int]::TryParse($Value, [ref]$parsed) -or $parsed -lt 1 -or $parsed -gt 65535) {
+        Fail "$Name 必须是 1~65535 的整数: $Value"
+    }
+}
+
+function Get-ProbeHost {
+    param([string]$ListenHost)
+    if ($ListenHost -eq '0.0.0.0') { return '127.0.0.1' }
+    return $ListenHost
+}
+
+# 网络配置：默认本地单机；局域网用环境变量覆盖（不写死固定 IP）。
+$BindHost = Get-EnvDefault 'TMF_BIND_HOST' '127.0.0.1'
+Assert-HostValue 'TMF_BIND_HOST' $BindHost
+$GatewayHostOverride = Get-EnvDefault 'TMF_GATEWAY_HOST' ''
+if ($GatewayHostOverride) { Assert-HostValue 'TMF_GATEWAY_HOST' $GatewayHostOverride }
+$GatewayPortOverride = Get-EnvDefault 'TMF_GATEWAY_PORT' ''
+if ($GatewayPortOverride) { Assert-PortValue 'TMF_GATEWAY_PORT' $GatewayPortOverride }
+$WorkerProbeHost = Get-ProbeHost $BindHost
+
 function Test-LlmLocalConfig {
     $envPath = Join-Path $ProjectRoot '04-LLM\.env'
     if (-not (Test-File $envPath)) { return $false }
@@ -286,7 +323,7 @@ function Start-Worker {
     Save-State $State
     Write-Log "worker '$Name' 启动中（PID $($process.Id)，port $port）"
 
-    $ready = Wait-Http "http://192.168.12.54:$port/readyz" $timeout
+    $ready = Wait-Http "http://${WorkerProbeHost}:$port/readyz" $timeout
     if ($ready) {
         $entry['status'] = 'ready'
         Write-Log "worker '$Name' 就绪"
@@ -301,8 +338,11 @@ function Start-Worker {
 function Start-Gateway {
     param($State, $ProcessConfig, [int]$TimeoutOverride)
     $gateway = $ProcessConfig['gateway']
-    $port = [int]$gateway['port']
-    $hostName = [string]$gateway['host']
+    $port = if ($GatewayPortOverride) { [int]$GatewayPortOverride } else { [int]$gateway['port'] }
+    $hostName = if ($GatewayHostOverride) { $GatewayHostOverride } else { [string]$gateway['host'] }
+    Assert-PortValue 'gateway port' ([string]$port)
+    Assert-HostValue 'gateway host' $hostName
+    $probeHost = Get-ProbeHost $hostName
     $timeout = if ($TimeoutOverride -gt 0) { $TimeoutOverride } else { [int]$gateway['startup_timeout_s'] }
     $marker = 'serving.gateway.main:app'
 
@@ -351,7 +391,7 @@ function Start-Gateway {
     Save-State $State
     Write-Log "gateway 启动中（PID $($process.Id)，port $port）"
 
-    $ready = Wait-Http "http://${hostName}:$port/api/v1/healthz" $timeout
+    $ready = Wait-Http "http://${probeHost}:$port/api/v1/healthz" $timeout
     if ($ready) {
         $entry['status'] = 'ready'
         Write-Log 'gateway 就绪'
@@ -473,6 +513,11 @@ function Status-System {
         return
     }
 
+    $processConfig = Read-YamlAsHashtable $ProcessesFile
+    $gatewayHost = if ($GatewayHostOverride) { $GatewayHostOverride } else { [string]$processConfig['gateway']['host'] }
+    $gatewayProbeHost = Get-ProbeHost $gatewayHost
+    $gatewayPort = if ($GatewayPortOverride) { [int]$GatewayPortOverride } else { [int]$processConfig['gateway']['port'] }
+
     $rows = @()
     if ($state.ContainsKey('gateway') -and $state['gateway']) {
         $entry = $state['gateway']
@@ -482,7 +527,7 @@ function Status-System {
         $http = ''
         if ($owned) {
             try {
-                $response = Invoke-WebRequest -Uri "http://192.168.12.54:$port/api/v1/healthz" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+                $response = Invoke-WebRequest -Uri "http://${gatewayProbeHost}:$port/api/v1/healthz" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
                 $http = [string]$response.StatusCode
             } catch { $http = 'ERR' }
         }
@@ -497,7 +542,7 @@ function Status-System {
             $http = ''
             if ($owned) {
                 try {
-                    $response = Invoke-WebRequest -Uri "http://192.168.12.54:$port/readyz" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
+                    $response = Invoke-WebRequest -Uri "http://${WorkerProbeHost}:$port/readyz" -UseBasicParsing -TimeoutSec 2 -ErrorAction Stop
                     $http = [string]$response.StatusCode
                 } catch { $http = 'ERR' }
             }
@@ -506,11 +551,16 @@ function Status-System {
     }
     $rows | Format-Table -AutoSize | Out-String | Write-Host
 
-    $knownPorts = @()
-    foreach ($entry in $rows) { $knownPorts += [int]$entry.Port }
-    foreach ($port in @(8000, 8101, 8103, 8104, 8105, 8106)) {
+    $statePorts = @()
+    foreach ($entry in $rows) { $statePorts += [int]$entry.Port }
+    $knownPorts = @($statePorts)
+    $knownPorts += $gatewayPort
+    foreach ($name in $processConfig['workers'].Keys) {
+        $knownPorts += [int]$processConfig['workers'][$name]['port']
+    }
+    foreach ($port in ($knownPorts | Sort-Object -Unique)) {
         $occupiedBy = Get-ListeningPid $port
-        if ($occupiedBy -and -not ($knownPorts -contains $port)) {
+        if ($occupiedBy -and -not ($statePorts -contains $port)) {
             Write-Log "WARN: 端口 $port 被状态文件之外的进程占用（PID $occupiedBy），本脚本不会处理"
         }
     }

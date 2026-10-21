@@ -1,48 +1,58 @@
-from config import Config
-import fasttext
-import jieba
+"""fastText 预测服务（统一 PredictService 契约）。
+
+词级 auto 模型（``word_auto_train.pkl``）在模块导入时加载一次。
+保留 ``predict(dict)`` 作为向后兼容入口。
+
+注意：fastText 词级模型要求先 jieba 分词，否则效果明显下降
+（见 docs/实测指标.md 的分词一致性验证）。
+"""
+
+import sys
+from pathlib import Path
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
+
+import fasttext  # noqa: E402
+import jieba  # noqa: E402
+
+from config import Config  # noqa: E402
+
+from tmf_common.prediction import PredictService  # noqa: E402
 
 config = Config()
 
-# 1- 加载训练好的模型：因为词级的模型效果最好
-model = fasttext.load_model(config.model_word_auto_train)
+# 词级模型效果最好，服务端保持加载 word_auto。
+_MODEL = fasttext.load_model(config.model_word_auto_train)
 
-# 2- 预测函数
+with open(config.class_datapath, mode="r", encoding="UTF-8") as f:
+    _CLASSES = [line.strip() for line in f if line.strip()]
+
+
+class FasttextPredictService(PredictService):
+    """jieba 分词 + fastText 词级监督模型。"""
+
+    model_id = "fasttext"
+    display_name = "fastText"
+
+    def __init__(self, classes, model):
+        super().__init__(classes)
+        self._model = model
+
+    def infer(self, title: str) -> str:
+        words = " ".join(jieba.lcut(title))
+        labels, _probs = self._model.predict(words)
+        return labels[0].replace("__label__", "")
+
+
+SERVICE = FasttextPredictService(_CLASSES, _MODEL)
+
+
 def predict(news_data):
-    """
-    对用户输入的新闻标题进行分类预测
-    :param news_data: 字典。格式：{"title":新闻标题}
-    :return: 字典。格式：{"title":新闻标题, "pred_class":分类预测结果名称}
-    """
-    # 1- 【可选】增加健壮性的代码
-    if not news_data.__contains__("title"):
-        news_data["error"] = "传递的参数中没有title字段"
-        return news_data
-
-    # 2- 取出新闻标题；数据预处理，也就是分词
-    title = " ".join(jieba.lcut(news_data["title"]))
-
-    # 3- 预测
-    # 返回值类型是嵌套元组。格式：(('__label__science',), array([0.81338769]))
-    pred_result = model.predict(title)
-    # print(type(pred_result))
-    # print(pred_result)
-
-    # 4- 取出预测结果
-    result = pred_result[0][0].replace("__label__","")
-
-    # 5- 返回结果
-    news_data["pred_class"] = result
-    return news_data
-
-if __name__ == '__main__':
-    # news_data = {"title":"体验2D巅峰 倚天屠龙记十大创新概览"}
-    news_data = {"aaaa":"体验2D巅峰 倚天屠龙记十大创新概览"}
-    result = predict(news_data)
-    print(result)
+    """向后兼容：``{"title": ...} -> {"title": ..., "pred_class": ...}``。"""
+    return SERVICE.handle_payload(news_data)
 
 
-
-
-
-
+if __name__ == "__main__":
+    print(SERVICE.predict("体验2D巅峰 倚天屠龙记十大创新概览"))

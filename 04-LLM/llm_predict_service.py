@@ -1,22 +1,32 @@
-# 大模型分类服务（阶段 4A：上游调用超时与有限重试）
-#
-# 相对上一版的改动：
-#   1. 新增上游总时间预算 TMF_LLM_TOTAL_TIMEOUT_S（默认 12s，必须小于网关 llm timeout 15s）；
-#   2. OpenAI 客户端禁用 SDK 自动重试（max_retries=0），每次请求使用剩余预算作为 timeout；
-#   3. 输出格式重试最多一次，且必须检查总 deadline；预算不足则不再发起第二次请求；
-#   4. 错误响应只返回稳定错误码/通用说明，不包含原始异常文本、供应商 URL、标题或密钥；
-#   5. 日志只记录 provider/model/错误码/尝试次数/耗时，不记录标题或密钥。
-#
-# 接口：predict({"title": "..."}) -> {"title": "...", "pred_class": "sports"}
+"""大模型分类服务（统一 PredictService 契约）。
+
+职责边界保持不变：
+- Provider 由 ``TMF_LLM_PROVIDER`` 选择（deepseek / qwen / zhipu）；
+- API Key 只从 ``04-LLM/.env`` 读取，不写入源码/日志/响应；
+- 上游总时间预算默认 12 s（小于网关对 8105 的 15 s 超时）；
+- SDK 自动重试关闭；输出做 10 类白名单校验，非法输出最多重试一次；
+- 错误响应只返回稳定错误码/通用说明，不包含供应商原文或密钥。
+
+``predict(dict)`` 保留为向后兼容入口；新代码使用 ``SERVICE.predict(title)``。
+"""
+
 import logging
 import os
+import sys
 import time
+from pathlib import Path
 
-from dotenv import load_dotenv
-from openai import APIError, APITimeoutError, OpenAI
+_MODULE_DIR = Path(__file__).resolve().parent
+_PROJECT_ROOT = _MODULE_DIR.parent
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
-_MODULE_DIR = os.path.dirname(os.path.abspath(__file__))
-load_dotenv(os.path.join(_MODULE_DIR, ".env"))
+from dotenv import load_dotenv  # noqa: E402
+from openai import APIError, APITimeoutError, OpenAI  # noqa: E402
+
+from tmf_common.prediction import PredictionError, PredictService  # noqa: E402
+
+load_dotenv(os.path.join(str(_MODULE_DIR), ".env"))
 
 CLASSES = ["finance", "realty", "stocks", "education", "science",
            "society", "politics", "sports", "game", "entertainment"]
@@ -28,15 +38,18 @@ _PROVIDERS = {
 }
 
 PROVIDER = os.environ.get("TMF_LLM_PROVIDER", "deepseek").lower()
-_key_env, _base_env, _model_env, _default_model = _PROVIDERS.get(PROVIDER, _PROVIDERS["deepseek"])
+_key_env, _base_env, _model_env, _default_model = _PROVIDERS.get(
+    PROVIDER, _PROVIDERS["deepseek"]
+)
 API_KEY = os.getenv(_key_env)
 BASE_URL = os.getenv(_base_env)
 MODEL = os.getenv(_model_env, _default_model)
 
 if not API_KEY:
-    raise RuntimeError(f"环境变量 {_key_env} 为空，请在 04-LLM/.env 中配置（参考 .env.example）")
+    raise RuntimeError(
+        f"环境变量 {_key_env} 为空，请在 04-LLM/.env 中配置（参考 .env.example）"
+    )
 
-# 上游总时间预算。默认 12s，严格小于网关对 LLM worker 的 15s 超时。
 DEFAULT_TOTAL_TIMEOUT_S = 12.0
 MIN_TOTAL_TIMEOUT_S = 0.5
 MAX_TOTAL_TIMEOUT_S = 14.0
@@ -59,7 +72,6 @@ def _read_total_timeout() -> float:
 
 TOTAL_TIMEOUT_S = _read_total_timeout()
 
-# 禁用 SDK 隐式重试；每次请求的 timeout 由剩余预算控制。
 try:
     llm_client = OpenAI(
         api_key=API_KEY,
@@ -68,7 +80,6 @@ try:
         max_retries=0,
     )
 except Exception as exc:
-    # 不输出 key、base_url 或原始异常文本；仅给出安全的本地初始化错误。
     raise RuntimeError("LLM 本地客户端初始化失败") from exc
 
 SYSTEM_PROMPT = """你是一名中文新闻标题分类器。请把用户给出的新闻标题归到以下 10 个英文类别之一：
@@ -85,8 +96,10 @@ society（社会）、politics（政治）、sports（体育）、game（游戏�
 4. 输出示例：sports
 """
 
-_RETRY_PROMPT = ("只回复一个英文类别名（finance/realty/stocks/education/science/society/politics/sports/game/"
-                 "entertainment），不要任何其它字符。")
+_RETRY_PROMPT = (
+    "只回复一个英文类别名（finance/realty/stocks/education/science/society/politics/"
+    "sports/game/entertainment），不要任何其它字符。"
+)
 
 _logger = logging.getLogger("tmf.llm")
 
@@ -100,7 +113,6 @@ class _LLMUpstreamError(RuntimeError):
 
 
 def _call_llm(user_content, system_prompt, timeout_s):
-    # with_options 复用底层 httpx 客户端；同时显式传 timeout 与 max_retries。
     client = llm_client.with_options(timeout=timeout_s, max_retries=0)
     return client.chat.completions.create(
         model=MODEL,
@@ -128,29 +140,22 @@ def _call_with_deadline(user_content, system_prompt, deadline):
         raise _LLMUpstreamError("上游调用异常") from exc
 
     try:
-        content = response.choices[0].message.content
+        return response.choices[0].message.content
     except (AttributeError, IndexError, TypeError) as exc:
         raise _LLMUpstreamError("上游响应结构异常") from exc
-    return content
 
 
 def _normalize(text):
-    """把模型输出规整成 10 类之一；无法规整则返回 None"""
+    """把模型输出规整成 10 类之一；无法规整则返回 None。"""
     if not text:
         return None
     t = text.strip().lower().strip("。.!！\"'`* \n\r\t")
     if t in CLASSES:
         return t
-    for c in CLASSES:          # 处理 "sports." / "类别：sports" / 多候选等情况
+    for c in CLASSES:
         if c in t:
             return c
     return None
-
-
-def _fail(news_data, code, message):
-    news_data["error"] = f"{code}: {message}"
-    news_data["pred_class"] = ""
-    return news_data
 
 
 def _log_failure(code, attempt, started, detail=""):
@@ -165,68 +170,92 @@ def _log_failure(code, attempt, started, detail=""):
     )
 
 
-def predict(news_data):
-    """
-    对单条新闻标题做分类
-    :param news_data: {"title": "新闻标题"}
-    :return: {"title": "...", "pred_class": "sports"}；异常时额外带 "error"
-    """
-    title = news_data.get("title", "")
-    if not title:
-        news_data["error"] = "缺少 title 字段"
-        return news_data
+class LlmPredictService(PredictService):
+    """调用外部 LLM Provider 的零样本分类服务。"""
 
-    started = time.monotonic()
-    deadline = started + TOTAL_TIMEOUT_S
-    attempt = 0
+    model_id = "llm"
+    display_name = "大模型"
 
-    try:
-        attempt = 1
-        raw = _call_with_deadline(title, SYSTEM_PROMPT, deadline)
-        pred = _normalize(raw)
+    # 与历史 worker 行为保持一致：缺 title 的文案、错误格式、pred_class 置空。
+    empty_title_message = "缺少 title 字段"
+    error_sets_empty_class = True
 
-        if pred is None:
-            remaining = deadline - time.monotonic()
-            if remaining <= MIN_ATTEMPT_SECONDS:
-                _log_failure("LLM_TIMEOUT", attempt, started, "budget_exhausted_before_format_retry")
-                return _fail(
-                    news_data,
-                    "LLM_TIMEOUT",
-                    "总时间预算不足，未进行格式重试",
-                )
-            attempt = 2
-            raw = _call_with_deadline(title, _RETRY_PROMPT, deadline)
+    def is_ready(self) -> bool:
+        return llm_client is not None
+
+    def ready_payload(self):
+        # /readyz 只表示本地服务与客户端已初始化，不验证密钥/供应商可用性。
+        return {
+            "status": "ready",
+            "model_id": self.model_id,
+            "provider_check": "not_performed",
+        }
+
+    def format_error(self, exc: PredictionError) -> str:
+        return f"{exc.code}: {exc.message}"
+
+    def infer(self, title: str) -> str:
+        started = time.monotonic()
+        deadline = started + TOTAL_TIMEOUT_S
+        attempt = 0
+
+        try:
+            attempt = 1
+            raw = _call_with_deadline(title, SYSTEM_PROMPT, deadline)
             pred = _normalize(raw)
 
-        if pred is None:
-            _log_failure("LLM_INVALID_OUTPUT", attempt, started, "unparseable_output")
-            return _fail(
-                news_data,
-                "LLM_INVALID_OUTPUT",
-                "模型输出无法解析为 10 个合法类别",
-            )
+            if pred is None:
+                remaining = deadline - time.monotonic()
+                if remaining <= MIN_ATTEMPT_SECONDS:
+                    _log_failure(
+                        "LLM_TIMEOUT",
+                        attempt,
+                        started,
+                        "budget_exhausted_before_format_retry",
+                    )
+                    raise PredictionError(
+                        "总时间预算不足，未进行格式重试", code="LLM_TIMEOUT"
+                    )
+                attempt = 2
+                raw = _call_with_deadline(title, _RETRY_PROMPT, deadline)
+                pred = _normalize(raw)
 
-        news_data["pred_class"] = pred
-        _logger.info(
-            "llm_call_ok | attempt=%s elapsed_ms=%.1f provider=%s model=%s",
-            attempt,
-            (time.monotonic() - started) * 1000,
-            PROVIDER,
-            MODEL,
-        )
-        return news_data
-    except _LLMTimeout as exc:
-        _log_failure("LLM_TIMEOUT", attempt or 1, started, str(exc))
-        return _fail(news_data, "LLM_TIMEOUT", "上游调用超过总时间预算")
-    except _LLMUpstreamError as exc:
-        _log_failure("LLM_UPSTREAM_ERROR", attempt or 1, started, str(exc))
-        return _fail(news_data, "LLM_UPSTREAM_ERROR", "上游 LLM 调用失败")
-    except Exception as exc:  # 本地 SDK/客户端异常也归为上游失败，不泄露原始文本
-        _log_failure("LLM_UPSTREAM_ERROR", attempt or 1, started, type(exc).__name__)
-        return _fail(news_data, "LLM_UPSTREAM_ERROR", "上游 LLM 调用失败")
+            if pred is None:
+                _log_failure("LLM_INVALID_OUTPUT", attempt, started, "unparseable_output")
+                raise PredictionError(
+                    "模型输出无法解析为 10 个合法类别", code="LLM_INVALID_OUTPUT"
+                )
+
+            _logger.info(
+                "llm_call_ok | attempt=%s elapsed_ms=%.1f provider=%s model=%s",
+                attempt,
+                (time.monotonic() - started) * 1000,
+                PROVIDER,
+                MODEL,
+            )
+            return pred
+        except _LLMTimeout as exc:
+            _log_failure("LLM_TIMEOUT", attempt or 1, started, str(exc))
+            raise PredictionError("上游调用超过总时间预算", code="LLM_TIMEOUT") from exc
+        except _LLMUpstreamError as exc:
+            _log_failure("LLM_UPSTREAM_ERROR", attempt or 1, started, str(exc))
+            raise PredictionError("上游 LLM 调用失败", code="LLM_UPSTREAM_ERROR") from exc
+        except PredictionError:
+            raise
+        except Exception as exc:  # 本地 SDK/客户端异常同样归为上游失败
+            _log_failure("LLM_UPSTREAM_ERROR", attempt or 1, started, type(exc).__name__)
+            raise PredictionError("上游 LLM 调用失败", code="LLM_UPSTREAM_ERROR") from exc
+
+
+SERVICE = LlmPredictService(CLASSES)
+
+
+def predict(news_data):
+    """向后兼容：``{"title": ...} -> {"title": ..., "pred_class": ...}``。"""
+    return SERVICE.handle_payload(news_data)
 
 
 if __name__ == "__main__":
     print(f"provider={PROVIDER} model={MODEL} total_timeout_s={TOTAL_TIMEOUT_S}")
     for t in ["化危为机 推动我国期市创新发展", "体验2D巅峰 倚天屠龙记十大创新概览", "2岁男童7楼坠下获救"]:
-        print(predict({"title": t}))
+        print(SERVICE.predict(t))

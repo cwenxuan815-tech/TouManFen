@@ -1,42 +1,18 @@
-from flask import Flask,request,jsonify
-from bert_predict_service import predict
+"""BERT worker 入口（薄壳）。"""
 
-# 1- 创建App应用
-app = Flask(__name__)
+import sys
+from pathlib import Path
 
-# 2- 创建后端接口
-@app.route(rule="/predict_api",methods=["POST"])
-def predict_api():
-    # 获得用户发送过来的请求
-    news_data = request.get_json()
+_PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(_PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(_PROJECT_ROOT))
 
-    # 调用预测函数
-    result = predict(news_data)
+from tmf_common.flask_shell import create_app, run_worker  # noqa: E402
 
-    return jsonify(result)
+from bert_predict_service import SERVICE  # noqa: E402
+
+app = create_app(SERVICE, import_name=__name__)
 
 
-# ---------------------------------------------------------------------------
-# 阶段 2：只读状态端点（不触发预测、不改变既有 /predict_api 行为）
-# ---------------------------------------------------------------------------
-@app.route(rule="/healthz", methods=["GET"])
-def healthz():
-    """网关用：仅表示 Flask 进程存活。"""
-    return jsonify({"status": "alive", "service": "bert"})
-
-
-@app.route(rule="/readyz", methods=["GET"])
-def readyz():
-    """网关用：模型在模块导入时已加载，能响应即表示本地服务已初始化。"""
-    return jsonify({"status": "ready", "model_id": "bert"})
-
-
-@app.route(rule="/metadata", methods=["GET"])
-def metadata():
-    """网关用：稳定 model_id/展示名；版本暂无可靠来源，返回 null，不编造。"""
-    return jsonify({"model_id": "bert", "display_name": "BERT", "version": None})
-
-
-if __name__ == '__main__':
-    # 3- 启动接口
-    app.run(host="192.168.12.54",port=8104,debug=False)
+if __name__ == "__main__":
+    run_worker(app, SERVICE, default_port=8104)

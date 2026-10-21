@@ -49,8 +49,9 @@ def list_stages():
     for name, cwd, script, desc in STAGES:
         print(f"  {name:<12} {os.path.join(cwd, script):<42} {desc}")
     print("\n服务（各自单独启动）：")
+    worker_host = os.environ.get("TMF_BIND_HOST", "127.0.0.1")
     for cwd, script, port in SERVICES:
-        print(f"  [{cwd}] python {script}   -> http://192.168.12.54:{port}/predict_api")
+        print(f"  [{cwd}] python {script}   -> http://{worker_host}:{port}/predict_api")
 
 
 def run_stage(name, cwd, script, desc):

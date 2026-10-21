@@ -1,4 +1,5 @@
 # pip install streamlit
+import os
 import streamlit as st
 import requests
 import time
@@ -12,7 +13,8 @@ if __name__ == '__main__':
     title = st.text_input("请输入新闻标题")
 
     # 3- 发送
-    url = "http://192.168.12.54:8101/predict_api"
+    worker_host = os.environ.get("TMF_WORKER_HOST", "127.0.0.1")
+    url = f"http://{worker_host}:8101/predict_api"
     if st.button("提交"):
         start_time = time.time()
 

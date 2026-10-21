@@ -6,6 +6,9 @@
 - 单模型分类与多模型对比编排；
 - 类别白名单校验（由适配器返回结果后统一判断）；
 - 有界并发、逐模型失败隔离、日志与统计。
+
+依赖边界：本服务只依赖 :class:`serving.adapters.protocol.ModelAdapter` 协议，
+具体适配器由应用装配处（``serving/gateway/main.py``）注入，便于用 fake adapter 测试。
 """
 
 from __future__ import annotations
@@ -13,14 +16,17 @@ from __future__ import annotations
 import asyncio
 import logging
 from dataclasses import dataclass
+from typing import Mapping
 
+from ..adapters.protocol import AdapterResult, ModelAdapter
 from ..gateway.errors import (
     ApiError,
     ERROR_INTERNAL,
-    ERROR_INVALID_MODEL_OUTPUT,
     ERROR_INVALID_MODELS,
+    ERROR_INVALID_MODEL_OUTPUT,
     ERROR_INVALID_TITLE,
     ERROR_MODEL_DISABLED,
+    ERROR_MODEL_ERROR,
     ERROR_TITLE_TOO_LONG,
     ERROR_UNKNOWN_MODEL,
     ERROR_WORKER_BAD_RESPONSE,
@@ -29,7 +35,6 @@ from ..gateway.errors import (
     ERROR_WORKER_UNAVAILABLE,
 )
 from ..gateway.stats import StatsCollector
-from ..models.http_adapter import AdapterResult, WorkerHttpAdapter
 from ..models.registry import ModelRegistry, ModelSpec
 
 MAX_COMPARE_CONCURRENCY = 5
@@ -67,14 +72,14 @@ class ClassificationService:
     def __init__(
         self,
         registry: ModelRegistry,
-        adapter: WorkerHttpAdapter,
+        adapters: Mapping[str, ModelAdapter],
         classes: tuple[str, ...],
         max_title_chars: int,
         stats: StatsCollector,
         logger: logging.Logger,
     ) -> None:
         self._registry = registry
-        self._adapter = adapter
+        self._adapters = dict(adapters)
         self._classes = frozenset(classes)
         self._max_title_chars = max_title_chars
         self._stats = stats
@@ -134,6 +139,14 @@ class ClassificationService:
             specs.append(spec)
         return specs
 
+    def _adapter_for(self, spec: ModelSpec) -> ModelAdapter:
+        adapter = self._adapters.get(spec.model_id)
+        if adapter is None:
+            raise ApiError(
+                502, ERROR_MODEL_ERROR, "模型适配器未装配", {"model_id": spec.model_id}
+            )
+        return adapter
+
     @staticmethod
     def _http_status(code: str | None) -> int:
         if code == ERROR_WORKER_TIMEOUT:
@@ -148,7 +161,7 @@ class ClassificationService:
         return 502
 
     def _to_api_error(self, result: AdapterResult) -> ApiError:
-        code = result.error_code or "MODEL_ERROR"
+        code = result.error_code or ERROR_MODEL_ERROR
         message = result.error_message or "所选模型调用失败"
         return ApiError(
             self._http_status(code),
@@ -177,7 +190,8 @@ class ClassificationService:
     ) -> ClassifyOutcome:
         clean_title = self._validate_title(title)
         spec = self._resolve_one(model_id)
-        result = await self._adapter.predict(spec, clean_title, request_id)
+        adapter = self._adapter_for(spec)
+        result = await adapter.predict(clean_title, request_id)
         self._record(result, request_id)
         if result.status != "ok":
             raise self._to_api_error(result)
@@ -194,13 +208,14 @@ class ClassificationService:
         clean_title = self._validate_title(title)
         specs = self._resolve_many(models)
         semaphore = asyncio.Semaphore(MAX_COMPARE_CONCURRENCY)
+        adapters = [self._adapter_for(spec) for spec in specs]
 
-        async def run_one(spec: ModelSpec) -> AdapterResult:
+        async def run_one(adapter: ModelAdapter) -> AdapterResult:
             async with semaphore:
-                return await self._adapter.predict(spec, clean_title, request_id)
+                return await adapter.predict(clean_title, request_id)
 
         raw_results = await asyncio.gather(
-            *(run_one(spec) for spec in specs), return_exceptions=True
+            *(run_one(adapter) for adapter in adapters), return_exceptions=True
         )
 
         items: list[CompareItem] = []
