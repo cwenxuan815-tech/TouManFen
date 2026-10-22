@@ -60,7 +60,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File serving/scripts/stage2.ps1 -
 ```
 
 - 状态文件：`serving/run/stage2-state.json`；日志：`serving/logs/`。
-- 脚本只停止由其启动且命令行归属匹配的进程；`TMF_GATEWAY_HOST`/`TMF_GATEWAY_PORT`/`TMF_BIND_HOST` 会被脚本与子进程共同采用。
+- 停止时优先按状态文件和命令行归属处理；状态记录缺失/遗漏时，会按 worker 专属 `--tmf-managed=stage2-...` 标记回收 worker，并要求网关/Vite 同时符合 TMF 命令行特征和对应监听端口。最后由 `check_tmf_ports.ps1` 核验端口；不要仅凭端口号手动结束进程。`TMF_GATEWAY_HOST`/`TMF_GATEWAY_PORT`/`TMF_BIND_HOST` 会被脚本与子进程共同采用。
 - 脚本为 UTF-8（含 BOM）+ CRLF，便于 Windows PowerShell 5.1 正确解析中文。
 - 网关用 `py3109` 启动并从 `venv-gateway\Lib\site-packages` 注入依赖（规避该机 `_ssl` DLL 故障）；worker 仍用 `py3109`。
 

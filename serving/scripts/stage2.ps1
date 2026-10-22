@@ -458,10 +458,60 @@ function Start-System {
     Write-Log '阶段 2 本地服务已全部就绪'
 }
 
+function Stop-VerifiedOrphanedProcesses {
+    # Recover processes left behind when stage2-state.json was deleted or only
+    # recorded the newest of several starts. Worker run markers are generated
+    # only by this manager; gateway/Vite also need an exact command-line and
+    # managed-listener match before they can be stopped.
+    $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
+    $workerPattern = '--tmf-managed=stage2-[0-9]{14}-[0-9a-f]{6}'
+    $managedPorts = @(8000, 8101, 8103, 8104, 8105, 8106)
+    $vitePort = 5173
+    try {
+        $processConfig = Read-YamlAsHashtable $ProcessesFile
+        $managedPorts = @([int]$processConfig['gateway']['port'])
+        foreach ($workerName in $processConfig['workers'].Keys) {
+            $managedPorts += [int]$processConfig['workers'][$workerName]['port']
+        }
+        $managedPorts = @($managedPorts | Sort-Object -Unique)
+    } catch {
+        Write-Log "WARN: 无法读取服务端口配置，孤儿进程恢复仅检查 worker 标记: $_"
+    }
+
+    $listenerMap = @{}
+    foreach ($connection in (Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue)) {
+        $port = [int]$connection.LocalPort
+        if (($managedPorts -contains $port) -or ($port -eq $vitePort)) {
+            $listenerMap[[int]$connection.OwningProcess] = $port
+        }
+    }
+
+    foreach ($processInfo in $processes) {
+        $commandLine = [string]$processInfo.CommandLine
+        $isWorker = ($processInfo.ExecutablePath -eq $Py3109) -and
+            ($commandLine -match 'api_flask_server\.py') -and
+            ($commandLine -match $workerPattern)
+        $isGatewayListener = ($listenerMap.ContainsKey([int]$processInfo.ProcessId)) -and
+            ($managedPorts -contains [int]$listenerMap[[int]$processInfo.ProcessId]) -and
+            ($commandLine -match '-m\s+uvicorn\s+serving\.gateway\.main:app')
+        $isViteListener = ($listenerMap.ContainsKey([int]$processInfo.ProcessId)) -and
+            ([int]$listenerMap[[int]$processInfo.ProcessId] -eq $vitePort) -and
+            ($processInfo.Name -eq 'node.exe') -and
+            ($commandLine -match 'node_modules[\\/]vite[\\/]bin[\\/]vite\.js')
+
+        if ($isWorker -or $isGatewayListener -or $isViteListener) {
+            $processId = [int]$processInfo.ProcessId
+            Write-Log "停止遗留 TMF 进程（PID $processId）"
+            Stop-Process -Id $processId -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
 function Stop-System {
     $state = Read-JsonFile $StateFile
     if ($null -eq $state) {
-        Write-Log '未找到状态文件，认为未运行'
+        Write-Log '未找到状态文件；扫描可验证归属的 TMF 遗留进程'
+        Stop-VerifiedOrphanedProcesses
         return
     }
 
@@ -496,6 +546,13 @@ function Stop-System {
             Write-Log "WARN: $name 端口 $port 仍被占用"
             $remaining = $true
         }
+    }
+
+    Stop-VerifiedOrphanedProcesses
+    Start-Sleep -Milliseconds 500
+    $remaining = $false
+    foreach ($port in @(5173, 8000, 8101, 8103, 8104, 8105, 8106)) {
+        if (Get-ListeningPid $port) { $remaining = $true }
     }
 
     if (-not $remaining) {
