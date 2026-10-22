@@ -464,7 +464,7 @@ function Stop-VerifiedOrphanedProcesses {
     # only by this manager; gateway/Vite also need an exact command-line and
     # managed-listener match before they can be stopped.
     $processes = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
-    $workerPattern = '--tmf-managed=stage2-[0-9]{14}-[0-9a-f]{6}'
+    $workerPattern = '--tmf-managed=stage2-'
     $managedPorts = @(8000, 8101, 8103, 8104, 8105, 8106)
     $vitePort = 5173
     try {
@@ -479,10 +479,13 @@ function Stop-VerifiedOrphanedProcesses {
     }
 
     $listenerMap = @{}
-    foreach ($connection in (Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue)) {
-        $port = [int]$connection.LocalPort
-        if (($managedPorts -contains $port) -or ($port -eq $vitePort)) {
-            $listenerMap[[int]$connection.OwningProcess] = $port
+    foreach ($line in (& netstat.exe -ano -p tcp)) {
+        if ($line -match '^\s*TCP\s+\S+:(\d+)\s+\S+\s+LISTENING\s+(\d+)\s*$') {
+            $port = [int]$Matches[1]
+            $processId = [int]$Matches[2]
+            if (($managedPorts -contains $port) -or ($port -eq $vitePort)) {
+                $listenerMap[$processId] = $port
+            }
         }
     }
 
@@ -491,13 +494,14 @@ function Stop-VerifiedOrphanedProcesses {
         $isWorker = ($processInfo.ExecutablePath -eq $Py3109) -and
             ($commandLine -match 'api_flask_server\.py') -and
             ($commandLine -match $workerPattern)
-        $isGatewayListener = ($listenerMap.ContainsKey([int]$processInfo.ProcessId)) -and
+        $isGatewayListener = ($processInfo.ExecutablePath -eq $Py3109) -and
+            ($listenerMap.ContainsKey([int]$processInfo.ProcessId)) -and
             ($managedPorts -contains [int]$listenerMap[[int]$processInfo.ProcessId]) -and
-            ($commandLine -match '-m\s+uvicorn\s+serving\.gateway\.main:app')
+            ($commandLine -match 'serving\.gateway\.main:app')
         $isViteListener = ($listenerMap.ContainsKey([int]$processInfo.ProcessId)) -and
             ([int]$listenerMap[[int]$processInfo.ProcessId] -eq $vitePort) -and
             ($processInfo.Name -eq 'node.exe') -and
-            ($commandLine -match 'node_modules[\\/]vite[\\/]bin[\\/]vite\.js')
+            ($commandLine -match 'vite\.js')
 
         if ($isWorker -or $isGatewayListener -or $isViteListener) {
             $processId = [int]$processInfo.ProcessId
