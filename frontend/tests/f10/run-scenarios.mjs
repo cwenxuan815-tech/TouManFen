@@ -469,7 +469,7 @@ const SCENARIOS = [
         board.available === 'true' && board.status === 'warming_up',
         JSON.stringify({ available: board.available, status: board.status }),
       )
-      checks.check('预热态显示 5 行且票数 < 50', board.rows.length === 5 && board.rows.every((row) => row.votes < 50), JSON.stringify(board.rows.map((row) => row.votes)))
+      checks.check('预热态显示 5 行且参与样本 n < 50', board.rows.length === 5 && board.rows.every((row) => row.sampleSize < 50), JSON.stringify(board.rows.map((row) => row.sampleSize)))
       checks.check(
         '预热态不显示名次（无 rank 属性、表头无名次列）',
         board.rows.every((row) => row.rank === null) && !board.headers.includes('名次'),
@@ -565,7 +565,7 @@ const SCENARIOS = [
       checks.check('ready 表头包含名次列', board.headers.includes('名次'), JSON.stringify(board.headers))
       checks.check('ready 每行都显示名次 1..5', ranks.length === 5 && [...ranks].sort((a, b) => a - b).join(',') === '1,2,3,4,5' && ranks.every((rank) => rank >= 1), JSON.stringify(ranks))
       checks.check('ready 行按名次升序排列', ranks.every((rank, index) => index === 0 || rank > ranks[index - 1]), JSON.stringify(ranks))
-      checks.check('ready 每行票数 ≥ 50', board.rows.every((row) => row.votes >= 50), JSON.stringify(board.rows.map((row) => row.votes)))
+      checks.check('ready 每行参与样本 n ≥ 50', board.rows.every((row) => row.sampleSize >= 50), JSON.stringify(board.rows.map((row) => row.sampleSize)))
       checks.check('ready 显示模型名（允许的聚合榜身份）', board.rows.every((row) => Boolean(row.displayName)), JSON.stringify(board.rows.map((row) => row.displayName)))
       checks.check('ready 仍包含固定「人类偏好…」说明', board.disclaimer.includes('人类偏好投票强度，仅供演示参考'), board.disclaimer)
       checks.check('ready 文字不含「准确率」「客观排名」', !board.text.includes('准确率') && !board.text.includes('客观排名'), board.text.slice(0, 160))

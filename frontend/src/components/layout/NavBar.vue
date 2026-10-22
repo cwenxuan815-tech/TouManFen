@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useTheme } from '../../composables/useTheme'
 import { useLargeScreen } from '../../composables/useLargeScreen'
 
@@ -10,6 +10,24 @@ defineProps<{
 
 const mobileMenuOpen = ref(false)
 const menuToggleRef = ref<HTMLButtonElement | null>(null)
+type ActiveNav = 'lab' | 'models' | 'arena' | 'bench' | 'about'
+
+function resolveActiveNav(): ActiveNav {
+  if (typeof window === 'undefined') return 'lab'
+  switch (window.location.hash) {
+    case '#models': return 'models'
+    case '#arena': return 'arena'
+    case '#bench': return 'bench'
+    case '#about': return 'about'
+    default: return 'lab'
+  }
+}
+
+const activeNav = ref<ActiveNav>(resolveActiveNav())
+function syncActiveNav(): void {
+  activeNav.value = resolveActiveNav()
+}
+
 const theme = useTheme()
 const presentation = useLargeScreen()
 const themeLabel = computed(() => (theme.isDark.value ? '亮色' : '暗色'))
@@ -37,6 +55,9 @@ function onNavKeydown(event: KeyboardEvent): void {
   event.stopPropagation()
   closeMobileMenuAndRestoreFocus()
 }
+
+onMounted(() => window.addEventListener('hashchange', syncActiveNav))
+onUnmounted(() => window.removeEventListener('hashchange', syncActiveNav))
 </script>
 
 <template>
@@ -59,11 +80,11 @@ function onNavKeydown(event: KeyboardEvent): void {
     </button>
 
     <nav id="primary-nav" class="nav-links" :class="{ 'nav-open': mobileMenuOpen }" aria-label="主导航">
-      <a class="nav-active" href="#lab" @click="closeMobileMenu">分类实验台</a>
-      <a href="#models" @click="closeMobileMenu">模型矩阵</a>
-      <a href="#arena" @click="closeMobileMenu">竞技场</a>
-      <a href="#bench" @click="closeMobileMenu">PK 榜单</a>
-      <a href="#about" @click="closeMobileMenu">关于 TMF</a>
+      <a :class="{ 'nav-active': activeNav === 'lab' }" :aria-current="activeNav === 'lab' ? 'page' : undefined" href="#lab" @click="closeMobileMenu">分类实验台</a>
+      <a :class="{ 'nav-active': activeNav === 'models' }" :aria-current="activeNav === 'models' ? 'page' : undefined" href="#models" @click="closeMobileMenu">模型矩阵</a>
+      <a :class="{ 'nav-active': activeNav === 'arena' }" :aria-current="activeNav === 'arena' ? 'page' : undefined" href="#arena" @click="closeMobileMenu">竞技场</a>
+      <a :class="{ 'nav-active': activeNav === 'bench' }" :aria-current="activeNav === 'bench' ? 'page' : undefined" href="#bench" @click="closeMobileMenu">PK 榜单</a>
+      <a :class="{ 'nav-active': activeNav === 'about' }" :aria-current="activeNav === 'about' ? 'page' : undefined" href="#about" @click="closeMobileMenu">关于 TMF</a>
     </nav>
 
     <div class="topbar-right">

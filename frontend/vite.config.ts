@@ -10,8 +10,10 @@ export default defineConfig(({ mode }) => {
   const fileEnv = loadEnv(mode, '.', 'TMF_')
   const processEnv =
     (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env ?? {}
-  const host = fileEnv.TMF_FRONTEND_HOST || processEnv.TMF_FRONTEND_HOST || '127.0.0.1'
-  const port = Number(fileEnv.TMF_FRONTEND_PORT || processEnv.TMF_FRONTEND_PORT || 5173)
+  // 显式进程环境变量优先，方便 PowerShell 临时切换 LAN 监听，
+  // 不被 `.env.local` 中的本机默认值覆盖。
+  const host = processEnv.TMF_FRONTEND_HOST || fileEnv.TMF_FRONTEND_HOST || '127.0.0.1'
+  const port = Number(processEnv.TMF_FRONTEND_PORT || fileEnv.TMF_FRONTEND_PORT || 5173)
 
   return {
     plugins: [vue()],

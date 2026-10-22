@@ -178,23 +178,25 @@ export async function createMockServer({ port, staticDir }) {
   function buildLeaderboard(requestId) {
     const entries = MODELS.map((model) => {
       const stat = log.votes[model.model_id]
-      const votes = stat.wins + stat.losses
-      const [lower, upper] = wilson(stat.wins, votes)
+      const sampleSize = stat.wins + stat.losses
+      const votes = stat.wins
+      const [lower, upper] = wilson(votes, sampleSize)
       return {
         model_id: model.model_id,
         display_name: model.display_name,
         elo: round4(stat.elo),
         votes,
+        sample_size: sampleSize,
         wins: stat.wins,
         losses: stat.losses,
-        win_rate: votes ? round4(stat.wins / votes) : null,
+        win_rate: sampleSize ? round4(votes / sampleSize) : null,
         wilson_lower: round4(lower),
         wilson_upper: round4(upper),
-        warming_up: votes < WARMUP_MIN_VOTES,
+        warming_up: sampleSize < WARMUP_MIN_VOTES,
         rank: null,
       }
     })
-    const ready = entries.length > 0 && entries.every((entry) => entry.votes >= WARMUP_MIN_VOTES)
+    const ready = entries.length > 0 && entries.every((entry) => entry.sample_size >= WARMUP_MIN_VOTES)
     if (ready) {
       const order = entries
         .map((_, index) => index)

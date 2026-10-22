@@ -269,6 +269,7 @@ export interface ArenaLeaderboardEntry {
   display_name: string
   elo: number
   votes: number
+  sample_size?: number | null
   wins: number
   losses: number
   win_rate: number | null

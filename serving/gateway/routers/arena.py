@@ -91,6 +91,7 @@ async def arena_leaderboard(request: Request) -> ArenaLeaderboardResponse:
                 display_name=entry.display_name,
                 elo=entry.elo,
                 votes=entry.votes,
+                sample_size=entry.sample_size,
                 wins=entry.wins,
                 losses=entry.losses,
                 win_rate=entry.win_rate,

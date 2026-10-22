@@ -159,7 +159,10 @@ class LeaderboardEntry:
     model_id: str
     display_name: str
     elo: float
+    #: 用户实际选择该模型的次数。
     votes: int
+    #: 该模型参与的投票题数量；Wilson 区间与预热门槛使用此样本量。
+    sample_size: int
     wins: int
     losses: int
     win_rate: float | None
@@ -562,7 +565,7 @@ class ArenaStore:
     def leaderboard_stats(
         self, model_ids: Sequence[str]
     ) -> dict[str, dict[str, float]]:
-        """返回每个模型 ``{"elo", "wins", "losses"}``（wins+losses = 参赛票数）。"""
+        """返回获选票数与参赛样本数，区分用户选择和模型曝光次数。"""
         conn = self._connect()
         try:
             conn.execute("BEGIN")
@@ -594,6 +597,7 @@ class ArenaStore:
                 "elo": elo.get(model_id, ELO_INITIAL),
                 "wins": win_count,
                 "losses": loss_count,
+                "sample_size": win_count + loss_count,
             }
         return stats
 
@@ -1020,27 +1024,32 @@ class ArenaService:
             stat = stats.get(model_id, {})
             wins = int(stat.get("wins", 0))
             losses = int(stat.get("losses", 0))
-            votes = wins + losses
-            win_rate = round(wins / votes, 4) if votes else None
-            lower, upper = wilson_interval(wins, votes)
+            # `votes` 是用户实际选择该模型的次数；`sample_size` 是该模型
+            # 出现在投票题中的次数。多模型每题都会参与 Elo 对局，因此旧的
+            # wins+losses 会让所有模型票数相同，不能作为“票数”展示。
+            votes = wins
+            sample_size = int(stat.get("sample_size", wins + losses))
+            win_rate = round(votes / sample_size, 4) if sample_size else None
+            lower, upper = wilson_interval(votes, sample_size)
             rows.append(
                 LeaderboardEntry(
                     model_id=model_id,
                     display_name=self._display_name(model_id),
                     elo=round(float(stat.get("elo", ELO_INITIAL)), 2),
                     votes=votes,
+                    sample_size=sample_size,
                     wins=wins,
                     losses=losses,
                     win_rate=win_rate,
                     wilson_lower=round(lower, 4),
                     wilson_upper=round(upper, 4),
-                    warming_up=votes < WARMUP_MIN_VOTES,
+                    warming_up=sample_size < WARMUP_MIN_VOTES,
                     rank=None,
                 )
             )
 
         overall_ready = bool(rows) and all(
-            row.votes >= WARMUP_MIN_VOTES for row in rows
+            row.sample_size >= WARMUP_MIN_VOTES for row in rows
         )
         status = "ready" if overall_ready else "warming_up"
         if overall_ready:
@@ -1056,6 +1065,7 @@ class ArenaService:
                     display_name=row.display_name,
                     elo=row.elo,
                     votes=row.votes,
+                    sample_size=row.sample_size,
                     wins=row.wins,
                     losses=row.losses,
                     win_rate=row.win_rate,

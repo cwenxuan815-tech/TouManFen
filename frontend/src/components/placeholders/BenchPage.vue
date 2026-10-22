@@ -102,7 +102,6 @@ const isEmpty = computed(
 const metaItems = computed(() => {
   const current = meta.value
   if (!current) return []
-  const metricDef = Object.entries(current.metric_def)
   return [
     { key: 'dataset', label: '数据集', raw: current.dataset, display: current.dataset },
     { key: 'split', label: '切分', raw: current.split, display: current.split },
@@ -128,9 +127,7 @@ const metaItems = computed(() => {
       key: 'metric_def',
       label: '指标口径',
       raw: JSON.stringify(current.metric_def),
-      display: metricDef.length
-        ? metricDef.map(([key, value]) => `${key}=${value}`).join(' · ')
-        : '未提供',
+      display: `${Object.keys(current.metric_def).length} 项定义（展开查看）`,
     },
     {
       key: 'data_kind',
@@ -138,15 +135,23 @@ const metaItems = computed(() => {
       raw: current.data_kind,
       display: current.data_kind === 'offline' ? '离线评估（测试集）' : '演示数据（demo）',
     },
-    {
-      key: 'model_versions',
-      label: '模型版本',
-      raw: JSON.stringify(current.model_versions),
-      display:
-        Object.entries(current.model_versions)
-          .map(([key, value]) => `${key}=${value}`)
-          .join(' · ') || '未提供',
-    },
+  ]
+})
+
+const detailItems = computed(() => {
+  const current = meta.value
+  if (!current) return []
+  return [
+    ...Object.entries(current.model_versions).map(([key, value]) => ({
+      group: '模型版本',
+      key,
+      value: String(value),
+    })),
+    ...Object.entries(current.metric_def).map(([key, value]) => ({
+      group: '指标口径',
+      key,
+      value: String(value),
+    })),
   ]
 })
 
@@ -416,6 +421,21 @@ defineExpose({ reload: load })
               <dd>{{ item.display }}</dd>
             </div>
           </dl>
+          <details class="meta-details">
+            <summary>查看模型版本与指标口径</summary>
+            <dl class="meta-details-grid">
+              <div
+                v-for="item in detailItems"
+                :key="`${item.group}:${item.key}`"
+                class="meta-detail-item"
+                :data-meta-field="`${item.group}:${item.key}`"
+                :data-meta-value="item.value"
+              >
+                <dt>{{ item.group }} · {{ item.key }}</dt>
+                <dd>{{ item.value }}</dd>
+              </div>
+            </dl>
+          </details>
           <div class="meta-artifact" v-if="data.artifact_path">
             产物路径：{{ data.artifact_path }}
           </div>
@@ -548,7 +568,7 @@ defineExpose({ reload: load })
   .bench-section {
     max-width: var(--layout-content);
     margin: 0 auto;
-    padding: 72px 6.3% 90px;
+    padding: 56px clamp(20px, 4vw, 64px) 80px;
   }
 
   .bench-heading h2 {
@@ -609,8 +629,9 @@ defineExpose({ reload: load })
 
   .meta-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: var(--space-10) var(--space-17);
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+    align-items: start;
+    gap: var(--space-10) var(--space-14);
     margin: var(--space-12) 0 0;
     padding: 0;
   }
@@ -627,7 +648,52 @@ defineExpose({ reload: load })
     color: var(--text-primary);
     font-size: 11px;
     line-height: 1.5;
-    word-break: break-all;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+
+  .meta-details {
+    margin-top: var(--space-12);
+    border-top: 1px solid var(--border);
+    color: var(--text-secondary);
+  }
+
+  .meta-details summary {
+    width: fit-content;
+    padding: var(--space-8) 0;
+    color: var(--brand-strong);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .meta-details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr));
+    gap: var(--space-10) var(--space-14);
+    margin: 0;
+  }
+
+  .meta-detail-item {
+    min-width: 0;
+    padding: var(--space-8) var(--space-10);
+    border-radius: var(--radius-sm);
+    background: var(--surface-page);
+  }
+
+  .meta-detail-item dt {
+    margin-bottom: 4px;
+    color: var(--text-faint);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .meta-detail-item dd {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 14px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
   }
 
   .meta-artifact {

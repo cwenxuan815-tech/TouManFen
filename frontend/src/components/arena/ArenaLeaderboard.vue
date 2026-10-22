@@ -6,9 +6,10 @@
  * `available === false` 时只渲染占位与规则说明，不出现任何真实模型名。
  * 首次投票成功后才由页面传入榜单数据。
  *
- * 展示规则（§4.3）：票数 < min_votes_for_ranking 时显示「预热中」+ Wilson
- * 95% 区间，不显示名次；`status === 'ready'` 才显示名次。
- * 固定说明「人类偏好投票强度，仅供演示参考」，不得表述为准确率/客观排名。
+ * 展示规则（§4.3）：比较样本数 < min_votes_for_ranking 时显示「预热中」+
+ * Wilson 95% 区间，不显示名次；`status === 'ready'` 才显示名次。
+ * `votes` 是用户选中次数，`sample_size` 是比较样本数。固定说明
+ * 「人类偏好投票强度，仅供演示参考」，不得表述为准确率/客观排名。
  */
 import { computed } from 'vue'
 import type { ArenaLeaderboardResponse } from '../../types'
@@ -32,6 +33,16 @@ const rows = computed(() => {
   if (!ready.value) return entries
   return [...entries].sort((a, b) => (a.rank ?? Number.MAX_SAFE_INTEGER) - (b.rank ?? Number.MAX_SAFE_INTEGER))
 })
+
+// wins 在旧版网关中就是 vote.model_id 的计数；新版 votes 与其同义。
+// 读取 wins 可兼容用户尚未重启的旧网关，避免把总样本数显示成获选票数。
+function selectedVotes(entry: (typeof rows.value)[number]): number {
+  return Number.isFinite(entry.wins) ? entry.wins : entry.votes
+}
+
+function sampleSize(entry: (typeof rows.value)[number]): number {
+  return Number.isFinite(entry.sample_size) ? Number(entry.sample_size) : entry.votes
+}
 
 function pct(value: number): string {
   const clamped = Math.max(0, Math.min(1, Number.isFinite(value) ? value : 0))
@@ -91,8 +102,8 @@ function intervalText(lower: number, upper: number): string {
 
     <template v-else>
       <p class="arena-board-rule" data-arena-board-rule>
-        <template v-if="ready">全部模型票数已达 {{ minVotes }}，显示正式名次。</template>
-        <template v-else>票数不足 {{ minVotes }}：仅显示预热态与 Wilson 95% 区间，不显示名次。</template>
+        <template v-if="ready">所有模型参与的比较样本均达到 {{ minVotes }}，显示正式名次。</template>
+        <template v-else>比较样本不足 {{ minVotes }}：仅显示预热态与 Wilson 95% 区间，不显示名次。</template>
       </p>
 
       <table class="arena-board-table">
@@ -101,7 +112,7 @@ function intervalText(lower: number, upper: number): string {
           <tr>
             <th v-if="ready" scope="col" class="arena-col-rank">名次</th>
             <th scope="col">模型</th>
-            <th scope="col" class="arena-col-num">票数</th>
+            <th scope="col" class="arena-col-num">获选票 / 样本 n</th>
             <th scope="col" class="arena-col-num">Elo</th>
             <th scope="col" class="arena-col-wilson">Wilson 95% 区间</th>
           </tr>
@@ -113,21 +124,24 @@ function intervalText(lower: number, upper: number): string {
             data-arena-entry
             :data-model-id="entry.model_id"
             :data-display-name="entry.display_name"
-            :data-votes="entry.votes"
+            :data-votes="selectedVotes(entry)"
+            :data-sample-size="sampleSize(entry)"
             :data-elo="entry.elo"
             :data-wilson-lower="entry.wilson_lower"
             :data-wilson-upper="entry.wilson_upper"
             :data-warming-up="entry.warming_up ? 'true' : 'false'"
             :data-rank="ready && entry.rank !== null ? entry.rank : null"
           >
-            <td v-if="ready" class="arena-rank">{{ entry.rank ?? '—' }}</td>
-            <td class="arena-model-cell">
+            <td v-if="ready" class="arena-rank" data-label="名次">{{ entry.rank ?? '—' }}</td>
+            <td class="arena-model-cell" data-label="模型">
               <b>{{ entry.display_name }}</b>
               <small v-if="entry.warming_up" class="arena-warmup-tag">预热中</small>
             </td>
-            <td class="arena-col-num">{{ entry.votes }}</td>
-            <td class="arena-col-num arena-elo">{{ Math.round(entry.elo) }}</td>
-            <td class="arena-col-wilson arena-wilson">
+            <td class="arena-col-num arena-vote-count" data-label="获选票 / 样本 n">
+              <b>{{ selectedVotes(entry) }}</b><small> / {{ sampleSize(entry) }}</small>
+            </td>
+            <td class="arena-col-num arena-elo" data-label="Elo">{{ Math.round(entry.elo) }}</td>
+            <td class="arena-col-wilson arena-wilson" data-label="Wilson 95%">
               {{ intervalText(entry.wilson_lower, entry.wilson_upper) }}
             </td>
           </tr>
@@ -137,6 +151,7 @@ function intervalText(lower: number, upper: number): string {
       <p v-if="leaderboard.note" class="arena-board-note" data-arena-board-note>
         {{ leaderboard.note }}
       </p>
+      <p class="arena-board-note">获选票是用户选中该模型的次数；样本 n 是该模型参与投票题的次数，Wilson 区间按样本 n 计算。</p>
     </template>
   </article>
 </template>
@@ -293,6 +308,16 @@ function intervalText(lower: number, upper: number): string {
   color: var(--text-primary);
 }
 
+.arena-vote-count b {
+  color: var(--text-primary);
+  font-size: 14px;
+}
+
+.arena-vote-count small {
+  color: var(--text-faint);
+  font-size: 12px;
+}
+
 .arena-wilson {
   color: var(--text-secondary);
 }
@@ -309,14 +334,113 @@ function intervalText(lower: number, upper: number): string {
     padding: var(--space-14);
   }
 
-  .arena-board-table th,
-  .arena-board-table td {
-    padding: var(--space-6) var(--space-5);
-    font-size: 10px;
+  .arena-board-table,
+  .arena-board-table tbody {
+    display: block;
   }
 
-  .arena-col-wilson {
-    width: 96px;
+  .arena-board-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .arena-board-table tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'model votes elo'
+      'model wilson wilson';
+    align-items: center;
+    gap: 4px 10px;
+    padding: 10px 4px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .arena-board-table tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .arena-board-table tbody tr[data-rank] {
+    grid-template-columns: 24px minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'rank model votes elo'
+      'rank model wilson wilson';
+  }
+
+  .arena-board-table td {
+    width: auto;
+    padding: 0;
+    border: 0;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .arena-model-cell {
+    grid-area: model;
+    white-space: normal !important;
+  }
+
+  .arena-rank {
+    display: none;
+  }
+
+  .arena-board-table tbody tr[data-rank] .arena-rank {
+    display: block;
+    grid-area: rank;
+  }
+
+  .arena-vote-count {
+    grid-area: votes;
+  }
+
+  .arena-elo {
+    grid-area: elo;
+  }
+
+  .arena-wilson {
+    grid-area: wilson;
+  }
+
+  .arena-vote-count::before,
+  .arena-elo::before,
+  .arena-wilson::before {
+    margin-right: 4px;
+    color: var(--text-faint);
+    font-size: 10px;
+    font-weight: 400;
+  }
+
+  .arena-vote-count::before {
+    content: '获选';
+  }
+
+  .arena-elo::before {
+    content: 'Elo';
+  }
+
+  .arena-wilson::before {
+    content: 'Wilson';
+  }
+
+  .arena-model-cell b {
+    overflow-wrap: anywhere;
+  }
+
+  .arena-vote-count b {
+    font-size: 14px;
+  }
+
+  .arena-vote-count small {
+    font-size: 12px;
+  }
+
+  .arena-board-note {
+    overflow-wrap: anywhere;
   }
 }
 </style>

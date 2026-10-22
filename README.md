@@ -352,8 +352,11 @@ pnpm install
 ### 2. 启动后端与前端
 
 ```powershell
-# 一键（Windows，先等后端 ready，再启动前端）
+# 一键启动（Windows，自动选择当前默认路由 IPv4；手机和电脑需在可互访的局域网）
 启动TMF.bat
+
+# 一键停止前后端
+停止TMF.bat
 
 # 或手动
 powershell -NoProfile -ExecutionPolicy Bypass -File serving\scripts\stage2.ps1 -Action start
@@ -365,18 +368,21 @@ pnpm dev
 
 ### 3. 局域网访问
 
-监听地址和客户端访问地址是不同概念。按需设置：
+`启动TMF.bat` 会自动发现本机默认路由的 IPv4 地址，将前端和网关绑定到所有网卡、将 worker 保持在本机回环地址，并配置 CORS 和前端 API 地址。脚本会打印手机访问 URL。若自动发现失败，可在启动前设置 `TMF_LAN_IP` 为电脑当前 Wi-Fi IPv4 地址。
+
+脚本会等待 Vite 就绪，并在已有前端时核对其 LAN 绑定和 API 基址后复用。`04-LLM/.env` 未配置非空 Key 时，stage2 会按设计跳过 LLM worker，其余已配置服务仍可启动。`停止TMF.bat` 停止自身管理的后端进程和 TMF 前端窗口，随后检查 5173/8000/worker 端口；仍有不属于脚本的监听时会警告，不会按端口强杀其他进程。
+
+手动启动时，配置如下（将 `<LAN_IP>` 换成电脑当前 Wi-Fi IPv4 地址）：
 
 ```powershell
-$env:TMF_BIND_HOST='0.0.0.0'
-$env:TMF_GATEWAY_HOST='0.0.0.0'
 $env:TMF_FRONTEND_HOST='0.0.0.0'
-$env:TMF_WORKER_HOST='<LAN_IP>'
+$env:TMF_GATEWAY_HOST='0.0.0.0'
+$env:TMF_WORKER_HOST='127.0.0.1'
 $env:VITE_API_BASE_URL='http://<LAN_IP>:8000'
 $env:TMF_CORS_ORIGINS='http://<LAN_IP>:5173'
 ```
 
-同时在防火墙放行 5173/8000/8101/8103~8106。`0.0.0.0` 只能监听，不能作为浏览器连接目标。
+前端用 `pnpm dev` 启动后，在手机浏览器访问 `http://<LAN_IP>:5173`。Windows 防火墙只需在可信专用网络放行 TCP 5173（前端）和 8000（网关）；worker 端口保留本机访问，不要向局域网开放。`0.0.0.0` 仅是监听地址，不能作为浏览器连接目标。同一 Wi-Fi 通常处于同一局域网，但访客网络、AP/客户端隔离或 VLAN 可能阻止设备互访。
 
 ### 4. 训练（可选）
 

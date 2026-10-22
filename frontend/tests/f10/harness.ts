@@ -33,6 +33,7 @@ interface BoardRowSnapshot {
   modelId: string | null
   displayName: string | null
   votes: number
+  sampleSize: number
   elo: number
   rank: string | null
   wilsonLower: number
@@ -101,6 +102,7 @@ function boardSnapshot(): BoardSnapshot {
     modelId: element.getAttribute('data-model-id'),
     displayName: element.getAttribute('data-display-name'),
     votes: Number(element.getAttribute('data-votes') ?? 0),
+    sampleSize: Number(element.getAttribute('data-sample-size') ?? 0),
     elo: Number(element.getAttribute('data-elo') ?? 0),
     rank: element.getAttribute('data-rank'),
     wilsonLower: Number(element.getAttribute('data-wilson-lower') ?? 0),

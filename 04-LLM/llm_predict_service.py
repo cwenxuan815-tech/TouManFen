@@ -40,7 +40,7 @@ CLASSES = ["finance", "realty", "stocks", "education", "science",
            "society", "politics", "sports", "game", "entertainment"]
 
 _PROVIDERS = {
-    "deepseek": ("DEEPSEEK_API_KEY", "DEEPSEEK_BASE_URL", "DEEPSEEK_MODEL", "deepseek-chat"),
+    "deepseek": ("DEEPSEEK_API_KEY", "DEEPSEEK_BASE_URL", "DEEPSEEK_MODEL", "deepseek-flash"),
     "qwen": ("QWEN_API_KEY", "QWEN_BASE_URL", "QWEN_MODEL", "qwen-plus"),
     "zhipu": ("ZHIPU_API_KEY", "ZHIPU_BASE_URL", "ZHIPU_MODEL", "glm-4-flash"),
 }

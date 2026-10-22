@@ -36,7 +36,7 @@
 
 ## 配置（网络）
 
-默认全部为 `127.0.0.1`，局域网通过环境变量覆盖（完整表见根 [README](../README.md) 5.5）：
+后端单机默认全部为 `127.0.0.1`。Windows 根目录 `启动TMF.bat` 会为手机局域网模式自动配置：网关绑定 `0.0.0.0`，worker 仍绑定 `127.0.0.1`，网关也只通过 loopback 调用 worker；停止使用根目录 `停止TMF.bat`。手动设置项如下（完整操作见根 [README](../README.md)）：
 
 | 变量 | 作用 |
 |---|---|
@@ -46,6 +46,8 @@
 | `TMF_WORKER_URL_<ID>` | 单个 worker 完整 URL 覆盖（如 `TMF_WORKER_URL_RF`） |
 | `TMF_FRONTEND_HOST` / `TMF_FRONTEND_PORT` | 默认 CORS 来源推导（`http://<host>:<port>`） |
 | `TMF_CORS_ORIGINS` | 追加 CORS 来源（逗号分隔，禁止 `*`） |
+
+手机访问时只需在可信专用网络放行 TCP 8000（网关）和 5173（前端）；worker 的 8101/8103/8104/8105/8106 端口不要暴露到局域网。启动脚本不会自行创建 Windows 防火墙规则。
 
 `serving/scripts/validate_config.py` 会校验 YAML、端口、URL、host/port/CORS；非法变量直接失败并给出变量名。
 

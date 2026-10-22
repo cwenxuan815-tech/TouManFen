@@ -496,7 +496,8 @@ def flow_checks(tmp: Path) -> None:
         leaderboard.status == "warming_up"
         and all(entry.warming_up for entry in leaderboard.entries)
         and all(entry.rank is None for entry in leaderboard.entries)
-        and all(entry.votes == 10 for entry in leaderboard.entries),
+        and all(entry.sample_size == 10 for entry in leaderboard.entries)
+        and sum(entry.votes for entry in leaderboard.entries) == 10,
         str([(entry.model_id, entry.votes, entry.rank) for entry in leaderboard.entries]),
     )
     bounds_ok = all(
@@ -891,11 +892,12 @@ def _http_contract_checks(
         str([entry["model_id"] for entry in entries]),
     )
     check(
-        "http leaderboard: warming_up, rank null, votes == 1",
+        "http leaderboard: warming_up, rank null, sample_size == 1",
         board.get("status") == "warming_up"
         and all(entry["warming_up"] for entry in entries)
         and all(entry["rank"] is None for entry in entries)
-        and all(entry["votes"] == 1 for entry in entries),
+        and all(entry["sample_size"] == 1 for entry in entries)
+        and sum(entry["votes"] for entry in entries) == 1,
         str([(entry["model_id"], entry["votes"], entry["rank"]) for entry in entries]),
     )
     wilson_ok = all(
@@ -904,12 +906,13 @@ def _http_contract_checks(
     )
     check("http leaderboard: wilson bounds valid", wilson_ok)
     check(
-        "http leaderboard: win_rate/losses consistent",
+        "http leaderboard: selection votes / sample_size consistent",
         all(
-            entry["losses"] == entry["votes"] - entry["wins"]
+            entry["votes"] == entry["wins"]
+            and entry["sample_size"] == entry["wins"] + entry["losses"]
             and (
                 entry["win_rate"] is None
-                or abs(entry["win_rate"] - entry["wins"] / entry["votes"]) < 1e-9
+                or abs(entry["win_rate"] - entry["votes"] / entry["sample_size"]) < 1e-9
             )
             for entry in entries
         ),
@@ -1111,8 +1114,8 @@ def ranking_checks(tmp: Path) -> None:
     board = asyncio.run(service.leaderboard("req-rank-board"))
     entries = list(board.entries)
     check(
-        "ranking: status ready after all models >= 50 votes",
-        board.status == "ready" and all(entry.votes >= 50 for entry in entries),
+        "ranking: status ready after all models >= 50 comparison samples",
+        board.status == "ready" and all(entry.sample_size >= 50 for entry in entries),
         str([(entry.model_id, entry.votes) for entry in entries]),
     )
     check(

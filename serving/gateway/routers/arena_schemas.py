@@ -54,6 +54,7 @@ class ArenaLeaderboardEntry(BaseModel):
     display_name: str
     elo: float
     votes: int
+    sample_size: int
     wins: int
     losses: int
     win_rate: float | None

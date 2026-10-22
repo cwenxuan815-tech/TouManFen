@@ -4,7 +4,7 @@ TMF 新闻标题分类验证页面，使用 Vue 3、TypeScript 和 Vite。当前
 
 > **最终状态（2026-10-22）**：已完成 F1–F16 中与本阶段相关的前端能力（分类/对比/SSE/反馈/竞技场/PK/主题/大屏/可访问性/F15 来源）；`vue-tsc`/`pnpm build` 通过；F14/F15/F10/F11/F9 浏览器 harness 有记录。F13/D4 设备为 Edge headless 模拟，**未做真实投影/手机人工视觉验收**。
 >
-> **运行状态**：本地默认 `127.0.0.1:5173`，LAN 需按 README 环境变量配置；`.env.local` 可能指定 LAN API，测试/彩排必须用独立 `envDir`（见 D4 隔离记录）。**用户 stage2 未由本轮测试启动/停止/压测**。
+> **运行方式**：本地开发默认 `127.0.0.1:5173`。从仓库根目录运行 `启动TMF.bat` 可自动探测电脑 LAN IPv4、启动后端与前端并等待前端就绪；手机访问脚本显示的 URL。停止时运行根目录 `停止TMF.bat`。真实手机视觉验收仍需在目标设备上完成。
 
 ## 环境
 
@@ -28,8 +28,27 @@ pnpm dev
 | `VITE_API_BASE_URL` | 前端访问网关的基址 | `http://127.0.0.1:8000` |
 
 可在 shell 环境变量或 `frontend/.env.local`（不入库）中设置；示例见 `.env.example`。
-**局域网示例**：`TMF_FRONTEND_HOST=0.0.0.0`（监听所有网卡），浏览器访问 `http://<LAN_IP>:5173`，
-并让后端 `TMF_CORS_ORIGINS` 允许该来源、`VITE_API_BASE_URL=http://<LAN_IP>:8000`。
+**一键局域网启动（推荐）**：从仓库根目录运行 `启动TMF.bat`。它会发现当前默认路由的 Wi-Fi IPv4（无 Wi-Fi 时回退到有线网卡），设置 `TMF_FRONTEND_HOST=0.0.0.0`、`TMF_GATEWAY_HOST=0.0.0.0`、`TMF_BIND_HOST=127.0.0.1`、`TMF_WORKER_HOST=127.0.0.1`，并按当前 IP 配置 CORS 与 `VITE_API_BASE_URL`。前端和网关对手机开放，模型 worker 仅在电脑本机监听。
+
+手动启动时，将 `<LAN_IP>` 换成电脑当前 Wi-Fi IPv4 地址：
+
+```powershell
+$env:TMF_FRONTEND_HOST='0.0.0.0'
+$env:TMF_GATEWAY_HOST='0.0.0.0'
+$env:TMF_BIND_HOST='127.0.0.1'
+$env:TMF_WORKER_HOST='127.0.0.1'
+$env:TMF_FRONTEND_PORT='5173'
+$env:TMF_CORS_ORIGINS='http://<LAN_IP>:5173'
+$env:VITE_API_BASE_URL='http://<LAN_IP>:8000'
+powershell -NoProfile -ExecutionPolicy Bypass -File ..\serving\scripts\stage2.ps1 -Action start
+pnpm dev
+```
+
+手机访问 `http://<LAN_IP>:5173`。Windows Defender 防火墙需在可信的“专用网络”放行 TCP **5173 和 8000**；启动脚本会提示此要求，但不会自行添加防火墙规则。worker 端口留在本机，不要向局域网开放。若仍无法连接，检查电脑与手机是否在同一可互访的子网、路由器是否开启 AP/客户端隔离，以及电脑当前 IPv4 地址是否变化。连接同一个 Wi-Fi 通常意味着在同一局域网，但访客 Wi-Fi、VLAN 或客户端隔离会阻止设备互访。
+
+停止时运行仓库根目录 `停止TMF.bat`。后端脚本按状态文件和命令行归属停止自身启动的 worker/网关，前端脚本只关闭名为 `TMF Frontend` 的 Vite 窗口，不会结束其他 Python/Node 进程；结束后会检查相关端口并报告仍在监听的进程。
+
+主导航根据 hash 路由同步当前项；进入 `#arena`、`#bench`、`#models`、`#about` 时会高亮对应导航，默认首页和 `#lab` 高亮分类实验台。
 
 > 监听地址 ≠ 访问地址：`0.0.0.0` 只用于监听，浏览器不能用它连接。
 
