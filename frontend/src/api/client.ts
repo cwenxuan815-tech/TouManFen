@@ -12,14 +12,29 @@ export const TIMEOUT_MS: Record<TimeoutProfile, number> = {
 
 function resolveApiBase(): string {
   const configured = import.meta.env.VITE_API_BASE_URL?.trim()
-  if (configured) return configured.replace(/\/$/, '')
-
-  // In LAN mode, use the host that served this page so multiple NICs/subnets
-  // each reach the gateway through the matching local address.
   if (typeof window !== 'undefined' && window.location.hostname) {
+    const hostname = window.location.hostname
+    const octets = hostname.split('.').map(Number)
+    const isPrivateIpv4 =
+      octets.length === 4 &&
+      octets.every((part) => Number.isInteger(part) && part >= 0 && part <= 255) &&
+      (octets[0] === 10 ||
+        (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) ||
+        (octets[0] === 192 && octets[1] === 168) ||
+        (octets[0] === 169 && octets[1] === 254))
+
+    // On private LAN addresses, keep API traffic on the same interface/subnet
+    // as the page. This supports clients reaching different NICs on one host.
+    if (isPrivateIpv4) {
+      const port = import.meta.env.VITE_API_PORT?.trim() || '8000'
+      return `${window.location.protocol}//${hostname}:${port}`
+    }
+    if (configured) return configured.replace(/\/$/, '')
+
     const port = import.meta.env.VITE_API_PORT?.trim() || '8000'
-    return `${window.location.protocol}//${window.location.hostname}:${port}`
+    return `${window.location.protocol}//${hostname}:${port}`
   }
+  if (configured) return configured.replace(/\/$/, '')
   return 'http://127.0.0.1:8000'
 }
 
