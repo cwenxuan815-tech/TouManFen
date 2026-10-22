@@ -90,15 +90,23 @@
 - ☑ **最终口径决策**：主口径 = 未清洗数据（服务端模型不变），清洗集作为实验章节呈现；
   详见 docs/实测指标.md 第九、十章，README「口径说明」
 
-## 七、当前待办汇总（2026-10-21）
+## 七、当前待办汇总（2026-10-22 最终）
 
-- ☑ **局域网部署（2026-10-21）**：服务以 LAN 模式运行（`192.168.12.54:5173/8000/8101/8103~8106`，readyz 5/5），用户级环境变量与 `frontend/.env.local` 已配置；经 LAN 本机调用 health/models/classify/compare/CORS 全部通过。**外部机器访问未实测**。
-- ☑ **学习档案版本重排（2026-10-21）**：v3=前端归档、v4=Git 归档、v5=适配层重构；README 索引与文档内链接已同步。
-- ☐ 适配层/契约重构后的**浏览器人工视觉验收**（桌面/窄屏）与 `compare` 界面点击路径验收
-- ◐ 完整 LAN 部署外部验收：在另一台同网段机器验证防火墙/CORS/前端访问
-- ☐ 真实 LLM provider 的准确性/费用/稳定性系统评估与抽样评估脚本（已有 2026-10-20 16 次真实调用日志，但未做统计）
-- ◐ `run_all.py` 端到端验证；☐ `tools/evaluate_all.py` 统一评估脚本
-- ☐ `PretrainedModel` 瘦身（9.27 GB → 可只留 `bert-base-chinese` 必需文件）
-- ☑ 版本控制：工程目录已有 `.git`（2026-10-21 初始化并推送，见 [docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md](docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md)）；后续提交策略/仓库可见性另行确认
-- ☐ 可选：无泄漏重评（剔除 test 中 110 条与 train 重叠样本）
-- 未实现、**不要记为已具备**：热搜采集/分类、confidence/概率、批量分类、缓存/single-flight/级联、鉴权、数据库/队列、Docker/CI。
+### 已完成（本阶段）
+- ☑ **D5**：SSE 渐进对比、总截止、取消、前端降级（B6/F9）。
+- ☑ **D6**：B8 离线基准/PK API、B12 并发/线程边界、F10 竞技场、F11 PK 榜。
+- ☑ **最终收尾**：B9 LLM opt-in、B10 后端回归、B11 data_source/快照、D1 文档、D2 演示数据/seed、F14 前端质量、D3 演示脚本。
+- ☑ **D4**：隔离 mock/headless 下正常 10 步 + 5 故障场景复验；网络审计 `all_isolated=true`。
+- ☑ **F15**：启动来源 `/api/v1/demo/state`、cached 快照回退、非法/缺失快照错误态。
+- ☑ **学习档案 v6**：全链路交付/决策/问题/证据复盘；README 索引已同步。
+
+### 仍待处理 / 未验证
+- ☐ **B8 真实 LLM 基准**：当前 LLM=missing；需要真实 Provider 授权、费用/稳定性评估后才能补 5 模型 PK，不能用 mock 代替。
+- ☐ **真实设备验收**：投影/手机/笔记本人工视觉、键盘/触摸、真实局域网外部机器；F13/D4 目前是 Edge headless 模拟。
+- ☐ **真实 LAN/外部 Provider**：用户 stage2 运行状态不在本项目测试范围；外部 LAN、真实网络断开、真实 Provider 均未验收。
+- ☐ **D7**：未执行。
+- ◐ **历史工程脚本**：`run_all.py` 完整端到端流水线、`tools/evaluate_all.py` 统一评估脚本仍未固化；`PretrainedModel` 瘦身未做（历史待办，非本轮范围）。
+- ◐ **旧 D4 非隔离证据**：`artifacts/d4/` 中旧文件仍保留，文档已标注由 `*-isolated` 取代；是否归档/清理待决定。
+- ☐ **生产化**：鉴权、HTTPS、生产级数据库/迁移、队列、Docker/CI 未实现。
+- 明确未实现、不要记为已具备：calibrated confidence、批量分类、API 缓存/single-flight/级联、热搜、鉴权、生产级数据库/队列、Docker/CI。
+- 已实现但不要误读：B4/B7 使用本地 SQLite 存反馈/投票；cached/mock 不进入 live 统计；B8 集成/oracle 是派生指标。
