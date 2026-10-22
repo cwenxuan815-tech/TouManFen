@@ -1,0 +1,179 @@
+{
+  "schema_version": 1,
+  "generated_by": "tools/make_demo_data.py",
+  "generated_at": "2026-10-22T07:53:25+08:00",
+  "source": "00-data/data/test.txt",
+  "purpose": "demo",
+  "dataset": "00-data/data/test.txt",
+  "split": "test",
+  "selection": {
+    "method": "stratified_by_true_label_per_class",
+    "per_class": 2,
+    "sample_size": 20,
+    "seed": 20261022,
+    "order": "line_index_ascending"
+  },
+  "note": "20 道竞技场预置题：来自 test.txt，保留真实 label 与 line_index；仅用于演示/预置与人工核对，不写入运行时反馈、投票统计或离线指标，也不作为考试/榜单依据。",
+  "questions": [
+    {
+      "question_id": "arena-demo-001",
+      "order": 1,
+      "line_index": 49,
+      "title": "风中劲草：2008年考研时事政治必背20题",
+      "true_label": "education",
+      "true_label_index": 3
+    },
+    {
+      "question_id": "arena-demo-002",
+      "order": 2,
+      "line_index": 965,
+      "title": "美中产家庭抚养孩子18岁要花147万元人民币",
+      "true_label": "education",
+      "true_label_index": 3
+    },
+    {
+      "question_id": "arena-demo-003",
+      "order": 3,
+      "line_index": 1198,
+      "title": "剧组：我们忠于原著 红学家：你们没看懂原著",
+      "true_label": "entertainment",
+      "true_label_index": 9
+    },
+    {
+      "question_id": "arena-demo-004",
+      "order": 4,
+      "line_index": 1203,
+      "title": "史可产后高调复出 签约华谊雍容亮相(图)",
+      "true_label": "entertainment",
+      "true_label_index": 9
+    },
+    {
+      "question_id": "arena-demo-005",
+      "order": 5,
+      "line_index": 2361,
+      "title": "易方达基金新增广发华福证券为其代销机构",
+      "true_label": "finance",
+      "true_label_index": 0
+    },
+    {
+      "question_id": "arena-demo-006",
+      "order": 6,
+      "line_index": 2696,
+      "title": "大盘小幅调整 基金略微减仓",
+      "true_label": "finance",
+      "true_label_index": 0
+    },
+    {
+      "question_id": "arena-demo-007",
+      "order": 7,
+      "line_index": 3060,
+      "title": "玄武19日甜蜜公测 七夕侠侣相约江湖",
+      "true_label": "game",
+      "true_label_index": 8
+    },
+    {
+      "question_id": "arena-demo-008",
+      "order": 8,
+      "line_index": 3134,
+      "title": "一年一变化 电子游戏画面25年进化史",
+      "true_label": "game",
+      "true_label_index": 8
+    },
+    {
+      "question_id": "arena-demo-009",
+      "order": 9,
+      "line_index": 4002,
+      "title": "鸠山斥菅直人辞职时间模糊似骗子 后悔放弃倒戈",
+      "true_label": "politics",
+      "true_label_index": 6
+    },
+    {
+      "question_id": "arena-demo-010",
+      "order": 10,
+      "line_index": 4730,
+      "title": "我国未来3年将实施十大水利工程",
+      "true_label": "politics",
+      "true_label_index": 6
+    },
+    {
+      "question_id": "arena-demo-011",
+      "order": 11,
+      "line_index": 5289,
+      "title": "三轮调控下楼市进入低潮期 众楼盘打折促销量",
+      "true_label": "realty",
+      "true_label_index": 1
+    },
+    {
+      "question_id": "arena-demo-012",
+      "order": 12,
+      "line_index": 5593,
+      "title": "万众瞩目盛事一锤定音北京四中正式入驻长阳半岛",
+      "true_label": "realty",
+      "true_label_index": 1
+    },
+    {
+      "question_id": "arena-demo-013",
+      "order": 13,
+      "line_index": 6247,
+      "title": "1GHz处理器不足两千 5款高配旗舰机推荐",
+      "true_label": "science",
+      "true_label_index": 4
+    },
+    {
+      "question_id": "arena-demo-014",
+      "order": 14,
+      "line_index": 6843,
+      "title": "华为将在伦敦开设终端设计中心",
+      "true_label": "science",
+      "true_label_index": 4
+    },
+    {
+      "question_id": "arena-demo-015",
+      "order": 15,
+      "line_index": 7235,
+      "title": "黑恶团伙垄断医院专家号 最高日收入2万元",
+      "true_label": "society",
+      "true_label_index": 5
+    },
+    {
+      "question_id": "arena-demo-016",
+      "order": 16,
+      "line_index": 7240,
+      "title": "司机醉驾被判死刑续：法院召集当事双方调解",
+      "true_label": "society",
+      "true_label_index": 5
+    },
+    {
+      "question_id": "arena-demo-017",
+      "order": 17,
+      "line_index": 8559,
+      "title": "邵佳一命运赌博开局即陷被动 杜堡冲甲？先摆脱降级区",
+      "true_label": "sports",
+      "true_label_index": 7
+    },
+    {
+      "question_id": "arena-demo-018",
+      "order": 18,
+      "line_index": 8845,
+      "title": "围丙联赛第2轮世界冠军周俊勋输棋 浙江胜台湾棋院",
+      "true_label": "sports",
+      "true_label_index": 7
+    },
+    {
+      "question_id": "arena-demo-019",
+      "order": 19,
+      "line_index": 9176,
+      "title": "达创午后现升16.57% 大股东调高私有化作价",
+      "true_label": "stocks",
+      "true_label_index": 2
+    },
+    {
+      "question_id": "arena-demo-020",
+      "order": 20,
+      "line_index": 9874,
+      "title": "和黄获李嘉诚再增持158万股",
+      "true_label": "stocks",
+      "true_label_index": 2
+    }
+  ]
+}

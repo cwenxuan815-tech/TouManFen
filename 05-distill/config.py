@@ -1,4 +1,5 @@
 import os
+import sys
 
 # ---------------------------------------------------------------
 # 预训练模型路径：默认取「本工程目录的同级 PretrainedModel/bert-base-chinese」
@@ -9,12 +10,33 @@ _PROJECT_ROOT = os.path.dirname(_MODULE_DIR)
 _DEFAULT_BERT = os.path.join(os.path.dirname(_PROJECT_ROOT), "PretrainedModel", "bert-base-chinese")
 _BERT_PATH = os.environ.get("TMF_BERT_PATH", _DEFAULT_BERT)
 
+# tmf_common 位于工程根：本文件可能被训练脚本（直接运行）或 worker（薄壳）导入，
+# 这里显式保证工程根可导入，不依赖调用方的 sys.path。
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+
 import torch
+
+from tmf_common.config import (  # noqa: E402
+    DEFAULT_TORCH_THREADS,
+    TORCH_THREADS_MAX,
+    TORCH_THREADS_MIN,
+    env_int,
+)
 
 class Config:
     def __init__(self):
         # 1- 设备
         self.device = ("cuda" if torch.cuda.is_available() else "cpu")
+
+        # 1.0- 推理线程数（B12）：默认 4，可用 TMF_TORCH_THREADS 覆盖（1~64）。
+        #      由 student_predict_service 在模型加载前调用 torch.set_num_threads。
+        self.torch_threads = env_int(
+            "TMF_TORCH_THREADS",
+            DEFAULT_TORCH_THREADS,
+            TORCH_THREADS_MIN,
+            TORCH_THREADS_MAX,
+        )
 
         # 2- 原始文件路径
         self.train_datapath = os.path.join(_MODULE_DIR, "data", "train.txt")
@@ -46,3 +68,4 @@ if __name__ == '__main__':
     config = Config()
     print(config.classname_list)
     print(config.classname_len)
+    print("torch_threads :", config.torch_threads, "（TMF_TORCH_THREADS，默认 4）")

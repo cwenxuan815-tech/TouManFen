@@ -8,6 +8,10 @@
 
 实现上复用 ``HttpWorkerAdapter`` 的传输/错误归一化逻辑，只增加 LLM 边界标识，
 保证网关侧行为与阶段 3/4A 完全一致。
+
+B11：``data_source`` 判定同样继承自 ``HttpWorkerAdapter``——即通过 LLM worker
+``/metadata.display_name`` 的 ``mock-`` 前缀区分 mock 与 live；不读取 Provider
+密钥、不发起任何上游调用。
 """
 
 from __future__ import annotations

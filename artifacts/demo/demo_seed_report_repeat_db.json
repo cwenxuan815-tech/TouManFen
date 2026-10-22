@@ -1,0 +1,125 @@
+{
+  "schema_version": 1,
+  "generated_by": "serving/scripts/demo_seed.py",
+  "generated_at": "2026-10-21T23:55:01.184064+00:00",
+  "db_path": "E:\\AIModels\\test\\TouManFen\\TouManFenClassifier\\artifacts\\demo\\_verify\\tmf_b.db",
+  "default_db_protected": {
+    "path": "E:\\AIModels\\test\\TouManFen\\TouManFenClassifier\\serving\\run\\tmf.db",
+    "touched": false,
+    "before": null,
+    "after": null
+  },
+  "inputs": {
+    "demo_cases_artifact": "artifacts\\demo\\demo_cases_2026-10-22.json",
+    "arena_questions_artifact": "artifacts\\demo\\arena_questions_2026-10-22.json",
+    "b8_prediction_dir": "artifacts/bench",
+    "base_epoch": 1792598400.0,
+    "base_iso": "2026-10-21T16:00:00+00:00"
+  },
+  "removed_rows": {
+    "arena_item_demo": 0,
+    "vote_item": 0,
+    "vote": 0,
+    "feedback": 0,
+    "arena_model": 0
+  },
+  "counts": {
+    "feedback": 3,
+    "arena_item": 2,
+    "arena_model": 5,
+    "vote": 2,
+    "vote_item": 6
+  },
+  "seeded_feedback": [
+    {
+      "feedback_id": 1,
+      "client_id": "demo-seed-client-1",
+      "case_id": "demo-correctable-entertainment-disagree",
+      "model_id": "rf",
+      "pred_class": "stocks",
+      "corrected_class": "entertainment",
+      "source": "demo",
+      "status": "pending"
+    },
+    {
+      "feedback_id": 2,
+      "client_id": "demo-seed-client-2",
+      "case_id": "demo-confusing-education-disagree",
+      "model_id": "fasttext",
+      "pred_class": "society",
+      "corrected_class": "education",
+      "source": "demo",
+      "status": "pending"
+    },
+    {
+      "feedback_id": 3,
+      "client_id": "demo-seed-client-3",
+      "case_id": "demo-correctable-entertainment-disagree",
+      "model_id": "fasttext",
+      "pred_class": "realty",
+      "corrected_class": "entertainment",
+      "source": "demo",
+      "status": "pending"
+    }
+  ],
+  "seeded_arena": {
+    "items": [
+      {
+        "item_id": "demo-seed-q01",
+        "question_id": "arena-demo-001",
+        "line_index": 49,
+        "true_label": "education",
+        "winner": "bert"
+      },
+      {
+        "item_id": "demo-seed-q02",
+        "question_id": "arena-demo-002",
+        "line_index": 965,
+        "true_label": "education",
+        "winner": "distill"
+      }
+    ],
+    "votes": [
+      {
+        "vote_id": 1,
+        "client_id": "demo-seed-vote-1",
+        "item_id": "demo-seed-q01",
+        "model_id": "bert",
+        "pred_class": "education",
+        "games_applied": 3
+      },
+      {
+        "vote_id": 2,
+        "client_id": "demo-seed-vote-2",
+        "item_id": "demo-seed-q02",
+        "model_id": "distill",
+        "pred_class": "society",
+        "games_applied": 3
+      }
+    ],
+    "ratings": {
+      "rf": 1177.652570223992,
+      "fasttext": 1176.8696989965226,
+      "bert": 1221.1665570647117,
+      "llm": 1200.0,
+      "distill": 1224.3111737147738
+    }
+  },
+  "arena_ratings": {
+    "rf": 1177.652570223992,
+    "fasttext": 1176.8696989965226,
+    "bert": 1221.1665570647117,
+    "llm": 1200.0,
+    "distill": 1224.3111737147738
+  },
+  "warmup": {
+    "total_votes": 2,
+    "warmup_threshold": 50,
+    "state": "warming_up",
+    "note": "演示种子票数远小于 50，榜单保持预热态；不伪造正式排名/准确率"
+  },
+  "idempotency": {
+    "state_digest_semantic": "8d39dcd3b53267af3deceff7611c8daf2f04033bb76f44928ca109eb0a58430f",
+    "note": "state_digest 不含 created_at/updated_at；同一 DB 连续 --reset 后语义状态一致；传固定 --at 时时间戳也一致"
+  }
+}

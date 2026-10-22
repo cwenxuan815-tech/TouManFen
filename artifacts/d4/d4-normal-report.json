@@ -1,0 +1,79 @@
+{
+  "generated_at": "2026-10-22T00:36:25.493Z",
+  "mode": "normal isolated mock 10-step",
+  "results": [
+    {
+      "step": 1,
+      "name": "打开首页/识别页面与来源待确认",
+      "ok": true,
+      "detail": "lab loaded; badge=来源待确认; cached=false",
+      "ms": 662
+    },
+    {
+      "step": 2,
+      "name": "正常标题实时建议与 fastText 分类",
+      "ok": true,
+      "detail": "realtime=true; result=CLASSIFICATION RESULT 这条新闻，属于 房产 演示数据（mock） REQUEST · 9811642f 房 REALTY 房产 楼市 · 地产动态 北京二手房成交量创年内新高 由; badge=演示数据（mock）",
+      "ms": 1101
+    },
+    {
+      "step": 3,
+      "name": "非新闻标题软拒识提示",
+      "ok": true,
+      "detail": "rejection visible; CLASSIFICATION RESULT 这条新闻，属于 游戏 演示数据（mock） REQUEST · f2d1f794 ! 可能是非新闻内容 已触发软拒识：最高原始分低于拒识阈值。本次分类仍有效，下面仍展示模型原始预测。 来源：合成负",
+      "ms": 957
+    },
+    {
+      "step": 4,
+      "name": "切换 BERT 并查看 Top-3/未校准说明",
+      "ok": true,
+      "detail": "bert result visible; 未校准 text present",
+      "ms": 1481
+    },
+    {
+      "step": 5,
+      "name": "模型对比 SSE 逐项结果",
+      "ok": true,
+      "detail": "compare cards>=4; MODEL COMPARISON · STREAMING 同一个标题，4 个模型完成判断。 REQUEST · 86692050 ✓ 全部模型已完成 4 成功 · 0 失败 · 用时 235 ms · 总截止 18000 ms 流式实时（SSE） 首结果 185 ms 模型间存在分歧（1 个不同） 北京二手房成交量创年内新高 排序 按延迟 按一致度 一致度 ",
+      "ms": 1248
+    },
+    {
+      "step": 6,
+      "name": "纠错反馈提交（待审核）",
+      "ok": true,
+      "detail": "selected=财经; pending visible",
+      "ms": 2855
+    },
+    {
+      "step": 7,
+      "name": "人工反馈参考（未审核）",
+      "ok": true,
+      "detail": "hint visible",
+      "ms": 2009
+    },
+    {
+      "step": 8,
+      "name": "竞技场匿名投票与揭晓",
+      "ok": true,
+      "detail": "anonymous cards=5; revealed; pre-vote live=false",
+      "ms": 772
+    },
+    {
+      "step": 9,
+      "name": "PK 榜单真实 B8 产物/LLM missing",
+      "ok": true,
+      "detail": "bench meta visible; LLM missing visible; no realtime accuracy claim",
+      "ms": 1105
+    },
+    {
+      "step": 10,
+      "name": "暗色主题与大屏模式",
+      "ok": true,
+      "detail": "theme light->dark; largeClicked=true; large=",
+      "ms": 967
+    }
+  ],
+  "total_ms": 13157,
+  "passed": 10,
+  "failed": 0
+}

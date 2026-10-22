@@ -1,0 +1,5087 @@
+{
+  "generatedAt": "2026-10-22T00:40:33.240Z",
+  "browser": "Edg/155.0.4283.62",
+  "mode": "mock B7 API + Edge headless/CDP",
+  "serverPort": 18181,
+  "exitCode": 0,
+  "summary": [
+    {
+      "id": "anonymity-vote-reveal",
+      "name": "S1 正常（预热）：投票前匿名、投票后翻牌揭晓、预热榜显示区间不显示名次",
+      "pass": true,
+      "checks": [
+        {
+          "name": "页面进入可投票状态",
+          "pass": true,
+          "detail": "ready"
+        },
+        {
+          "name": "渲染 5 张匿名卡片 A–E",
+          "pass": true,
+          "detail": "5"
+        },
+        {
+          "name": "字母按服务端候选顺序映射 A/B/C/D/E",
+          "pass": true,
+          "detail": "[\"A\",\"B\",\"C\",\"D\",\"E\"]"
+        },
+        {
+          "name": "投票前卡片均为 idle 且无背面/无 model_id 属性",
+          "pass": true,
+          "detail": "[\"A:idle\",\"B:idle\",\"C:idle\",\"D:idle\",\"E:idle\"]"
+        },
+        {
+          "name": "投票前候选区 DOM 不含 model_id / 真实模型名",
+          "pass": true,
+          "detail": "[]"
+        },
+        {
+          "name": "投票前整页 DOM 不含 model_id / 真实模型名",
+          "pass": true,
+          "detail": "[]"
+        },
+        {
+          "name": "投票前只请求 /arena/next（无 leaderboard 请求）",
+          "pass": true,
+          "detail": "[\"/api/v1/arena/next\"]"
+        },
+        {
+          "name": "/arena/next 响应体不含 model_id / display_name / 真实模型名",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-1792629627263\",\"item_id\":\"item_1_b34a73fa489ff6d7\",\"title\":\"高校发布今年招生政策调整方案\",\"candidates\":[{\"anon_id\":\"an_0ad9984e3c56\",\"pred_class\":\"finance\",\"latency_ms\":144},{\"anon_id\":\"an_f217c36c9c7a\",\"pred_class\":\"finance\",\"latency_ms\":138},{\"anon_id\":\"an_6d1b954a3882\",\"pred_class\":\"stocks\""
+        },
+        {
+          "name": "投票前榜单为占位且标记 available=false",
+          "pass": true,
+          "detail": "{\"available\":\"false\",\"placeholder\":true}"
+        },
+        {
+          "name": "榜单固定说明在投票前即存在",
+          "pass": true,
+          "detail": "人类偏好投票强度，仅供演示参考"
+        },
+        {
+          "name": "投票前候选区不出现名次/票数（榜单未加载）",
+          "pass": true,
+          "detail": "0"
+        },
+        {
+          "name": "本地字母锚点可映射回服务端 anon_id",
+          "pass": true,
+          "detail": "an_6d1b954a3882"
+        },
+        {
+          "name": "投票请求为 POST /arena/vote",
+          "pass": true,
+          "detail": "POST"
+        },
+        {
+          "name": "投票请求体只含 client_id/item_id/anon_id",
+          "pass": true,
+          "detail": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_b34a73fa489ff6d7\",\"anon_id\":\"an_6d1b954a3882\"}"
+        },
+        {
+          "name": "投票前 DOM/请求未携带 model_id（投票请求体无 model_id/display_name）",
+          "pass": true,
+          "detail": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_b34a73fa489ff6d7\",\"anon_id\":\"an_6d1b954a3882\"}"
+        },
+        {
+          "name": "翻牌后卡片 C 状态为 revealed",
+          "pass": true,
+          "detail": "revealed"
+        },
+        {
+          "name": "翻牌背面正确显示被选中模型（model_id/display_name/pred_class）",
+          "pass": true,
+          "detail": "{\"cardC\":{\"letter\":\"C\",\"anonId\":\"an_6d1b954a3882\",\"state\":\"revealed\",\"revealedModelId\":\"distill\",\"hasBackFace\":true,\"text\":\"C匿名候选股票stocks选择它你选择了蒸馏模型distill股票Elo 1220\",\"animationName\":\"arena-flip-ae537aa6\",\"animationDuration\":\"0.2s\",\"transitionDuration\":\"0s\",\"disabled\":true},\"expected\":{\"anon_id\":\"an_6d1b954a3882\",\"pred_class\":\"stocks\",\"latency_ms\":157,\"model_id\":\"distill\",\"display_name\":\"蒸馏模型\"}}"
+        },
+        {
+          "name": "其他 4 张卡片保持匿名（无背面/无 model_id）",
+          "pass": true,
+          "detail": "[\"A:idle\",\"B:idle\",\"D:idle\",\"E:idle\"]"
+        },
+        {
+          "name": "投票后其他卡片置灰、全部卡片禁用",
+          "pass": true,
+          "detail": "[\"A:true\",\"B:true\",\"C:true\",\"D:true\",\"E:true\"]"
+        },
+        {
+          "name": "验收环境以 no-preference 运行（normal 模式未被强制减少动效）",
+          "pass": true,
+          "detail": "false"
+        },
+        {
+          "name": "翻牌动画约 200ms（arena-flip 动画，duration≈200ms）",
+          "pass": true,
+          "detail": "arena-flip-ae537aa6 / 0.2s"
+        },
+        {
+          "name": "无障碍 live 区播报已揭晓模型",
+          "pass": true,
+          "detail": "已揭晓：蒸馏模型（distill），预测类别 股票"
+        },
+        {
+          "name": "投票后请求 1 次 /arena/leaderboard",
+          "pass": true,
+          "detail": "/api/v1/arena/leaderboard"
+        },
+        {
+          "name": "榜单 available=true 且 status=warming_up",
+          "pass": true,
+          "detail": "{\"available\":\"true\",\"status\":\"warming_up\"}"
+        },
+        {
+          "name": "预热态显示 5 行且票数 < 50",
+          "pass": true,
+          "detail": "[4,4,4,3,3]"
+        },
+        {
+          "name": "预热态不显示名次（无 rank 属性、表头无名次列）",
+          "pass": true,
+          "detail": "{\"ranks\":[null,null,null,null,null],\"headers\":[\"模型\",\"票数\",\"Elo\",\"Wilson 95% 区间\"]}"
+        },
+        {
+          "name": "预热态每行显示 Wilson 区间（lower ≤ upper）",
+          "pass": true,
+          "detail": "[[0.15,0.85],[0.0456,0.6994],[0,0.4899],[0.2077,0.9385],[0,0.5615]]"
+        },
+        {
+          "name": "预热态徽标为「预热中」且规则说明不显示名次",
+          "pass": true,
+          "detail": "{\"statusText\":\"预热中\",\"ruleText\":\"票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。\"}"
+        },
+        {
+          "name": "榜单固定说明「人类偏好投票强度，仅供演示参考」",
+          "pass": true,
+          "detail": "人类偏好投票强度，仅供演示参考"
+        },
+        {
+          "name": "榜单不含「准确率」「客观排名」表述",
+          "pass": true,
+          "detail": "HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。人类偏好投票榜（vote）模型票数EloWilson 95% 区间随机森林预热中4121615.0% – 85.0%fastText预热中412044.6% – 69"
+        },
+        {
+          "name": "投票成功有成功提示（Toaster）",
+          "pass": true,
+          "detail": "[\"投票已记录，已揭晓你选择的模型。\"]"
+        },
+        {
+          "name": "client_id 持久化到 localStorage 固定 key 并用于投票",
+          "pass": true,
+          "detail": "{\"storedClientId\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"voteClientId\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\"}"
+        },
+        {
+          "name": "换下一题后榜单回到占位（投票前不展示真实模型名）",
+          "pass": true,
+          "detail": "{\"available\":\"false\",\"placeholder\":true}"
+        },
+        {
+          "name": "换下一题不重复请求榜单（仍为 1 次）",
+          "pass": true,
+          "detail": "1"
+        },
+        {
+          "name": "换下一题后候选区仍无 model_id / 真实模型名",
+          "pass": true,
+          "detail": "[]"
+        }
+      ],
+      "elapsedMs": 457
+    },
+    {
+      "id": "ready-ranking",
+      "name": "S2 就绪：票数 ≥ 50 时显示正式名次（按名次排序）",
+      "pass": true,
+      "checks": [
+        {
+          "name": "就绪场景投票前也不请求榜单",
+          "pass": true,
+          "detail": "/api/v1/arena/next"
+        },
+        {
+          "name": "投票前整体 DOM 无真实模型名",
+          "pass": true,
+          "detail": "[]"
+        },
+        {
+          "name": "ready 状态徽标为「已就绪」",
+          "pass": true,
+          "detail": "{\"status\":\"ready\",\"statusText\":\"已就绪\"}"
+        },
+        {
+          "name": "ready 表头包含名次列",
+          "pass": true,
+          "detail": "[\"名次\",\"模型\",\"票数\",\"Elo\",\"Wilson 95% 区间\"]"
+        },
+        {
+          "name": "ready 每行都显示名次 1..5",
+          "pass": true,
+          "detail": "[1,2,3,4,5]"
+        },
+        {
+          "name": "ready 行按名次升序排列",
+          "pass": true,
+          "detail": "[1,2,3,4,5]"
+        },
+        {
+          "name": "ready 每行票数 ≥ 50",
+          "pass": true,
+          "detail": "[106,106,106,106,106]"
+        },
+        {
+          "name": "ready 显示模型名（允许的聚合榜身份）",
+          "pass": true,
+          "detail": "[\"随机森林\",\"蒸馏模型\",\"fastText\",\"BERT\",\"LLM\"]"
+        },
+        {
+          "name": "ready 仍包含固定「人类偏好…」说明",
+          "pass": true,
+          "detail": "人类偏好投票强度，仅供演示参考"
+        },
+        {
+          "name": "ready 文字不含「准确率」「客观排名」",
+          "pass": true,
+          "detail": "HUMAN PREFERENCE人类偏好榜已就绪 人类偏好投票强度，仅供演示参考 全部模型票数已达 50，显示正式名次。人类偏好投票榜（vote）名次模型票数EloWilson 95% 区间1随机森林106121647.1% – 65.6%2蒸馏模型106121042.5% – 61.2%3fastText106120"
+        },
+        {
+          "name": "ready 规则说明为显示正式名次",
+          "pass": true,
+          "detail": "全部模型票数已达 50，显示正式名次。"
+        }
+      ],
+      "elapsedMs": 296
+    },
+    {
+      "id": "partial-candidates",
+      "name": "S3 部分候选：partial=true 显示部分结果提示，仍可投票揭晓",
+      "pass": true,
+      "checks": [
+        {
+          "name": "partial 场景只下发 3 个匿名候选",
+          "pass": true,
+          "detail": "3"
+        },
+        {
+          "name": "页面显示部分候选提示（复用 AsyncState partial）",
+          "pass": true,
+          "detail": "{\"hasPartial\":true}"
+        },
+        {
+          "name": "partial 响应标记 partial=true",
+          "pass": true,
+          "detail": "true"
+        },
+        {
+          "name": "partial 场景投票后可正确揭晓",
+          "pass": true,
+          "detail": "{\"state\":\"revealed\",\"expected\":{\"anon_id\":\"an_c51a21086346\",\"pred_class\":\"finance\",\"latency_ms\":138,\"model_id\":\"fasttext\",\"display_name\":\"fastText\"}}"
+        },
+        {
+          "name": "partial 场景投票后榜单已加载",
+          "pass": true,
+          "detail": "{\"available\":\"true\",\"rows\":5}"
+        }
+      ],
+      "elapsedMs": 937
+    },
+    {
+      "id": "duplicate-vote",
+      "name": "S4 重复投票：409 ARENA_DUPLICATE_VOTE → 中文提示，不伪造揭晓",
+      "pass": true,
+      "checks": [
+        {
+          "name": "重复投票提示来自 Toaster（F4）",
+          "pass": true,
+          "detail": "[\"你已经对这道题投过票了。\"]"
+        },
+        {
+          "name": "提示附带「只计 1 票」说明",
+          "pass": true,
+          "detail": "[\"同一道题每个客户端只计 1 票；可以换一题继续。\",\"请求编号 mock-1792629628953\"]"
+        },
+        {
+          "name": "失败后不进入揭晓态、不显示 model_id",
+          "pass": true,
+          "detail": "[\"idle\",\"idle\",\"idle\",\"idle\",\"idle\"]"
+        },
+        {
+          "name": "失败后卡片回到可投票（未被禁用）",
+          "pass": true,
+          "detail": "[false,false,false,false,false]"
+        },
+        {
+          "name": "失败后不请求榜单",
+          "pass": true,
+          "detail": "/api/v1/arena/next,/api/v1/arena/vote"
+        },
+        {
+          "name": "错误响应码为 409",
+          "pass": true,
+          "detail": "409"
+        },
+        {
+          "name": "投票请求仍只含匿名载荷",
+          "pass": true,
+          "detail": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_a6b3a974cd4e959b\",\"anon_id\":\"an_96317200a201\"}"
+        }
+      ],
+      "elapsedMs": 611
+    },
+    {
+      "id": "rate-limited",
+      "name": "S5 限速：429 ARENA_RATE_LIMITED → 可读提示",
+      "pass": true,
+      "checks": [
+        {
+          "name": "限速提示为「投票太快了，请稍后再试。」",
+          "pass": true,
+          "detail": "[\"投票太快了，请稍后再试。\"]"
+        },
+        {
+          "name": "限速提示附带每分钟 20 票说明",
+          "pass": true,
+          "detail": "[\"单客户端每分钟最多 20 票，请稍后再试。\",\"请求编号 mock-1792629629587\"]"
+        },
+        {
+          "name": "限速后不揭晓、不请求榜单",
+          "pass": true,
+          "detail": "ready"
+        },
+        {
+          "name": "限速响应码为 429",
+          "pass": true,
+          "detail": "429"
+        }
+      ],
+      "elapsedMs": 275
+    },
+    {
+      "id": "network-error",
+      "name": "S6 网络错误：连接被断开 → NETWORK_ERROR 提示，不伪造揭晓",
+      "pass": true,
+      "checks": [
+        {
+          "name": "网络错误提示可读（NETWORK_ERROR 映射）",
+          "pass": true,
+          "detail": "[\"无法连接分类服务，请确认后端已启动。\"]"
+        },
+        {
+          "name": "网络错误后不进入揭晓态",
+          "pass": true,
+          "detail": "ready"
+        },
+        {
+          "name": "网络错误后卡片仍可重试",
+          "pass": true,
+          "detail": "[false,false,false,false,false]"
+        },
+        {
+          "name": "网络错误不请求榜单",
+          "pass": true,
+          "detail": "/api/v1/arena/next,/api/v1/arena/vote"
+        }
+      ],
+      "elapsedMs": 641
+    },
+    {
+      "id": "empty-bank",
+      "name": "S7 空题库：ARENA_NO_ITEMS → 空状态 + 可重新抽取",
+      "pass": true,
+      "checks": [
+        {
+          "name": "页面进入 empty 状态",
+          "pass": true,
+          "detail": "empty"
+        },
+        {
+          "name": "空题库使用 AsyncState 空状态（非自写横幅）",
+          "pass": true,
+          "detail": "-暂无可用题目竞技场题库为空或题目文件不可用；可重新抽取或稍后再试。"
+        },
+        {
+          "name": "空题库不渲染候选卡片",
+          "pass": true,
+          "detail": "0"
+        },
+        {
+          "name": "空题库不请求榜单",
+          "pass": true,
+          "detail": "/api/v1/arena/next"
+        },
+        {
+          "name": "空题库错误码为 ARENA_NO_ITEMS",
+          "pass": true,
+          "detail": "{\"code\":\"ARENA_NO_ITEMS\",\"message\":\"竞技场暂无可用题目\"}"
+        },
+        {
+          "name": "空状态提供「重新抽取」按钮",
+          "pass": true,
+          "detail": "data-arena-empty-retry"
+        },
+        {
+          "name": "空题库后重新抽取可恢复候选",
+          "pass": true,
+          "detail": "5"
+        }
+      ],
+      "elapsedMs": 1083
+    },
+    {
+      "id": "reduced-motion",
+      "name": "S8 减少动效：prefers-reduced-motion: reduce 时立即揭晓且无动画",
+      "pass": true,
+      "checks": [
+        {
+          "name": "浏览器已应用 prefers-reduced-motion: reduce",
+          "pass": true,
+          "detail": "true"
+        },
+        {
+          "name": "reduce 下投票后进入揭示态",
+          "pass": true,
+          "detail": "revealed"
+        },
+        {
+          "name": "reduce 下揭晓无 200ms 动画等待（≤1500ms）",
+          "pass": true,
+          "detail": "141 ms"
+        },
+        {
+          "name": "reduce 下翻牌无动画（animation-name=none）",
+          "pass": true,
+          "detail": "none"
+        },
+        {
+          "name": "reduce 下动画时长为 0（≤1ms，跳过 200ms 翻牌）",
+          "pass": true,
+          "detail": "1e-05s"
+        },
+        {
+          "name": "reduce 下过渡时长为 0（≤1ms）",
+          "pass": true,
+          "detail": "1e-05s"
+        }
+      ],
+      "elapsedMs": 1170
+    },
+    {
+      "id": "client-id-persist",
+      "name": "S9 client_id 刷新保持：localStorage 固定 key，刷新后同一投票身份",
+      "pass": true,
+      "checks": [
+        {
+          "name": "首次加载即写入 localStorage 固定 key",
+          "pass": true,
+          "detail": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7"
+        },
+        {
+          "name": "localStorage 可用",
+          "pass": true,
+          "detail": "available"
+        },
+        {
+          "name": "首次投票使用客户端持久化 client_id",
+          "pass": true,
+          "detail": "{\"stored\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"sent\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\"}"
+        },
+        {
+          "name": "刷新后 client_id 保持不变",
+          "pass": true,
+          "detail": "{\"before\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"after\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\"}"
+        },
+        {
+          "name": "刷新后榜单重新回到占位（先投票才加载）",
+          "pass": true,
+          "detail": "{\"available\":\"false\"}"
+        },
+        {
+          "name": "刷新后投票前不请求榜单",
+          "pass": true,
+          "detail": "1（刷新前 1 次）"
+        },
+        {
+          "name": "刷新后再次投票仍使用同一 client_id",
+          "pass": true,
+          "detail": "{\"stored\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"sent\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\"}"
+        },
+        {
+          "name": "刷新后投票成功揭晓",
+          "pass": true,
+          "detail": "revealed"
+        }
+      ],
+      "elapsedMs": 554
+    }
+  ],
+  "evidence": {
+    "anonymity-vote-reveal": {
+      "mockScenario": "normal",
+      "serverRequests": [
+        {
+          "ts": 1792629633138,
+          "method": "POST",
+          "path": "/api/v1/arena/vote",
+          "kind": "vote",
+          "body": {
+            "client_id": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7",
+            "item_id": "item_2_c99a055762bfcc79",
+            "anon_id": "an_a7bc2a2e4d1e"
+          },
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633138",
+            "selected": {
+              "model_id": "rf",
+              "display_name": "随机森林",
+              "pred_class": "finance"
+            },
+            "elo_after": 1224,
+            "games_applied": 4
+          }
+        },
+        {
+          "ts": 1792629633142,
+          "method": "GET",
+          "path": "/api/v1/arena/leaderboard",
+          "kind": "leaderboard",
+          "body": null,
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633142",
+            "status": "warming_up",
+            "data_kind": "vote",
+            "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+            "min_votes_for_ranking": 50,
+            "entries": [
+              {
+                "model_id": "rf",
+                "display_name": "随机森林",
+                "elo": 1224,
+                "votes": 5,
+                "wins": 3,
+                "losses": 2,
+                "win_rate": 0.6,
+                "wilson_lower": 0.2307,
+                "wilson_upper": 0.8824,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "fasttext",
+                "display_name": "fastText",
+                "elo": 1202,
+                "votes": 5,
+                "wins": 1,
+                "losses": 4,
+                "win_rate": 0.2,
+                "wilson_lower": 0.0362,
+                "wilson_upper": 0.6245,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "bert",
+                "display_name": "BERT",
+                "elo": 1184,
+                "votes": 5,
+                "wins": 0,
+                "losses": 5,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4345,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "distill",
+                "display_name": "蒸馏模型",
+                "elo": 1218,
+                "votes": 4,
+                "wins": 2,
+                "losses": 2,
+                "win_rate": 0.5,
+                "wilson_lower": 0.15,
+                "wilson_upper": 0.85,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "llm",
+                "display_name": "LLM",
+                "elo": 1172,
+                "votes": 4,
+                "wins": 0,
+                "losses": 4,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4899,
+                "warming_up": true,
+                "rank": null
+              }
+            ]
+          }
+        }
+      ],
+      "browserRequests": [
+        {
+          "ts": 1792629632767,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629632972,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629632991,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_f182d4fa9745bccd\",\"anon_id\":\"an_d5298cd35a04\"}"
+        },
+        {
+          "ts": 1792629632996,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633093,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629633125,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633134,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "method": "GET",
+          "type": "Other",
+          "postData": null
+        },
+        {
+          "ts": 1792629633139,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_2_c99a055762bfcc79\",\"anon_id\":\"an_a7bc2a2e4d1e\"}"
+        },
+        {
+          "ts": 1792629633146,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        }
+      ],
+      "browserResponses": [
+        {
+          "ts": 1792629632798,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629632965,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629632967,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629632975,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632992,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632997,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633098,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629633127,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633136,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "status": 404,
+          "mimeType": "text/plain"
+        },
+        {
+          "ts": 1792629633140,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633147,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        }
+      ],
+      "browserFailed": [],
+      "items": {
+        "item_1_b34a73fa489ff6d7": {
+          "item_id": "item_1_b34a73fa489ff6d7",
+          "title": "高校发布今年招生政策调整方案",
+          "candidates": [
+            {
+              "anon_id": "an_0ad9984e3c56",
+              "pred_class": "finance",
+              "latency_ms": 144,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            },
+            {
+              "anon_id": "an_f217c36c9c7a",
+              "pred_class": "finance",
+              "latency_ms": 138,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_6d1b954a3882",
+              "pred_class": "stocks",
+              "latency_ms": 157,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            },
+            {
+              "anon_id": "an_58c067ecf938",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            },
+            {
+              "anon_id": "an_78f060b41277",
+              "pred_class": "finance",
+              "latency_ms": 111,
+              "model_id": "bert",
+              "display_name": "BERT"
+            }
+          ]
+        },
+        "item_2_b80054c0890a6704": {
+          "item_id": "item_2_b80054c0890a6704",
+          "title": "国产推理芯片进入量产阶段",
+          "candidates": [
+            {
+              "anon_id": "an_c413f54f3315",
+              "pred_class": "stocks",
+              "latency_ms": 250,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            },
+            {
+              "anon_id": "an_9934bd2da385",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            },
+            {
+              "anon_id": "an_79b267160cde",
+              "pred_class": "finance",
+              "latency_ms": 283,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_6e417d0226e1",
+              "pred_class": "finance",
+              "latency_ms": 149,
+              "model_id": "bert",
+              "display_name": "BERT"
+            },
+            {
+              "anon_id": "an_0a1e13799700",
+              "pred_class": "finance",
+              "latency_ms": 276,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            }
+          ]
+        }
+      },
+      "votes": {
+        "rf": {
+          "wins": 2,
+          "losses": 2,
+          "elo": 1216
+        },
+        "fasttext": {
+          "wins": 1,
+          "losses": 3,
+          "elo": 1204
+        },
+        "bert": {
+          "wins": 0,
+          "losses": 4,
+          "elo": 1186
+        },
+        "distill": {
+          "wins": 2,
+          "losses": 1,
+          "elo": 1220
+        },
+        "llm": {
+          "wins": 0,
+          "losses": 3,
+          "elo": 1174
+        }
+      },
+      "dom": {
+        "pageState": "revealed",
+        "cards": [
+          {
+            "letter": "A",
+            "anonId": "an_0ad9984e3c56",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "A匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "B",
+            "anonId": "an_f217c36c9c7a",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "B匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "C",
+            "anonId": "an_6d1b954a3882",
+            "state": "revealed",
+            "revealedModelId": "distill",
+            "hasBackFace": true,
+            "text": "C匿名候选股票stocks选择它你选择了蒸馏模型distill股票Elo 1220",
+            "animationName": "arena-flip-ae537aa6",
+            "animationDuration": "0.2s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "D",
+            "anonId": "an_58c067ecf938",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "D匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "E",
+            "anonId": "an_78f060b41277",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "E匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          }
+        ],
+        "candidatesText": "A匿名候选财经finance选择它B匿名候选财经finance选择它C匿名候选股票stocks选择它你选择了蒸馏模型distill股票Elo 1220D匿名候选财经finance选择它E匿名候选财经finance选择它",
+        "bodyText": "PREFERENCE ARENA匿名投票，偏好可读。 从 5 个匿名结果里选出更像正确标签的一个， 投票后翻牌揭晓你选中的模型。 01匿名候选高校发布今年招生政策调整方案下一题 点击卡片投下偏好票；投票前不会显示任何模型名称。 A匿名候选财经finance选择它B匿名候选财经finance选择它C匿名候选股票stocks选择它你选择了蒸馏模型distill股票Elo 1220D匿名候选财经finance选择它E匿名候选财经finance选择它已揭晓：蒸馏模型（distill），预测类别 股票 同一题目每个客户端只计 1 票；单客户端每分钟最多 20 票。票数可被本机清除，仅作演示参考。 再抽一题 HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。人类偏好投票榜（vote）模型票数EloWilson 95% 区间随机森林预热中4121615.0% – 85.0%fastText预热中412044.6% – 69.9%BERT预热中411860.0% – 49.0%蒸馏模型预热中3122020.8% – 93.8%LLM预热中311740.0% – 56.1%人类偏好投票强度，仅作演示参考；票数可被本机清除。 i投票已记录，已揭晓你选择的模型。请求编号 mock-1792629627408 ×",
+        "toastMessages": [
+          "投票已记录，已揭晓你选择的模型。"
+        ],
+        "toastDetails": [
+          "请求编号 mock-1792629627408"
+        ],
+        "hasLoading": false,
+        "hasEmpty": false,
+        "emptyText": "",
+        "hasLoadError": false,
+        "loadErrorText": "",
+        "hasPartial": false,
+        "revealedNote": "已揭晓：蒸馏模型（distill），预测类别 股票",
+        "itemId": "item_1_b34a73fa489ff6d7",
+        "board": {
+          "present": true,
+          "status": "warming_up",
+          "available": "true",
+          "hasPlaceholder": false,
+          "hasError": false,
+          "loading": false,
+          "statusText": "预热中",
+          "ruleText": "票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。",
+          "disclaimer": "人类偏好投票强度，仅供演示参考",
+          "headers": [
+            "模型",
+            "票数",
+            "Elo",
+            "Wilson 95% 区间"
+          ],
+          "rows": [
+            {
+              "modelId": "rf",
+              "displayName": "随机森林",
+              "votes": 4,
+              "elo": 1216,
+              "rank": null,
+              "wilsonLower": 0.15,
+              "wilsonUpper": 0.85,
+              "warmingUp": true,
+              "text": "随机森林预热中4121615.0% – 85.0%"
+            },
+            {
+              "modelId": "fasttext",
+              "displayName": "fastText",
+              "votes": 4,
+              "elo": 1204,
+              "rank": null,
+              "wilsonLower": 0.0456,
+              "wilsonUpper": 0.6994,
+              "warmingUp": true,
+              "text": "fastText预热中412044.6% – 69.9%"
+            },
+            {
+              "modelId": "bert",
+              "displayName": "BERT",
+              "votes": 4,
+              "elo": 1186,
+              "rank": null,
+              "wilsonLower": 0,
+              "wilsonUpper": 0.4899,
+              "warmingUp": true,
+              "text": "BERT预热中411860.0% – 49.0%"
+            },
+            {
+              "modelId": "distill",
+              "displayName": "蒸馏模型",
+              "votes": 3,
+              "elo": 1220,
+              "rank": null,
+              "wilsonLower": 0.2077,
+              "wilsonUpper": 0.9385,
+              "warmingUp": true,
+              "text": "蒸馏模型预热中3122020.8% – 93.8%"
+            },
+            {
+              "modelId": "llm",
+              "displayName": "LLM",
+              "votes": 3,
+              "elo": 1174,
+              "rank": null,
+              "wilsonLower": 0,
+              "wilsonUpper": 0.5615,
+              "warmingUp": true,
+              "text": "LLM预热中311740.0% – 56.1%"
+            }
+          ],
+          "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+          "text": "HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。人类偏好投票榜（vote）模型票数EloWilson 95% 区间随机森林预热中4121615.0% – 85.0%fastText预热中412044.6% – 69.9%BERT预热中411860.0% – 49.0%蒸馏模型预热中3122020.8% – 93.8%LLM预热中311740.0% – 56.1%人类偏好投票强度，仅作演示参考；票数可被本机清除。"
+        },
+        "reducedMotion": false
+      }
+    },
+    "ready-ranking": {
+      "mockScenario": "ready",
+      "serverRequests": [
+        {
+          "ts": 1792629633138,
+          "method": "POST",
+          "path": "/api/v1/arena/vote",
+          "kind": "vote",
+          "body": {
+            "client_id": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7",
+            "item_id": "item_2_c99a055762bfcc79",
+            "anon_id": "an_a7bc2a2e4d1e"
+          },
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633138",
+            "selected": {
+              "model_id": "rf",
+              "display_name": "随机森林",
+              "pred_class": "finance"
+            },
+            "elo_after": 1224,
+            "games_applied": 4
+          }
+        },
+        {
+          "ts": 1792629633142,
+          "method": "GET",
+          "path": "/api/v1/arena/leaderboard",
+          "kind": "leaderboard",
+          "body": null,
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633142",
+            "status": "warming_up",
+            "data_kind": "vote",
+            "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+            "min_votes_for_ranking": 50,
+            "entries": [
+              {
+                "model_id": "rf",
+                "display_name": "随机森林",
+                "elo": 1224,
+                "votes": 5,
+                "wins": 3,
+                "losses": 2,
+                "win_rate": 0.6,
+                "wilson_lower": 0.2307,
+                "wilson_upper": 0.8824,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "fasttext",
+                "display_name": "fastText",
+                "elo": 1202,
+                "votes": 5,
+                "wins": 1,
+                "losses": 4,
+                "win_rate": 0.2,
+                "wilson_lower": 0.0362,
+                "wilson_upper": 0.6245,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "bert",
+                "display_name": "BERT",
+                "elo": 1184,
+                "votes": 5,
+                "wins": 0,
+                "losses": 5,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4345,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "distill",
+                "display_name": "蒸馏模型",
+                "elo": 1218,
+                "votes": 4,
+                "wins": 2,
+                "losses": 2,
+                "win_rate": 0.5,
+                "wilson_lower": 0.15,
+                "wilson_upper": 0.85,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "llm",
+                "display_name": "LLM",
+                "elo": 1172,
+                "votes": 4,
+                "wins": 0,
+                "losses": 4,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4899,
+                "warming_up": true,
+                "rank": null
+              }
+            ]
+          }
+        }
+      ],
+      "browserRequests": [
+        {
+          "ts": 1792629632767,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629632972,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629632991,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_f182d4fa9745bccd\",\"anon_id\":\"an_d5298cd35a04\"}"
+        },
+        {
+          "ts": 1792629632996,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633093,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629633125,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633134,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "method": "GET",
+          "type": "Other",
+          "postData": null
+        },
+        {
+          "ts": 1792629633139,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_2_c99a055762bfcc79\",\"anon_id\":\"an_a7bc2a2e4d1e\"}"
+        },
+        {
+          "ts": 1792629633146,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        }
+      ],
+      "browserResponses": [
+        {
+          "ts": 1792629632798,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629632965,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629632967,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629632975,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632992,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632997,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633098,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629633127,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633136,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "status": 404,
+          "mimeType": "text/plain"
+        },
+        {
+          "ts": 1792629633140,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633147,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        }
+      ],
+      "browserFailed": [],
+      "items": {
+        "item_1_83c46da79655d669": {
+          "item_id": "item_1_83c46da79655d669",
+          "title": "高校发布今年招生政策调整方案",
+          "candidates": [
+            {
+              "anon_id": "an_2888057091df",
+              "pred_class": "finance",
+              "latency_ms": 168,
+              "model_id": "bert",
+              "display_name": "BERT"
+            },
+            {
+              "anon_id": "an_13ba247259a8",
+              "pred_class": "finance",
+              "latency_ms": 185,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_8de89819a9cf",
+              "pred_class": "stocks",
+              "latency_ms": 288,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            },
+            {
+              "anon_id": "an_a3ba0b29779e",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            },
+            {
+              "anon_id": "an_9d1c72f39cb6",
+              "pred_class": "finance",
+              "latency_ms": 299,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            }
+          ]
+        }
+      },
+      "votes": {
+        "rf": {
+          "wins": 60,
+          "losses": 46,
+          "elo": 1216
+        },
+        "fasttext": {
+          "wins": 58,
+          "losses": 48,
+          "elo": 1204
+        },
+        "bert": {
+          "wins": 53,
+          "losses": 53,
+          "elo": 1196
+        },
+        "distill": {
+          "wins": 55,
+          "losses": 51,
+          "elo": 1210
+        },
+        "llm": {
+          "wins": 51,
+          "losses": 55,
+          "elo": 1174
+        }
+      },
+      "dom": {
+        "pageState": "revealed",
+        "cards": [
+          {
+            "letter": "A",
+            "anonId": "an_2888057091df",
+            "state": "revealed",
+            "revealedModelId": "bert",
+            "hasBackFace": true,
+            "text": "A匿名候选财经finance选择它你选择了BERTbert财经Elo 1196",
+            "animationName": "arena-flip-ae537aa6",
+            "animationDuration": "0.2s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "B",
+            "anonId": "an_13ba247259a8",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "B匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "C",
+            "anonId": "an_8de89819a9cf",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "C匿名候选股票stocks选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "D",
+            "anonId": "an_a3ba0b29779e",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "D匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "E",
+            "anonId": "an_9d1c72f39cb6",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "E匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          }
+        ],
+        "candidatesText": "A匿名候选财经finance选择它你选择了BERTbert财经Elo 1196B匿名候选财经finance选择它C匿名候选股票stocks选择它D匿名候选财经finance选择它E匿名候选财经finance选择它",
+        "bodyText": "PREFERENCE ARENA匿名投票，偏好可读。 从 5 个匿名结果里选出更像正确标签的一个， 投票后翻牌揭晓你选中的模型。 01匿名候选高校发布今年招生政策调整方案下一题 点击卡片投下偏好票；投票前不会显示任何模型名称。 A匿名候选财经finance选择它你选择了BERTbert财经Elo 1196B匿名候选财经finance选择它C匿名候选股票stocks选择它D匿名候选财经finance选择它E匿名候选财经finance选择它已揭晓：BERT（bert），预测类别 财经 同一题目每个客户端只计 1 票；单客户端每分钟最多 20 票。票数可被本机清除，仅作演示参考。 再抽一题 HUMAN PREFERENCE人类偏好榜已就绪 人类偏好投票强度，仅供演示参考 全部模型票数已达 50，显示正式名次。人类偏好投票榜（vote）名次模型票数EloWilson 95% 区间1随机森林106121647.1% – 65.6%2蒸馏模型106121042.5% – 61.2%3fastText106120445.2% – 63.9%4BERT106119640.6% – 59.4%5LLM106117438.8% – 57.5%人类偏好投票强度，仅作演示参考；票数可被本机清除。 i投票已记录，已揭晓你选择的模型。请求编号 mock-1792629627737 ×",
+        "toastMessages": [
+          "投票已记录，已揭晓你选择的模型。"
+        ],
+        "toastDetails": [
+          "请求编号 mock-1792629627737"
+        ],
+        "hasLoading": false,
+        "hasEmpty": false,
+        "emptyText": "",
+        "hasLoadError": false,
+        "loadErrorText": "",
+        "hasPartial": false,
+        "revealedNote": "已揭晓：BERT（bert），预测类别 财经",
+        "itemId": "item_1_83c46da79655d669",
+        "board": {
+          "present": true,
+          "status": "ready",
+          "available": "true",
+          "hasPlaceholder": false,
+          "hasError": false,
+          "loading": false,
+          "statusText": "已就绪",
+          "ruleText": "全部模型票数已达 50，显示正式名次。",
+          "disclaimer": "人类偏好投票强度，仅供演示参考",
+          "headers": [
+            "名次",
+            "模型",
+            "票数",
+            "Elo",
+            "Wilson 95% 区间"
+          ],
+          "rows": [
+            {
+              "modelId": "rf",
+              "displayName": "随机森林",
+              "votes": 106,
+              "elo": 1216,
+              "rank": "1",
+              "wilsonLower": 0.471,
+              "wilsonUpper": 0.6564,
+              "warmingUp": false,
+              "text": "1随机森林106121647.1% – 65.6%"
+            },
+            {
+              "modelId": "distill",
+              "displayName": "蒸馏模型",
+              "votes": 106,
+              "elo": 1210,
+              "rank": "2",
+              "wilsonLower": 0.4248,
+              "wilsonUpper": 0.6117,
+              "warmingUp": false,
+              "text": "2蒸馏模型106121042.5% – 61.2%"
+            },
+            {
+              "modelId": "fasttext",
+              "displayName": "fastText",
+              "votes": 106,
+              "elo": 1204,
+              "rank": "3",
+              "wilsonLower": 0.4524,
+              "wilsonUpper": 0.6386,
+              "warmingUp": false,
+              "text": "3fastText106120445.2% – 63.9%"
+            },
+            {
+              "modelId": "bert",
+              "displayName": "BERT",
+              "votes": 106,
+              "elo": 1196,
+              "rank": "4",
+              "wilsonLower": 0.4065,
+              "wilsonUpper": 0.5935,
+              "warmingUp": false,
+              "text": "4BERT106119640.6% – 59.4%"
+            },
+            {
+              "modelId": "llm",
+              "displayName": "LLM",
+              "votes": 106,
+              "elo": 1174,
+              "rank": "5",
+              "wilsonLower": 0.3883,
+              "wilsonUpper": 0.5752,
+              "warmingUp": false,
+              "text": "5LLM106117438.8% – 57.5%"
+            }
+          ],
+          "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+          "text": "HUMAN PREFERENCE人类偏好榜已就绪 人类偏好投票强度，仅供演示参考 全部模型票数已达 50，显示正式名次。人类偏好投票榜（vote）名次模型票数EloWilson 95% 区间1随机森林106121647.1% – 65.6%2蒸馏模型106121042.5% – 61.2%3fastText106120445.2% – 63.9%4BERT106119640.6% – 59.4%5LLM106117438.8% – 57.5%人类偏好投票强度，仅作演示参考；票数可被本机清除。"
+        },
+        "reducedMotion": false
+      }
+    },
+    "partial-candidates": {
+      "mockScenario": "partial",
+      "serverRequests": [
+        {
+          "ts": 1792629633138,
+          "method": "POST",
+          "path": "/api/v1/arena/vote",
+          "kind": "vote",
+          "body": {
+            "client_id": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7",
+            "item_id": "item_2_c99a055762bfcc79",
+            "anon_id": "an_a7bc2a2e4d1e"
+          },
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633138",
+            "selected": {
+              "model_id": "rf",
+              "display_name": "随机森林",
+              "pred_class": "finance"
+            },
+            "elo_after": 1224,
+            "games_applied": 4
+          }
+        },
+        {
+          "ts": 1792629633142,
+          "method": "GET",
+          "path": "/api/v1/arena/leaderboard",
+          "kind": "leaderboard",
+          "body": null,
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633142",
+            "status": "warming_up",
+            "data_kind": "vote",
+            "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+            "min_votes_for_ranking": 50,
+            "entries": [
+              {
+                "model_id": "rf",
+                "display_name": "随机森林",
+                "elo": 1224,
+                "votes": 5,
+                "wins": 3,
+                "losses": 2,
+                "win_rate": 0.6,
+                "wilson_lower": 0.2307,
+                "wilson_upper": 0.8824,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "fasttext",
+                "display_name": "fastText",
+                "elo": 1202,
+                "votes": 5,
+                "wins": 1,
+                "losses": 4,
+                "win_rate": 0.2,
+                "wilson_lower": 0.0362,
+                "wilson_upper": 0.6245,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "bert",
+                "display_name": "BERT",
+                "elo": 1184,
+                "votes": 5,
+                "wins": 0,
+                "losses": 5,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4345,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "distill",
+                "display_name": "蒸馏模型",
+                "elo": 1218,
+                "votes": 4,
+                "wins": 2,
+                "losses": 2,
+                "win_rate": 0.5,
+                "wilson_lower": 0.15,
+                "wilson_upper": 0.85,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "llm",
+                "display_name": "LLM",
+                "elo": 1172,
+                "votes": 4,
+                "wins": 0,
+                "losses": 4,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4899,
+                "warming_up": true,
+                "rank": null
+              }
+            ]
+          }
+        }
+      ],
+      "browserRequests": [
+        {
+          "ts": 1792629632767,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629632972,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629632991,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_f182d4fa9745bccd\",\"anon_id\":\"an_d5298cd35a04\"}"
+        },
+        {
+          "ts": 1792629632996,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633093,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629633125,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633134,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "method": "GET",
+          "type": "Other",
+          "postData": null
+        },
+        {
+          "ts": 1792629633139,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_2_c99a055762bfcc79\",\"anon_id\":\"an_a7bc2a2e4d1e\"}"
+        },
+        {
+          "ts": 1792629633146,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        }
+      ],
+      "browserResponses": [
+        {
+          "ts": 1792629632798,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629632965,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629632967,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629632975,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632992,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632997,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633098,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629633127,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633136,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "status": 404,
+          "mimeType": "text/plain"
+        },
+        {
+          "ts": 1792629633140,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633147,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        }
+      ],
+      "browserFailed": [],
+      "items": {
+        "item_1_2031186ec6502964": {
+          "item_id": "item_1_2031186ec6502964",
+          "title": "高校发布今年招生政策调整方案",
+          "candidates": [
+            {
+              "anon_id": "an_e00f57722c83",
+              "pred_class": "finance",
+              "latency_ms": 223,
+              "model_id": "bert",
+              "display_name": "BERT"
+            },
+            {
+              "anon_id": "an_c51a21086346",
+              "pred_class": "finance",
+              "latency_ms": 138,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_131d01840dd2",
+              "pred_class": "finance",
+              "latency_ms": 190,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            }
+          ]
+        }
+      },
+      "votes": {
+        "rf": {
+          "wins": 2,
+          "losses": 2,
+          "elo": 1216
+        },
+        "fasttext": {
+          "wins": 2,
+          "losses": 2,
+          "elo": 1214
+        },
+        "bert": {
+          "wins": 0,
+          "losses": 4,
+          "elo": 1186
+        },
+        "distill": {
+          "wins": 1,
+          "losses": 1,
+          "elo": 1212
+        },
+        "llm": {
+          "wins": 0,
+          "losses": 2,
+          "elo": 1176
+        }
+      },
+      "dom": {
+        "pageState": "revealed",
+        "cards": [
+          {
+            "letter": "A",
+            "anonId": "an_e00f57722c83",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "A匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "B",
+            "anonId": "an_c51a21086346",
+            "state": "revealed",
+            "revealedModelId": "fasttext",
+            "hasBackFace": true,
+            "text": "B匿名候选财经finance选择它你选择了fastTextfasttext财经Elo 1214",
+            "animationName": "arena-flip-ae537aa6",
+            "animationDuration": "0.2s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "C",
+            "anonId": "an_131d01840dd2",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "C匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          }
+        ],
+        "candidatesText": "A匿名候选财经finance选择它B匿名候选财经finance选择它你选择了fastTextfasttext财经Elo 1214C匿名候选财经finance选择它",
+        "bodyText": "PREFERENCE ARENA匿名投票，偏好可读。 从 5 个匿名结果里选出更像正确标签的一个， 投票后翻牌揭晓你选中的模型。 01匿名候选高校发布今年招生政策调整方案下一题~部分候选已返回部分模型结果缺失，仅展示可用候选；投票只作用于本次展示的匿名结果。A匿名候选财经finance选择它B匿名候选财经finance选择它你选择了fastTextfasttext财经Elo 1214C匿名候选财经finance选择它已揭晓：fastText（fasttext），预测类别 财经 同一题目每个客户端只计 1 票；单客户端每分钟最多 20 票。票数可被本机清除，仅作演示参考。 再抽一题 HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。人类偏好投票榜（vote）模型票数EloWilson 95% 区间随机森林预热中4121615.0% – 85.0%fastText预热中4121415.0% – 85.0%BERT预热中411860.0% – 49.0%蒸馏模型预热中212129.4% – 90.5%LLM预热中211760.0% – 65.8%人类偏好投票强度，仅作演示参考；票数可被本机清除。 i投票已记录，已揭晓你选择的模型。请求编号 mock-1792629628242 ×",
+        "toastMessages": [
+          "投票已记录，已揭晓你选择的模型。"
+        ],
+        "toastDetails": [
+          "请求编号 mock-1792629628242"
+        ],
+        "hasLoading": false,
+        "hasEmpty": false,
+        "emptyText": "",
+        "hasLoadError": false,
+        "loadErrorText": "",
+        "hasPartial": true,
+        "revealedNote": "已揭晓：fastText（fasttext），预测类别 财经",
+        "itemId": "item_1_2031186ec6502964",
+        "board": {
+          "present": true,
+          "status": "warming_up",
+          "available": "true",
+          "hasPlaceholder": false,
+          "hasError": false,
+          "loading": false,
+          "statusText": "预热中",
+          "ruleText": "票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。",
+          "disclaimer": "人类偏好投票强度，仅供演示参考",
+          "headers": [
+            "模型",
+            "票数",
+            "Elo",
+            "Wilson 95% 区间"
+          ],
+          "rows": [
+            {
+              "modelId": "rf",
+              "displayName": "随机森林",
+              "votes": 4,
+              "elo": 1216,
+              "rank": null,
+              "wilsonLower": 0.15,
+              "wilsonUpper": 0.85,
+              "warmingUp": true,
+              "text": "随机森林预热中4121615.0% – 85.0%"
+            },
+            {
+              "modelId": "fasttext",
+              "displayName": "fastText",
+              "votes": 4,
+              "elo": 1214,
+              "rank": null,
+              "wilsonLower": 0.15,
+              "wilsonUpper": 0.85,
+              "warmingUp": true,
+              "text": "fastText预热中4121415.0% – 85.0%"
+            },
+            {
+              "modelId": "bert",
+              "displayName": "BERT",
+              "votes": 4,
+              "elo": 1186,
+              "rank": null,
+              "wilsonLower": 0,
+              "wilsonUpper": 0.4899,
+              "warmingUp": true,
+              "text": "BERT预热中411860.0% – 49.0%"
+            },
+            {
+              "modelId": "distill",
+              "displayName": "蒸馏模型",
+              "votes": 2,
+              "elo": 1212,
+              "rank": null,
+              "wilsonLower": 0.0945,
+              "wilsonUpper": 0.9055,
+              "warmingUp": true,
+              "text": "蒸馏模型预热中212129.4% – 90.5%"
+            },
+            {
+              "modelId": "llm",
+              "displayName": "LLM",
+              "votes": 2,
+              "elo": 1176,
+              "rank": null,
+              "wilsonLower": 0,
+              "wilsonUpper": 0.6576,
+              "warmingUp": true,
+              "text": "LLM预热中211760.0% – 65.8%"
+            }
+          ],
+          "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+          "text": "HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。人类偏好投票榜（vote）模型票数EloWilson 95% 区间随机森林预热中4121615.0% – 85.0%fastText预热中4121415.0% – 85.0%BERT预热中411860.0% – 49.0%蒸馏模型预热中212129.4% – 90.5%LLM预热中211760.0% – 65.8%人类偏好投票强度，仅作演示参考；票数可被本机清除。"
+        },
+        "reducedMotion": false
+      }
+    },
+    "duplicate-vote": {
+      "mockScenario": "duplicate",
+      "serverRequests": [
+        {
+          "ts": 1792629633138,
+          "method": "POST",
+          "path": "/api/v1/arena/vote",
+          "kind": "vote",
+          "body": {
+            "client_id": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7",
+            "item_id": "item_2_c99a055762bfcc79",
+            "anon_id": "an_a7bc2a2e4d1e"
+          },
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633138",
+            "selected": {
+              "model_id": "rf",
+              "display_name": "随机森林",
+              "pred_class": "finance"
+            },
+            "elo_after": 1224,
+            "games_applied": 4
+          }
+        },
+        {
+          "ts": 1792629633142,
+          "method": "GET",
+          "path": "/api/v1/arena/leaderboard",
+          "kind": "leaderboard",
+          "body": null,
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633142",
+            "status": "warming_up",
+            "data_kind": "vote",
+            "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+            "min_votes_for_ranking": 50,
+            "entries": [
+              {
+                "model_id": "rf",
+                "display_name": "随机森林",
+                "elo": 1224,
+                "votes": 5,
+                "wins": 3,
+                "losses": 2,
+                "win_rate": 0.6,
+                "wilson_lower": 0.2307,
+                "wilson_upper": 0.8824,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "fasttext",
+                "display_name": "fastText",
+                "elo": 1202,
+                "votes": 5,
+                "wins": 1,
+                "losses": 4,
+                "win_rate": 0.2,
+                "wilson_lower": 0.0362,
+                "wilson_upper": 0.6245,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "bert",
+                "display_name": "BERT",
+                "elo": 1184,
+                "votes": 5,
+                "wins": 0,
+                "losses": 5,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4345,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "distill",
+                "display_name": "蒸馏模型",
+                "elo": 1218,
+                "votes": 4,
+                "wins": 2,
+                "losses": 2,
+                "win_rate": 0.5,
+                "wilson_lower": 0.15,
+                "wilson_upper": 0.85,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "llm",
+                "display_name": "LLM",
+                "elo": 1172,
+                "votes": 4,
+                "wins": 0,
+                "losses": 4,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4899,
+                "warming_up": true,
+                "rank": null
+              }
+            ]
+          }
+        }
+      ],
+      "browserRequests": [
+        {
+          "ts": 1792629632767,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629632972,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629632991,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_f182d4fa9745bccd\",\"anon_id\":\"an_d5298cd35a04\"}"
+        },
+        {
+          "ts": 1792629632996,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633093,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629633125,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633134,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "method": "GET",
+          "type": "Other",
+          "postData": null
+        },
+        {
+          "ts": 1792629633139,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_2_c99a055762bfcc79\",\"anon_id\":\"an_a7bc2a2e4d1e\"}"
+        },
+        {
+          "ts": 1792629633146,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        }
+      ],
+      "browserResponses": [
+        {
+          "ts": 1792629632798,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629632965,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629632967,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629632975,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632992,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632997,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633098,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629633127,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633136,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "status": 404,
+          "mimeType": "text/plain"
+        },
+        {
+          "ts": 1792629633140,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633147,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        }
+      ],
+      "browserFailed": [],
+      "items": {
+        "item_1_a6b3a974cd4e959b": {
+          "item_id": "item_1_a6b3a974cd4e959b",
+          "title": "高校发布今年招生政策调整方案",
+          "candidates": [
+            {
+              "anon_id": "an_96317200a201",
+              "pred_class": "finance",
+              "latency_ms": 327,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_fbd2d99c05f4",
+              "pred_class": "finance",
+              "latency_ms": 244,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            },
+            {
+              "anon_id": "an_501f6bb6f47a",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            },
+            {
+              "anon_id": "an_d0c87206e4b1",
+              "pred_class": "stocks",
+              "latency_ms": 154,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            },
+            {
+              "anon_id": "an_da13b09d929d",
+              "pred_class": "finance",
+              "latency_ms": 143,
+              "model_id": "bert",
+              "display_name": "BERT"
+            }
+          ]
+        }
+      },
+      "votes": {
+        "rf": {
+          "wins": 2,
+          "losses": 1,
+          "elo": 1218
+        },
+        "fasttext": {
+          "wins": 1,
+          "losses": 2,
+          "elo": 1206
+        },
+        "bert": {
+          "wins": 0,
+          "losses": 3,
+          "elo": 1188
+        },
+        "distill": {
+          "wins": 1,
+          "losses": 1,
+          "elo": 1212
+        },
+        "llm": {
+          "wins": 0,
+          "losses": 2,
+          "elo": 1176
+        }
+      },
+      "dom": {
+        "pageState": "ready",
+        "cards": [
+          {
+            "letter": "A",
+            "anonId": "an_96317200a201",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "A匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "B",
+            "anonId": "an_fbd2d99c05f4",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "B匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "C",
+            "anonId": "an_501f6bb6f47a",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "C匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "D",
+            "anonId": "an_d0c87206e4b1",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "D匿名候选股票stocks选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "E",
+            "anonId": "an_da13b09d929d",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "E匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          }
+        ],
+        "candidatesText": "A匿名候选财经finance选择它B匿名候选财经finance选择它C匿名候选财经finance选择它D匿名候选股票stocks选择它E匿名候选财经finance选择它",
+        "bodyText": "PREFERENCE ARENA匿名投票，偏好可读。 从 5 个匿名结果里选出更像正确标签的一个， 投票后翻牌揭晓你选中的模型。 01匿名候选高校发布今年招生政策调整方案换一题 点击卡片投下偏好票；投票前不会显示任何模型名称。 A匿名候选财经finance选择它B匿名候选财经finance选择它C匿名候选财经finance选择它D匿名候选股票stocks选择它E匿名候选财经finance选择它 同一题目每个客户端只计 1 票；单客户端每分钟最多 20 票。票数可被本机清除，仅作演示参考。 HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 i投票后展示人类偏好榜Elo 与票数全部来自真实投票记录；票数不足 50 时只显示「预热中」与 Wilson 95% 区间，不显示名次。 !你已经对这道题投过票了。同一道题每个客户端只计 1 票；可以换一题继续。请求编号 mock-1792629628953 ×",
+        "toastMessages": [
+          "你已经对这道题投过票了。"
+        ],
+        "toastDetails": [
+          "同一道题每个客户端只计 1 票；可以换一题继续。",
+          "请求编号 mock-1792629628953"
+        ],
+        "hasLoading": false,
+        "hasEmpty": false,
+        "emptyText": "",
+        "hasLoadError": false,
+        "loadErrorText": "",
+        "hasPartial": false,
+        "revealedNote": "",
+        "itemId": "item_1_a6b3a974cd4e959b",
+        "board": {
+          "present": true,
+          "status": "idle",
+          "available": "false",
+          "hasPlaceholder": true,
+          "hasError": false,
+          "loading": false,
+          "statusText": "预热中",
+          "ruleText": "",
+          "disclaimer": "人类偏好投票强度，仅供演示参考",
+          "headers": [],
+          "rows": [],
+          "note": "",
+          "text": "HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 i投票后展示人类偏好榜Elo 与票数全部来自真实投票记录；票数不足 50 时只显示「预热中」与 Wilson 95% 区间，不显示名次。"
+        },
+        "reducedMotion": false
+      }
+    },
+    "rate-limited": {
+      "mockScenario": "rate-limited",
+      "serverRequests": [
+        {
+          "ts": 1792629633138,
+          "method": "POST",
+          "path": "/api/v1/arena/vote",
+          "kind": "vote",
+          "body": {
+            "client_id": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7",
+            "item_id": "item_2_c99a055762bfcc79",
+            "anon_id": "an_a7bc2a2e4d1e"
+          },
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633138",
+            "selected": {
+              "model_id": "rf",
+              "display_name": "随机森林",
+              "pred_class": "finance"
+            },
+            "elo_after": 1224,
+            "games_applied": 4
+          }
+        },
+        {
+          "ts": 1792629633142,
+          "method": "GET",
+          "path": "/api/v1/arena/leaderboard",
+          "kind": "leaderboard",
+          "body": null,
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633142",
+            "status": "warming_up",
+            "data_kind": "vote",
+            "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+            "min_votes_for_ranking": 50,
+            "entries": [
+              {
+                "model_id": "rf",
+                "display_name": "随机森林",
+                "elo": 1224,
+                "votes": 5,
+                "wins": 3,
+                "losses": 2,
+                "win_rate": 0.6,
+                "wilson_lower": 0.2307,
+                "wilson_upper": 0.8824,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "fasttext",
+                "display_name": "fastText",
+                "elo": 1202,
+                "votes": 5,
+                "wins": 1,
+                "losses": 4,
+                "win_rate": 0.2,
+                "wilson_lower": 0.0362,
+                "wilson_upper": 0.6245,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "bert",
+                "display_name": "BERT",
+                "elo": 1184,
+                "votes": 5,
+                "wins": 0,
+                "losses": 5,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4345,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "distill",
+                "display_name": "蒸馏模型",
+                "elo": 1218,
+                "votes": 4,
+                "wins": 2,
+                "losses": 2,
+                "win_rate": 0.5,
+                "wilson_lower": 0.15,
+                "wilson_upper": 0.85,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "llm",
+                "display_name": "LLM",
+                "elo": 1172,
+                "votes": 4,
+                "wins": 0,
+                "losses": 4,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4899,
+                "warming_up": true,
+                "rank": null
+              }
+            ]
+          }
+        }
+      ],
+      "browserRequests": [
+        {
+          "ts": 1792629632767,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629632972,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629632991,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_f182d4fa9745bccd\",\"anon_id\":\"an_d5298cd35a04\"}"
+        },
+        {
+          "ts": 1792629632996,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633093,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629633125,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633134,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "method": "GET",
+          "type": "Other",
+          "postData": null
+        },
+        {
+          "ts": 1792629633139,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_2_c99a055762bfcc79\",\"anon_id\":\"an_a7bc2a2e4d1e\"}"
+        },
+        {
+          "ts": 1792629633146,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        }
+      ],
+      "browserResponses": [
+        {
+          "ts": 1792629632798,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629632965,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629632967,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629632975,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632992,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632997,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633098,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629633127,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633136,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "status": 404,
+          "mimeType": "text/plain"
+        },
+        {
+          "ts": 1792629633140,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633147,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        }
+      ],
+      "browserFailed": [],
+      "items": {
+        "item_1_c690bf0a5407a982": {
+          "item_id": "item_1_c690bf0a5407a982",
+          "title": "高校发布今年招生政策调整方案",
+          "candidates": [
+            {
+              "anon_id": "an_820a8ac9cfee",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            },
+            {
+              "anon_id": "an_09dce6793efd",
+              "pred_class": "stocks",
+              "latency_ms": 184,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            },
+            {
+              "anon_id": "an_7fbb1b95166d",
+              "pred_class": "finance",
+              "latency_ms": 313,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            },
+            {
+              "anon_id": "an_bf137234d53d",
+              "pred_class": "finance",
+              "latency_ms": 211,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_cbcd5700aa74",
+              "pred_class": "finance",
+              "latency_ms": 167,
+              "model_id": "bert",
+              "display_name": "BERT"
+            }
+          ]
+        }
+      },
+      "votes": {
+        "rf": {
+          "wins": 2,
+          "losses": 1,
+          "elo": 1218
+        },
+        "fasttext": {
+          "wins": 1,
+          "losses": 2,
+          "elo": 1206
+        },
+        "bert": {
+          "wins": 0,
+          "losses": 3,
+          "elo": 1188
+        },
+        "distill": {
+          "wins": 1,
+          "losses": 1,
+          "elo": 1212
+        },
+        "llm": {
+          "wins": 0,
+          "losses": 2,
+          "elo": 1176
+        }
+      },
+      "dom": {
+        "pageState": "ready",
+        "cards": [
+          {
+            "letter": "A",
+            "anonId": "an_820a8ac9cfee",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "A匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "B",
+            "anonId": "an_09dce6793efd",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "B匿名候选股票stocks选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "C",
+            "anonId": "an_7fbb1b95166d",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "C匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "D",
+            "anonId": "an_bf137234d53d",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "D匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "E",
+            "anonId": "an_cbcd5700aa74",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "E匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          }
+        ],
+        "candidatesText": "A匿名候选财经finance选择它B匿名候选股票stocks选择它C匿名候选财经finance选择它D匿名候选财经finance选择它E匿名候选财经finance选择它",
+        "bodyText": "PREFERENCE ARENA匿名投票，偏好可读。 从 5 个匿名结果里选出更像正确标签的一个， 投票后翻牌揭晓你选中的模型。 01匿名候选高校发布今年招生政策调整方案换一题 点击卡片投下偏好票；投票前不会显示任何模型名称。 A匿名候选财经finance选择它B匿名候选股票stocks选择它C匿名候选财经finance选择它D匿名候选财经finance选择它E匿名候选财经finance选择它 同一题目每个客户端只计 1 票；单客户端每分钟最多 20 票。票数可被本机清除，仅作演示参考。 HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 i投票后展示人类偏好榜Elo 与票数全部来自真实投票记录；票数不足 50 时只显示「预热中」与 Wilson 95% 区间，不显示名次。 !投票太快了，请稍后再试。单客户端每分钟最多 20 票，请稍后再试。请求编号 mock-1792629629587 ×",
+        "toastMessages": [
+          "投票太快了，请稍后再试。"
+        ],
+        "toastDetails": [
+          "单客户端每分钟最多 20 票，请稍后再试。",
+          "请求编号 mock-1792629629587"
+        ],
+        "hasLoading": false,
+        "hasEmpty": false,
+        "emptyText": "",
+        "hasLoadError": false,
+        "loadErrorText": "",
+        "hasPartial": false,
+        "revealedNote": "",
+        "itemId": "item_1_c690bf0a5407a982",
+        "board": {
+          "present": true,
+          "status": "idle",
+          "available": "false",
+          "hasPlaceholder": true,
+          "hasError": false,
+          "loading": false,
+          "statusText": "预热中",
+          "ruleText": "",
+          "disclaimer": "人类偏好投票强度，仅供演示参考",
+          "headers": [],
+          "rows": [],
+          "note": "",
+          "text": "HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 i投票后展示人类偏好榜Elo 与票数全部来自真实投票记录；票数不足 50 时只显示「预热中」与 Wilson 95% 区间，不显示名次。"
+        },
+        "reducedMotion": false
+      }
+    },
+    "network-error": {
+      "mockScenario": "network",
+      "serverRequests": [
+        {
+          "ts": 1792629633138,
+          "method": "POST",
+          "path": "/api/v1/arena/vote",
+          "kind": "vote",
+          "body": {
+            "client_id": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7",
+            "item_id": "item_2_c99a055762bfcc79",
+            "anon_id": "an_a7bc2a2e4d1e"
+          },
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633138",
+            "selected": {
+              "model_id": "rf",
+              "display_name": "随机森林",
+              "pred_class": "finance"
+            },
+            "elo_after": 1224,
+            "games_applied": 4
+          }
+        },
+        {
+          "ts": 1792629633142,
+          "method": "GET",
+          "path": "/api/v1/arena/leaderboard",
+          "kind": "leaderboard",
+          "body": null,
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633142",
+            "status": "warming_up",
+            "data_kind": "vote",
+            "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+            "min_votes_for_ranking": 50,
+            "entries": [
+              {
+                "model_id": "rf",
+                "display_name": "随机森林",
+                "elo": 1224,
+                "votes": 5,
+                "wins": 3,
+                "losses": 2,
+                "win_rate": 0.6,
+                "wilson_lower": 0.2307,
+                "wilson_upper": 0.8824,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "fasttext",
+                "display_name": "fastText",
+                "elo": 1202,
+                "votes": 5,
+                "wins": 1,
+                "losses": 4,
+                "win_rate": 0.2,
+                "wilson_lower": 0.0362,
+                "wilson_upper": 0.6245,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "bert",
+                "display_name": "BERT",
+                "elo": 1184,
+                "votes": 5,
+                "wins": 0,
+                "losses": 5,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4345,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "distill",
+                "display_name": "蒸馏模型",
+                "elo": 1218,
+                "votes": 4,
+                "wins": 2,
+                "losses": 2,
+                "win_rate": 0.5,
+                "wilson_lower": 0.15,
+                "wilson_upper": 0.85,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "llm",
+                "display_name": "LLM",
+                "elo": 1172,
+                "votes": 4,
+                "wins": 0,
+                "losses": 4,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4899,
+                "warming_up": true,
+                "rank": null
+              }
+            ]
+          }
+        }
+      ],
+      "browserRequests": [
+        {
+          "ts": 1792629632767,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629632972,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629632991,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_f182d4fa9745bccd\",\"anon_id\":\"an_d5298cd35a04\"}"
+        },
+        {
+          "ts": 1792629632996,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633093,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629633125,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633134,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "method": "GET",
+          "type": "Other",
+          "postData": null
+        },
+        {
+          "ts": 1792629633139,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_2_c99a055762bfcc79\",\"anon_id\":\"an_a7bc2a2e4d1e\"}"
+        },
+        {
+          "ts": 1792629633146,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        }
+      ],
+      "browserResponses": [
+        {
+          "ts": 1792629632798,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629632965,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629632967,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629632975,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632992,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632997,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633098,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629633127,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633136,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "status": 404,
+          "mimeType": "text/plain"
+        },
+        {
+          "ts": 1792629633140,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633147,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        }
+      ],
+      "browserFailed": [],
+      "items": {
+        "item_1_c44eeafc4360fedf": {
+          "item_id": "item_1_c44eeafc4360fedf",
+          "title": "高校发布今年招生政策调整方案",
+          "candidates": [
+            {
+              "anon_id": "an_58a6d5f74d77",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            },
+            {
+              "anon_id": "an_ee37de0b26c9",
+              "pred_class": "finance",
+              "latency_ms": 194,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_d553cfc77f8f",
+              "pred_class": "stocks",
+              "latency_ms": 341,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            },
+            {
+              "anon_id": "an_47a7a9bee41a",
+              "pred_class": "finance",
+              "latency_ms": 134,
+              "model_id": "bert",
+              "display_name": "BERT"
+            },
+            {
+              "anon_id": "an_7acec46a84b8",
+              "pred_class": "finance",
+              "latency_ms": 350,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            }
+          ]
+        }
+      },
+      "votes": {
+        "rf": {
+          "wins": 2,
+          "losses": 1,
+          "elo": 1218
+        },
+        "fasttext": {
+          "wins": 1,
+          "losses": 2,
+          "elo": 1206
+        },
+        "bert": {
+          "wins": 0,
+          "losses": 3,
+          "elo": 1188
+        },
+        "distill": {
+          "wins": 1,
+          "losses": 1,
+          "elo": 1212
+        },
+        "llm": {
+          "wins": 0,
+          "losses": 2,
+          "elo": 1176
+        }
+      },
+      "dom": {
+        "pageState": "ready",
+        "cards": [
+          {
+            "letter": "A",
+            "anonId": "an_58a6d5f74d77",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "A匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "B",
+            "anonId": "an_ee37de0b26c9",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "B匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "C",
+            "anonId": "an_d553cfc77f8f",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "C匿名候选股票stocks选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "D",
+            "anonId": "an_47a7a9bee41a",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "D匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          },
+          {
+            "letter": "E",
+            "anonId": "an_7acec46a84b8",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "E匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": false
+          }
+        ],
+        "candidatesText": "A匿名候选财经finance选择它B匿名候选财经finance选择它C匿名候选股票stocks选择它D匿名候选财经finance选择它E匿名候选财经finance选择它",
+        "bodyText": "PREFERENCE ARENA匿名投票，偏好可读。 从 5 个匿名结果里选出更像正确标签的一个， 投票后翻牌揭晓你选中的模型。 01匿名候选高校发布今年招生政策调整方案换一题 点击卡片投下偏好票；投票前不会显示任何模型名称。 A匿名候选财经finance选择它B匿名候选财经finance选择它C匿名候选股票stocks选择它D匿名候选财经finance选择它E匿名候选财经finance选择它 同一题目每个客户端只计 1 票；单客户端每分钟最多 20 票。票数可被本机清除，仅作演示参考。 HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 i投票后展示人类偏好榜Elo 与票数全部来自真实投票记录；票数不足 50 时只显示「预热中」与 Wilson 95% 区间，不显示名次。 !无法连接分类服务，请确认后端已启动。 ×",
+        "toastMessages": [
+          "无法连接分类服务，请确认后端已启动。"
+        ],
+        "toastDetails": [],
+        "hasLoading": false,
+        "hasEmpty": false,
+        "emptyText": "",
+        "hasLoadError": false,
+        "loadErrorText": "",
+        "hasPartial": false,
+        "revealedNote": "",
+        "itemId": "item_1_c44eeafc4360fedf",
+        "board": {
+          "present": true,
+          "status": "idle",
+          "available": "false",
+          "hasPlaceholder": true,
+          "hasError": false,
+          "loading": false,
+          "statusText": "预热中",
+          "ruleText": "",
+          "disclaimer": "人类偏好投票强度，仅供演示参考",
+          "headers": [],
+          "rows": [],
+          "note": "",
+          "text": "HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 i投票后展示人类偏好榜Elo 与票数全部来自真实投票记录；票数不足 50 时只显示「预热中」与 Wilson 95% 区间，不显示名次。"
+        },
+        "reducedMotion": false
+      }
+    },
+    "empty-bank": {
+      "mockScenario": "normal",
+      "serverRequests": [
+        {
+          "ts": 1792629633138,
+          "method": "POST",
+          "path": "/api/v1/arena/vote",
+          "kind": "vote",
+          "body": {
+            "client_id": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7",
+            "item_id": "item_2_c99a055762bfcc79",
+            "anon_id": "an_a7bc2a2e4d1e"
+          },
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633138",
+            "selected": {
+              "model_id": "rf",
+              "display_name": "随机森林",
+              "pred_class": "finance"
+            },
+            "elo_after": 1224,
+            "games_applied": 4
+          }
+        },
+        {
+          "ts": 1792629633142,
+          "method": "GET",
+          "path": "/api/v1/arena/leaderboard",
+          "kind": "leaderboard",
+          "body": null,
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633142",
+            "status": "warming_up",
+            "data_kind": "vote",
+            "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+            "min_votes_for_ranking": 50,
+            "entries": [
+              {
+                "model_id": "rf",
+                "display_name": "随机森林",
+                "elo": 1224,
+                "votes": 5,
+                "wins": 3,
+                "losses": 2,
+                "win_rate": 0.6,
+                "wilson_lower": 0.2307,
+                "wilson_upper": 0.8824,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "fasttext",
+                "display_name": "fastText",
+                "elo": 1202,
+                "votes": 5,
+                "wins": 1,
+                "losses": 4,
+                "win_rate": 0.2,
+                "wilson_lower": 0.0362,
+                "wilson_upper": 0.6245,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "bert",
+                "display_name": "BERT",
+                "elo": 1184,
+                "votes": 5,
+                "wins": 0,
+                "losses": 5,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4345,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "distill",
+                "display_name": "蒸馏模型",
+                "elo": 1218,
+                "votes": 4,
+                "wins": 2,
+                "losses": 2,
+                "win_rate": 0.5,
+                "wilson_lower": 0.15,
+                "wilson_upper": 0.85,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "llm",
+                "display_name": "LLM",
+                "elo": 1172,
+                "votes": 4,
+                "wins": 0,
+                "losses": 4,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4899,
+                "warming_up": true,
+                "rank": null
+              }
+            ]
+          }
+        }
+      ],
+      "browserRequests": [
+        {
+          "ts": 1792629632767,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629632972,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629632991,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_f182d4fa9745bccd\",\"anon_id\":\"an_d5298cd35a04\"}"
+        },
+        {
+          "ts": 1792629632996,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633093,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629633125,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633134,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "method": "GET",
+          "type": "Other",
+          "postData": null
+        },
+        {
+          "ts": 1792629633139,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_2_c99a055762bfcc79\",\"anon_id\":\"an_a7bc2a2e4d1e\"}"
+        },
+        {
+          "ts": 1792629633146,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        }
+      ],
+      "browserResponses": [
+        {
+          "ts": 1792629632798,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629632965,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629632967,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629632975,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632992,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632997,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633098,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629633127,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633136,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "status": 404,
+          "mimeType": "text/plain"
+        },
+        {
+          "ts": 1792629633140,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633147,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        }
+      ],
+      "browserFailed": [],
+      "items": {
+        "item_1_e6a0619781f10e5a": {
+          "item_id": "item_1_e6a0619781f10e5a",
+          "title": "高校发布今年招生政策调整方案",
+          "candidates": [
+            {
+              "anon_id": "an_87f5d95c2938",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            },
+            {
+              "anon_id": "an_8dfd0b5f5709",
+              "pred_class": "stocks",
+              "latency_ms": 329,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            },
+            {
+              "anon_id": "an_46fb21e7f327",
+              "pred_class": "finance",
+              "latency_ms": 213,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            },
+            {
+              "anon_id": "an_b4457fefff7f",
+              "pred_class": "finance",
+              "latency_ms": 145,
+              "model_id": "bert",
+              "display_name": "BERT"
+            },
+            {
+              "anon_id": "an_c871488f72bf",
+              "pred_class": "finance",
+              "latency_ms": 132,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            }
+          ]
+        }
+      },
+      "votes": {
+        "rf": {
+          "wins": 2,
+          "losses": 1,
+          "elo": 1218
+        },
+        "fasttext": {
+          "wins": 1,
+          "losses": 2,
+          "elo": 1206
+        },
+        "bert": {
+          "wins": 0,
+          "losses": 3,
+          "elo": 1188
+        },
+        "distill": {
+          "wins": 1,
+          "losses": 1,
+          "elo": 1212
+        },
+        "llm": {
+          "wins": 0,
+          "losses": 2,
+          "elo": 1176
+        }
+      },
+      "dom": {
+        "pageState": "empty",
+        "cards": [],
+        "candidatesText": "",
+        "bodyText": "PREFERENCE ARENA匿名投票，偏好可读。 从 5 个匿名结果里选出更像正确标签的一个， 投票后翻牌揭晓你选中的模型。 01匿名候选换一题-暂无可用题目竞技场题库为空或题目文件不可用；可重新抽取或稍后再试。 重新抽取 HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 i投票后展示人类偏好榜Elo 与票数全部来自真实投票记录；票数不足 50 时只显示「预热中」与 Wilson 95% 区间，不显示名次。",
+        "toastMessages": [],
+        "toastDetails": [],
+        "hasLoading": false,
+        "hasEmpty": true,
+        "emptyText": "-暂无可用题目竞技场题库为空或题目文件不可用；可重新抽取或稍后再试。",
+        "hasLoadError": false,
+        "loadErrorText": "",
+        "hasPartial": false,
+        "revealedNote": "",
+        "itemId": null,
+        "board": {
+          "present": true,
+          "status": "idle",
+          "available": "false",
+          "hasPlaceholder": true,
+          "hasError": false,
+          "loading": false,
+          "statusText": "预热中",
+          "ruleText": "",
+          "disclaimer": "人类偏好投票强度，仅供演示参考",
+          "headers": [],
+          "rows": [],
+          "note": "",
+          "text": "HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 i投票后展示人类偏好榜Elo 与票数全部来自真实投票记录；票数不足 50 时只显示「预热中」与 Wilson 95% 区间，不显示名次。"
+        },
+        "reducedMotion": false
+      }
+    },
+    "reduced-motion": {
+      "mockScenario": "normal",
+      "serverRequests": [
+        {
+          "ts": 1792629633138,
+          "method": "POST",
+          "path": "/api/v1/arena/vote",
+          "kind": "vote",
+          "body": {
+            "client_id": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7",
+            "item_id": "item_2_c99a055762bfcc79",
+            "anon_id": "an_a7bc2a2e4d1e"
+          },
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633138",
+            "selected": {
+              "model_id": "rf",
+              "display_name": "随机森林",
+              "pred_class": "finance"
+            },
+            "elo_after": 1224,
+            "games_applied": 4
+          }
+        },
+        {
+          "ts": 1792629633142,
+          "method": "GET",
+          "path": "/api/v1/arena/leaderboard",
+          "kind": "leaderboard",
+          "body": null,
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633142",
+            "status": "warming_up",
+            "data_kind": "vote",
+            "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+            "min_votes_for_ranking": 50,
+            "entries": [
+              {
+                "model_id": "rf",
+                "display_name": "随机森林",
+                "elo": 1224,
+                "votes": 5,
+                "wins": 3,
+                "losses": 2,
+                "win_rate": 0.6,
+                "wilson_lower": 0.2307,
+                "wilson_upper": 0.8824,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "fasttext",
+                "display_name": "fastText",
+                "elo": 1202,
+                "votes": 5,
+                "wins": 1,
+                "losses": 4,
+                "win_rate": 0.2,
+                "wilson_lower": 0.0362,
+                "wilson_upper": 0.6245,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "bert",
+                "display_name": "BERT",
+                "elo": 1184,
+                "votes": 5,
+                "wins": 0,
+                "losses": 5,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4345,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "distill",
+                "display_name": "蒸馏模型",
+                "elo": 1218,
+                "votes": 4,
+                "wins": 2,
+                "losses": 2,
+                "win_rate": 0.5,
+                "wilson_lower": 0.15,
+                "wilson_upper": 0.85,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "llm",
+                "display_name": "LLM",
+                "elo": 1172,
+                "votes": 4,
+                "wins": 0,
+                "losses": 4,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4899,
+                "warming_up": true,
+                "rank": null
+              }
+            ]
+          }
+        }
+      ],
+      "browserRequests": [
+        {
+          "ts": 1792629632767,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629632972,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629632991,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_f182d4fa9745bccd\",\"anon_id\":\"an_d5298cd35a04\"}"
+        },
+        {
+          "ts": 1792629632996,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633093,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629633125,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633134,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "method": "GET",
+          "type": "Other",
+          "postData": null
+        },
+        {
+          "ts": 1792629633139,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_2_c99a055762bfcc79\",\"anon_id\":\"an_a7bc2a2e4d1e\"}"
+        },
+        {
+          "ts": 1792629633146,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        }
+      ],
+      "browserResponses": [
+        {
+          "ts": 1792629632798,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629632965,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629632967,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629632975,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632992,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632997,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633098,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629633127,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633136,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "status": 404,
+          "mimeType": "text/plain"
+        },
+        {
+          "ts": 1792629633140,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633147,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        }
+      ],
+      "browserFailed": [],
+      "items": {
+        "item_1_86e77d8501fb11b1": {
+          "item_id": "item_1_86e77d8501fb11b1",
+          "title": "高校发布今年招生政策调整方案",
+          "candidates": [
+            {
+              "anon_id": "an_2896420ab66d",
+              "pred_class": "finance",
+              "latency_ms": 307,
+              "model_id": "bert",
+              "display_name": "BERT"
+            },
+            {
+              "anon_id": "an_b491ba6d24f5",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            },
+            {
+              "anon_id": "an_9ba3bf3aa3ca",
+              "pred_class": "finance",
+              "latency_ms": 143,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            },
+            {
+              "anon_id": "an_39215a95a8c9",
+              "pred_class": "finance",
+              "latency_ms": 234,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_fc7b8347faa4",
+              "pred_class": "stocks",
+              "latency_ms": 330,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            }
+          ]
+        }
+      },
+      "votes": {
+        "rf": {
+          "wins": 2,
+          "losses": 2,
+          "elo": 1216
+        },
+        "fasttext": {
+          "wins": 1,
+          "losses": 3,
+          "elo": 1204
+        },
+        "bert": {
+          "wins": 1,
+          "losses": 3,
+          "elo": 1196
+        },
+        "distill": {
+          "wins": 1,
+          "losses": 2,
+          "elo": 1210
+        },
+        "llm": {
+          "wins": 0,
+          "losses": 3,
+          "elo": 1174
+        }
+      },
+      "dom": {
+        "pageState": "revealed",
+        "cards": [
+          {
+            "letter": "A",
+            "anonId": "an_2896420ab66d",
+            "state": "revealed",
+            "revealedModelId": "bert",
+            "hasBackFace": true,
+            "text": "A匿名候选财经finance选择它你选择了BERTbert财经Elo 1196",
+            "animationName": "none",
+            "animationDuration": "1e-05s",
+            "transitionDuration": "1e-05s",
+            "disabled": true
+          },
+          {
+            "letter": "B",
+            "anonId": "an_b491ba6d24f5",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "B匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "1e-05s",
+            "transitionDuration": "1e-05s",
+            "disabled": true
+          },
+          {
+            "letter": "C",
+            "anonId": "an_9ba3bf3aa3ca",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "C匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "1e-05s",
+            "transitionDuration": "1e-05s",
+            "disabled": true
+          },
+          {
+            "letter": "D",
+            "anonId": "an_39215a95a8c9",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "D匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "1e-05s",
+            "transitionDuration": "1e-05s",
+            "disabled": true
+          },
+          {
+            "letter": "E",
+            "anonId": "an_fc7b8347faa4",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "E匿名候选股票stocks选择它",
+            "animationName": "none",
+            "animationDuration": "1e-05s",
+            "transitionDuration": "1e-05s",
+            "disabled": true
+          }
+        ],
+        "candidatesText": "A匿名候选财经finance选择它你选择了BERTbert财经Elo 1196B匿名候选财经finance选择它C匿名候选财经finance选择它D匿名候选财经finance选择它E匿名候选股票stocks选择它",
+        "bodyText": "PREFERENCE ARENA匿名投票，偏好可读。 从 5 个匿名结果里选出更像正确标签的一个， 投票后翻牌揭晓你选中的模型。 01匿名候选高校发布今年招生政策调整方案下一题 点击卡片投下偏好票；投票前不会显示任何模型名称。 A匿名候选财经finance选择它你选择了BERTbert财经Elo 1196B匿名候选财经finance选择它C匿名候选财经finance选择它D匿名候选财经finance选择它E匿名候选股票stocks选择它已揭晓：BERT（bert），预测类别 财经 同一题目每个客户端只计 1 票；单客户端每分钟最多 20 票。票数可被本机清除，仅作演示参考。 再抽一题 HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。人类偏好投票榜（vote）模型票数EloWilson 95% 区间随机森林预热中4121615.0% – 85.0%fastText预热中412044.6% – 69.9%BERT预热中411964.6% – 69.9%蒸馏模型预热中312106.2% – 79.2%LLM预热中311740.0% – 56.1%人类偏好投票强度，仅作演示参考；票数可被本机清除。 i投票已记录，已揭晓你选择的模型。请求编号 mock-1792629631941 ×",
+        "toastMessages": [
+          "投票已记录，已揭晓你选择的模型。"
+        ],
+        "toastDetails": [
+          "请求编号 mock-1792629631941"
+        ],
+        "hasLoading": false,
+        "hasEmpty": false,
+        "emptyText": "",
+        "hasLoadError": false,
+        "loadErrorText": "",
+        "hasPartial": false,
+        "revealedNote": "已揭晓：BERT（bert），预测类别 财经",
+        "itemId": "item_1_86e77d8501fb11b1",
+        "board": {
+          "present": true,
+          "status": "warming_up",
+          "available": "true",
+          "hasPlaceholder": false,
+          "hasError": false,
+          "loading": false,
+          "statusText": "预热中",
+          "ruleText": "票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。",
+          "disclaimer": "人类偏好投票强度，仅供演示参考",
+          "headers": [
+            "模型",
+            "票数",
+            "Elo",
+            "Wilson 95% 区间"
+          ],
+          "rows": [
+            {
+              "modelId": "rf",
+              "displayName": "随机森林",
+              "votes": 4,
+              "elo": 1216,
+              "rank": null,
+              "wilsonLower": 0.15,
+              "wilsonUpper": 0.85,
+              "warmingUp": true,
+              "text": "随机森林预热中4121615.0% – 85.0%"
+            },
+            {
+              "modelId": "fasttext",
+              "displayName": "fastText",
+              "votes": 4,
+              "elo": 1204,
+              "rank": null,
+              "wilsonLower": 0.0456,
+              "wilsonUpper": 0.6994,
+              "warmingUp": true,
+              "text": "fastText预热中412044.6% – 69.9%"
+            },
+            {
+              "modelId": "bert",
+              "displayName": "BERT",
+              "votes": 4,
+              "elo": 1196,
+              "rank": null,
+              "wilsonLower": 0.0456,
+              "wilsonUpper": 0.6994,
+              "warmingUp": true,
+              "text": "BERT预热中411964.6% – 69.9%"
+            },
+            {
+              "modelId": "distill",
+              "displayName": "蒸馏模型",
+              "votes": 3,
+              "elo": 1210,
+              "rank": null,
+              "wilsonLower": 0.0615,
+              "wilsonUpper": 0.7923,
+              "warmingUp": true,
+              "text": "蒸馏模型预热中312106.2% – 79.2%"
+            },
+            {
+              "modelId": "llm",
+              "displayName": "LLM",
+              "votes": 3,
+              "elo": 1174,
+              "rank": null,
+              "wilsonLower": 0,
+              "wilsonUpper": 0.5615,
+              "warmingUp": true,
+              "text": "LLM预热中311740.0% – 56.1%"
+            }
+          ],
+          "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+          "text": "HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。人类偏好投票榜（vote）模型票数EloWilson 95% 区间随机森林预热中4121615.0% – 85.0%fastText预热中412044.6% – 69.9%BERT预热中411964.6% – 69.9%蒸馏模型预热中312106.2% – 79.2%LLM预热中311740.0% – 56.1%人类偏好投票强度，仅作演示参考；票数可被本机清除。"
+        },
+        "reducedMotion": true
+      }
+    },
+    "client-id-persist": {
+      "mockScenario": "normal",
+      "serverRequests": [
+        {
+          "ts": 1792629633138,
+          "method": "POST",
+          "path": "/api/v1/arena/vote",
+          "kind": "vote",
+          "body": {
+            "client_id": "bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7",
+            "item_id": "item_2_c99a055762bfcc79",
+            "anon_id": "an_a7bc2a2e4d1e"
+          },
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633138",
+            "selected": {
+              "model_id": "rf",
+              "display_name": "随机森林",
+              "pred_class": "finance"
+            },
+            "elo_after": 1224,
+            "games_applied": 4
+          }
+        },
+        {
+          "ts": 1792629633142,
+          "method": "GET",
+          "path": "/api/v1/arena/leaderboard",
+          "kind": "leaderboard",
+          "body": null,
+          "status": 200,
+          "response": {
+            "request_id": "mock-1792629633142",
+            "status": "warming_up",
+            "data_kind": "vote",
+            "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+            "min_votes_for_ranking": 50,
+            "entries": [
+              {
+                "model_id": "rf",
+                "display_name": "随机森林",
+                "elo": 1224,
+                "votes": 5,
+                "wins": 3,
+                "losses": 2,
+                "win_rate": 0.6,
+                "wilson_lower": 0.2307,
+                "wilson_upper": 0.8824,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "fasttext",
+                "display_name": "fastText",
+                "elo": 1202,
+                "votes": 5,
+                "wins": 1,
+                "losses": 4,
+                "win_rate": 0.2,
+                "wilson_lower": 0.0362,
+                "wilson_upper": 0.6245,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "bert",
+                "display_name": "BERT",
+                "elo": 1184,
+                "votes": 5,
+                "wins": 0,
+                "losses": 5,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4345,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "distill",
+                "display_name": "蒸馏模型",
+                "elo": 1218,
+                "votes": 4,
+                "wins": 2,
+                "losses": 2,
+                "win_rate": 0.5,
+                "wilson_lower": 0.15,
+                "wilson_upper": 0.85,
+                "warming_up": true,
+                "rank": null
+              },
+              {
+                "model_id": "llm",
+                "display_name": "LLM",
+                "elo": 1172,
+                "votes": 4,
+                "wins": 0,
+                "losses": 4,
+                "win_rate": 0,
+                "wilson_lower": 0,
+                "wilson_upper": 0.4899,
+                "warming_up": true,
+                "rank": null
+              }
+            ]
+          }
+        }
+      ],
+      "browserRequests": [
+        {
+          "ts": 1792629632767,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629632962,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629632972,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629632991,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_1_f182d4fa9745bccd\",\"anon_id\":\"an_d5298cd35a04\"}"
+        },
+        {
+          "ts": 1792629632996,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633093,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "method": "GET",
+          "type": "Document",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "method": "GET",
+          "type": "Script",
+          "postData": null
+        },
+        {
+          "ts": 1792629633123,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "method": "GET",
+          "type": "Stylesheet",
+          "postData": null
+        },
+        {
+          "ts": 1792629633125,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        },
+        {
+          "ts": 1792629633134,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "method": "GET",
+          "type": "Other",
+          "postData": null
+        },
+        {
+          "ts": 1792629633139,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "method": "POST",
+          "type": "Fetch",
+          "postData": "{\"client_id\":\"bf7dadbb-5747-4e44-8e56-4cc4c1a41ea7\",\"item_id\":\"item_2_c99a055762bfcc79\",\"anon_id\":\"an_a7bc2a2e4d1e\"}"
+        },
+        {
+          "ts": 1792629633146,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "method": "GET",
+          "type": "Fetch",
+          "postData": null
+        }
+      ],
+      "browserResponses": [
+        {
+          "ts": 1792629632798,
+          "requestId": "6C1F800E0BF83B30EDFAC0B652183940",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629632965,
+          "requestId": "26276.65",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629632967,
+          "requestId": "26276.64",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629632975,
+          "requestId": "26276.68",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632992,
+          "requestId": "26276.69",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629632997,
+          "requestId": "26276.70",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633098,
+          "requestId": "9F6D14FE832A57F66AEB013153CED33F",
+          "url": "http://127.0.0.1:18181/tests/f10/harness.html?scenario=normal&t=1792629632688",
+          "status": 200,
+          "mimeType": "text/html"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.73",
+          "url": "http://127.0.0.1:18181/assets/harness-BZ197wsj.css",
+          "status": 200,
+          "mimeType": "text/css"
+        },
+        {
+          "ts": 1792629633124,
+          "requestId": "26276.72",
+          "url": "http://127.0.0.1:18181/assets/harness-BT2HW3ce.js",
+          "status": 200,
+          "mimeType": "text/javascript"
+        },
+        {
+          "ts": 1792629633127,
+          "requestId": "26276.76",
+          "url": "http://127.0.0.1:18181/api/v1/arena/next",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633136,
+          "requestId": "26276.77",
+          "url": "http://127.0.0.1:18181/favicon.ico",
+          "status": 404,
+          "mimeType": "text/plain"
+        },
+        {
+          "ts": 1792629633140,
+          "requestId": "26276.78",
+          "url": "http://127.0.0.1:18181/api/v1/arena/vote",
+          "status": 200,
+          "mimeType": "application/json"
+        },
+        {
+          "ts": 1792629633147,
+          "requestId": "26276.79",
+          "url": "http://127.0.0.1:18181/api/v1/arena/leaderboard",
+          "status": 200,
+          "mimeType": "application/json"
+        }
+      ],
+      "browserFailed": [],
+      "items": {
+        "item_1_f182d4fa9745bccd": {
+          "item_id": "item_1_f182d4fa9745bccd",
+          "title": "高校发布今年招生政策调整方案",
+          "candidates": [
+            {
+              "anon_id": "an_a2c24fb3f5c1",
+              "pred_class": "finance",
+              "latency_ms": 320,
+              "model_id": "bert",
+              "display_name": "BERT"
+            },
+            {
+              "anon_id": "an_d5298cd35a04",
+              "pred_class": "stocks",
+              "latency_ms": 256,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            },
+            {
+              "anon_id": "an_ec4275ea3253",
+              "pred_class": "finance",
+              "latency_ms": 114,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            },
+            {
+              "anon_id": "an_760a42d70f4f",
+              "pred_class": "finance",
+              "latency_ms": 122,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_dd5e85b0f502",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            }
+          ]
+        },
+        "item_2_c99a055762bfcc79": {
+          "item_id": "item_2_c99a055762bfcc79",
+          "title": "国产推理芯片进入量产阶段",
+          "candidates": [
+            {
+              "anon_id": "an_e1aa4dfbd90a",
+              "pred_class": "finance",
+              "latency_ms": 332,
+              "model_id": "fasttext",
+              "display_name": "fastText"
+            },
+            {
+              "anon_id": "an_8a178de4fa41",
+              "pred_class": "finance",
+              "latency_ms": 1380,
+              "model_id": "llm",
+              "display_name": "LLM"
+            },
+            {
+              "anon_id": "an_a7bc2a2e4d1e",
+              "pred_class": "finance",
+              "latency_ms": 240,
+              "model_id": "rf",
+              "display_name": "随机森林"
+            },
+            {
+              "anon_id": "an_dc3d7017938f",
+              "pred_class": "stocks",
+              "latency_ms": 238,
+              "model_id": "distill",
+              "display_name": "蒸馏模型"
+            },
+            {
+              "anon_id": "an_c71d384cad70",
+              "pred_class": "finance",
+              "latency_ms": 280,
+              "model_id": "bert",
+              "display_name": "BERT"
+            }
+          ]
+        }
+      },
+      "votes": {
+        "rf": {
+          "wins": 3,
+          "losses": 2,
+          "elo": 1224
+        },
+        "fasttext": {
+          "wins": 1,
+          "losses": 4,
+          "elo": 1202
+        },
+        "bert": {
+          "wins": 0,
+          "losses": 5,
+          "elo": 1184
+        },
+        "distill": {
+          "wins": 2,
+          "losses": 2,
+          "elo": 1218
+        },
+        "llm": {
+          "wins": 0,
+          "losses": 4,
+          "elo": 1172
+        }
+      },
+      "dom": {
+        "pageState": "revealed",
+        "cards": [
+          {
+            "letter": "A",
+            "anonId": "an_e1aa4dfbd90a",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "A匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "B",
+            "anonId": "an_8a178de4fa41",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "B匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "C",
+            "anonId": "an_a7bc2a2e4d1e",
+            "state": "revealed",
+            "revealedModelId": "rf",
+            "hasBackFace": true,
+            "text": "C匿名候选财经finance选择它你选择了随机森林rf财经Elo 1224",
+            "animationName": "arena-flip-ae537aa6",
+            "animationDuration": "0.2s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "D",
+            "anonId": "an_dc3d7017938f",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "D匿名候选股票stocks选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          },
+          {
+            "letter": "E",
+            "anonId": "an_c71d384cad70",
+            "state": "idle",
+            "revealedModelId": null,
+            "hasBackFace": false,
+            "text": "E匿名候选财经finance选择它",
+            "animationName": "none",
+            "animationDuration": "0s",
+            "transitionDuration": "0s",
+            "disabled": true
+          }
+        ],
+        "candidatesText": "A匿名候选财经finance选择它B匿名候选财经finance选择它C匿名候选财经finance选择它你选择了随机森林rf财经Elo 1224D匿名候选股票stocks选择它E匿名候选财经finance选择它",
+        "bodyText": "PREFERENCE ARENA匿名投票，偏好可读。 从 5 个匿名结果里选出更像正确标签的一个， 投票后翻牌揭晓你选中的模型。 01匿名候选国产推理芯片进入量产阶段下一题 点击卡片投下偏好票；投票前不会显示任何模型名称。 A匿名候选财经finance选择它B匿名候选财经finance选择它C匿名候选财经finance选择它你选择了随机森林rf财经Elo 1224D匿名候选股票stocks选择它E匿名候选财经finance选择它已揭晓：随机森林（rf），预测类别 财经 同一题目每个客户端只计 1 票；单客户端每分钟最多 20 票。票数可被本机清除，仅作演示参考。 再抽一题 HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。人类偏好投票榜（vote）模型票数EloWilson 95% 区间随机森林预热中5122423.1% – 88.2%fastText预热中512023.6% – 62.5%BERT预热中511840.0% – 43.5%蒸馏模型预热中4121815.0% – 85.0%LLM预热中411720.0% – 49.0%人类偏好投票强度，仅作演示参考；票数可被本机清除。 i投票已记录，已揭晓你选择的模型。请求编号 mock-1792629633138 ×",
+        "toastMessages": [
+          "投票已记录，已揭晓你选择的模型。"
+        ],
+        "toastDetails": [
+          "请求编号 mock-1792629633138"
+        ],
+        "hasLoading": false,
+        "hasEmpty": false,
+        "emptyText": "",
+        "hasLoadError": false,
+        "loadErrorText": "",
+        "hasPartial": false,
+        "revealedNote": "已揭晓：随机森林（rf），预测类别 财经",
+        "itemId": "item_2_c99a055762bfcc79",
+        "board": {
+          "present": true,
+          "status": "warming_up",
+          "available": "true",
+          "hasPlaceholder": false,
+          "hasError": false,
+          "loading": false,
+          "statusText": "预热中",
+          "ruleText": "票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。",
+          "disclaimer": "人类偏好投票强度，仅供演示参考",
+          "headers": [
+            "模型",
+            "票数",
+            "Elo",
+            "Wilson 95% 区间"
+          ],
+          "rows": [
+            {
+              "modelId": "rf",
+              "displayName": "随机森林",
+              "votes": 5,
+              "elo": 1224,
+              "rank": null,
+              "wilsonLower": 0.2307,
+              "wilsonUpper": 0.8824,
+              "warmingUp": true,
+              "text": "随机森林预热中5122423.1% – 88.2%"
+            },
+            {
+              "modelId": "fasttext",
+              "displayName": "fastText",
+              "votes": 5,
+              "elo": 1202,
+              "rank": null,
+              "wilsonLower": 0.0362,
+              "wilsonUpper": 0.6245,
+              "warmingUp": true,
+              "text": "fastText预热中512023.6% – 62.5%"
+            },
+            {
+              "modelId": "bert",
+              "displayName": "BERT",
+              "votes": 5,
+              "elo": 1184,
+              "rank": null,
+              "wilsonLower": 0,
+              "wilsonUpper": 0.4345,
+              "warmingUp": true,
+              "text": "BERT预热中511840.0% – 43.5%"
+            },
+            {
+              "modelId": "distill",
+              "displayName": "蒸馏模型",
+              "votes": 4,
+              "elo": 1218,
+              "rank": null,
+              "wilsonLower": 0.15,
+              "wilsonUpper": 0.85,
+              "warmingUp": true,
+              "text": "蒸馏模型预热中4121815.0% – 85.0%"
+            },
+            {
+              "modelId": "llm",
+              "displayName": "LLM",
+              "votes": 4,
+              "elo": 1172,
+              "rank": null,
+              "wilsonLower": 0,
+              "wilsonUpper": 0.4899,
+              "warmingUp": true,
+              "text": "LLM预热中411720.0% – 49.0%"
+            }
+          ],
+          "note": "人类偏好投票强度，仅作演示参考；票数可被本机清除。",
+          "text": "HUMAN PREFERENCE人类偏好榜预热中 人类偏好投票强度，仅供演示参考 票数不足 50：仅显示预热态与 Wilson 95% 区间，不显示名次。人类偏好投票榜（vote）模型票数EloWilson 95% 区间随机森林预热中5122423.1% – 88.2%fastText预热中512023.6% – 62.5%BERT预热中511840.0% – 43.5%蒸馏模型预热中4121815.0% – 85.0%LLM预热中411720.0% – 49.0%人类偏好投票强度，仅作演示参考；票数可被本机清除。"
+        },
+        "reducedMotion": false
+      }
+    }
+  }
+}

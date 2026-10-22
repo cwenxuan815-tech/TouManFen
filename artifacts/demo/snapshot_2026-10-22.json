@@ -1,0 +1,529 @@
+{
+  "schema_version": 1,
+  "generated_by": "tools/make_demo_snapshot.py",
+  "generated_at": "2026-10-22T07:45:02+08:00",
+  "data_source": "cached",
+  "meta": {
+    "dataset": "00-data/data/test.txt",
+    "split": "test",
+    "sample_size": 10000,
+    "generated_at": "2026-10-22T07:45:02+08:00",
+    "code_version": "uncommitted",
+    "model_versions": {
+      "rf": "rf.pkl+tfidf.pkl",
+      "fasttext": "word_auto_train.pkl",
+      "bert": "bert.pkl",
+      "distill": "student_v2b.pkl",
+      "llm": "external_provider_not_authorized(missing)"
+    },
+    "metric_def": {
+      "purpose": "缓存演示标题的预计算分类结果；本快照不产生新的模型指标",
+      "metrics_source": "artifacts/bench/pk_2026-10-22.json（B8 离线产物，数值不重算）"
+    },
+    "data_kind": "demo"
+  },
+  "source_contract": {
+    "image_language_note": "快照不伪称实时推理",
+    "bench_artifact": "artifacts/bench/pk_2026-10-22.json",
+    "prediction_files": [
+      "artifacts/bench/_pred_rf_test.jsonl",
+      "artifacts/bench/_pred_fasttext_test.jsonl",
+      "artifacts/bench/_pred_bert_test.jsonl",
+      "artifacts/bench/_pred_distill_test.jsonl"
+    ],
+    "b8_values_modified": false
+  },
+  "benchmark": {
+    "artifact_path": "artifacts/bench/pk_2026-10-22.json",
+    "artifact_sha256": "4aef918ed2e8b4740a5cd6cfcb23c35daf6a2a41c71c77b8314c58a3825252cd",
+    "artifact_generated_at": "2026-10-22T01:37:55+08:00",
+    "data_kind": "offline",
+    "dataset": "00-data/data/test.txt",
+    "split": "test",
+    "sample_size": 10000,
+    "models": [
+      {
+        "model_id": "rf",
+        "display_name": "随机森林",
+        "status": "ok",
+        "model_version": "rf.pkl+tfidf.pkl",
+        "metrics": {
+          "macro_f1": 0.830205,
+          "accuracy": 0.8293,
+          "avg_latency_ms": 123.844,
+          "p50_latency_ms": 62.585,
+          "p95_latency_ms": 375.264,
+          "latency_sample_size": 200,
+          "size_bytes": 1585887948,
+          "size_mib": 1512.42
+        },
+        "weight": 0.229685,
+        "weight_source": "dev_sample_macro_f1",
+        "reason": null
+      },
+      {
+        "model_id": "fasttext",
+        "display_name": "fastText",
+        "status": "ok",
+        "model_version": "word_auto_train.pkl",
+        "metrics": {
+          "macro_f1": 0.917395,
+          "accuracy": 0.9173,
+          "avg_latency_ms": 0.104,
+          "p50_latency_ms": 0.1,
+          "p95_latency_ms": 0.14,
+          "latency_sample_size": 200,
+          "size_bytes": 451244070,
+          "size_mib": 430.34
+        },
+        "weight": 0.255118,
+        "weight_source": "dev_sample_macro_f1",
+        "reason": null
+      },
+      {
+        "model_id": "bert",
+        "display_name": "BERT",
+        "status": "ok",
+        "model_version": "bert.pkl",
+        "metrics": {
+          "macro_f1": 0.930724,
+          "accuracy": 0.9305,
+          "avg_latency_ms": 76.537,
+          "p50_latency_ms": 38.05,
+          "p95_latency_ms": 288.345,
+          "latency_sample_size": 200,
+          "size_bytes": 409169600,
+          "size_mib": 390.21
+        },
+        "weight": 0.260819,
+        "weight_source": "dev_sample_macro_f1",
+        "reason": null
+      },
+      {
+        "model_id": "distill",
+        "display_name": "蒸馏 BiLSTM",
+        "status": "ok",
+        "model_version": "student_v2b.pkl",
+        "metrics": {
+          "macro_f1": 0.907386,
+          "accuracy": 0.9075,
+          "avg_latency_ms": 3.426,
+          "p50_latency_ms": 3.22,
+          "p95_latency_ms": 5.035,
+          "latency_sample_size": 200,
+          "size_bytes": 38490838,
+          "size_mib": 36.71
+        },
+        "weight": 0.254378,
+        "weight_source": "dev_sample_macro_f1",
+        "reason": null
+      },
+      {
+        "model_id": "llm",
+        "display_name": "大模型",
+        "status": "missing",
+        "model_version": null,
+        "metrics": null,
+        "weight": null,
+        "weight_source": null,
+        "reason": "external_provider_not_authorized"
+      }
+    ],
+    "derived": [
+      {
+        "kind": "weighted_vote",
+        "display_name": "dev 加权投票集成",
+        "status": "ok",
+        "metrics": {
+          "macro_f1": 0.939,
+          "accuracy": 0.9389,
+          "avg_latency_ms": null,
+          "latency_sample_size": 0,
+          "note": "集成延迟未测量（派生指标，不参与延迟比较）"
+        },
+        "participating_models": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill"
+        ],
+        "note": "派生指标，非独立模型：每个模型 1 票，票重=dev 抽样 macro-F1 归一化；平票先比非加权票数、再按 class.txt 类别顺序。权重未使用 test。"
+      },
+      {
+        "kind": "oracle",
+        "display_name": "Oracle 上界（任一模型正确即正确）",
+        "status": "ok",
+        "metrics": {
+          "macro_f1": 0.975493,
+          "accuracy": 0.9755,
+          "avg_latency_ms": null,
+          "latency_sample_size": 0
+        },
+        "participating_models": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill"
+        ],
+        "note": "参考上界，非独立模型，不可部署：仅表示 4 个可用本地模型并集的覆盖上限；不得当作某模型性能或对外宣称。"
+      }
+    ],
+    "missing_models": [
+      "llm"
+    ],
+    "values_copied_verbatim": true,
+    "note": "指标数值原样复制自 B8 离线产物（未重新计算、未取整）；本快照不是新的离线评估。"
+  },
+  "demo": {
+    "note": "预计算演示响应：来自 B8 test 集逐条预测产物（离线、非实时）；页面必须标注 cached，不得宣称实时推理。",
+    "title_count": 4,
+    "titles": [
+      {
+        "case_id": "demo-sports-consensus",
+        "title": "里皮回避卸任问题谈世界杯卫冕：只靠年轻人是不够的",
+        "split": "test",
+        "line_index": 8000,
+        "true_label": "sports",
+        "data_source": "cached",
+        "results": [
+          {
+            "model_id": "rf",
+            "status": "ok",
+            "pred_class": "sports",
+            "model_version": "rf.pkl+tfidf.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_rf_test.jsonl",
+              "split": "test",
+              "line_index": 8000
+            }
+          },
+          {
+            "model_id": "fasttext",
+            "status": "ok",
+            "pred_class": "sports",
+            "model_version": "word_auto_train.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_fasttext_test.jsonl",
+              "split": "test",
+              "line_index": 8000
+            }
+          },
+          {
+            "model_id": "bert",
+            "status": "ok",
+            "pred_class": "sports",
+            "model_version": "bert.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_bert_test.jsonl",
+              "split": "test",
+              "line_index": 8000
+            }
+          },
+          {
+            "model_id": "distill",
+            "status": "ok",
+            "pred_class": "sports",
+            "model_version": "student_v2b.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_distill_test.jsonl",
+              "split": "test",
+              "line_index": 8000
+            }
+          }
+        ],
+        "missing_models": [
+          "llm"
+        ],
+        "summary": {
+          "consensus": true,
+          "majority_pred_class": "sports",
+          "correct_models": [
+            "rf",
+            "fasttext",
+            "bert",
+            "distill"
+          ]
+        },
+        "note": "预计算（离线 test 集）演示响应：不是实时推理；四模型结果来自 B8 逐条预测中间文件，LLM 未授权不生成任何结果。"
+      },
+      {
+        "case_id": "demo-finance-consensus",
+        "title": "泰达荷银基金：管理层维护市场稳定信心坚决",
+        "split": "test",
+        "line_index": 2000,
+        "true_label": "finance",
+        "data_source": "cached",
+        "results": [
+          {
+            "model_id": "rf",
+            "status": "ok",
+            "pred_class": "finance",
+            "model_version": "rf.pkl+tfidf.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_rf_test.jsonl",
+              "split": "test",
+              "line_index": 2000
+            }
+          },
+          {
+            "model_id": "fasttext",
+            "status": "ok",
+            "pred_class": "finance",
+            "model_version": "word_auto_train.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_fasttext_test.jsonl",
+              "split": "test",
+              "line_index": 2000
+            }
+          },
+          {
+            "model_id": "bert",
+            "status": "ok",
+            "pred_class": "finance",
+            "model_version": "bert.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_bert_test.jsonl",
+              "split": "test",
+              "line_index": 2000
+            }
+          },
+          {
+            "model_id": "distill",
+            "status": "ok",
+            "pred_class": "finance",
+            "model_version": "student_v2b.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_distill_test.jsonl",
+              "split": "test",
+              "line_index": 2000
+            }
+          }
+        ],
+        "missing_models": [
+          "llm"
+        ],
+        "summary": {
+          "consensus": true,
+          "majority_pred_class": "finance",
+          "correct_models": [
+            "rf",
+            "fasttext",
+            "bert",
+            "distill"
+          ]
+        },
+        "note": "预计算（离线 test 集）演示响应：不是实时推理；四模型结果来自 B8 逐条预测中间文件，LLM 未授权不生成任何结果。"
+      },
+      {
+        "case_id": "demo-education-disagree",
+        "title": "野鸡大学调查：国外半小时注册 国内无周密审查",
+        "split": "test",
+        "line_index": 592,
+        "true_label": "education",
+        "data_source": "cached",
+        "results": [
+          {
+            "model_id": "rf",
+            "status": "ok",
+            "pred_class": "finance",
+            "model_version": "rf.pkl+tfidf.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_rf_test.jsonl",
+              "split": "test",
+              "line_index": 592
+            }
+          },
+          {
+            "model_id": "fasttext",
+            "status": "ok",
+            "pred_class": "society",
+            "model_version": "word_auto_train.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_fasttext_test.jsonl",
+              "split": "test",
+              "line_index": 592
+            }
+          },
+          {
+            "model_id": "bert",
+            "status": "ok",
+            "pred_class": "education",
+            "model_version": "bert.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_bert_test.jsonl",
+              "split": "test",
+              "line_index": 592
+            }
+          },
+          {
+            "model_id": "distill",
+            "status": "ok",
+            "pred_class": "education",
+            "model_version": "student_v2b.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_distill_test.jsonl",
+              "split": "test",
+              "line_index": 592
+            }
+          }
+        ],
+        "missing_models": [
+          "llm"
+        ],
+        "summary": {
+          "consensus": false,
+          "majority_pred_class": "education",
+          "correct_models": [
+            "bert",
+            "distill"
+          ]
+        },
+        "note": "预计算（离线 test 集）演示响应：不是实时推理；四模型结果来自 B8 逐条预测中间文件，LLM 未授权不生成任何结果。"
+      },
+      {
+        "case_id": "demo-entertainment-disagree",
+        "title": "电影票房今日冲刺100亿 细数百亿背后的痒与痛",
+        "split": "test",
+        "line_index": 1229,
+        "true_label": "entertainment",
+        "data_source": "cached",
+        "results": [
+          {
+            "model_id": "rf",
+            "status": "ok",
+            "pred_class": "stocks",
+            "model_version": "rf.pkl+tfidf.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_rf_test.jsonl",
+              "split": "test",
+              "line_index": 1229
+            }
+          },
+          {
+            "model_id": "fasttext",
+            "status": "ok",
+            "pred_class": "realty",
+            "model_version": "word_auto_train.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_fasttext_test.jsonl",
+              "split": "test",
+              "line_index": 1229
+            }
+          },
+          {
+            "model_id": "bert",
+            "status": "ok",
+            "pred_class": "entertainment",
+            "model_version": "bert.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_bert_test.jsonl",
+              "split": "test",
+              "line_index": 1229
+            }
+          },
+          {
+            "model_id": "distill",
+            "status": "ok",
+            "pred_class": "entertainment",
+            "model_version": "student_v2b.pkl",
+            "offline_latency_ms": null,
+            "data_source": "cached",
+            "provenance": {
+              "prediction_file": "artifacts/bench/_pred_distill_test.jsonl",
+              "split": "test",
+              "line_index": 1229
+            }
+          }
+        ],
+        "missing_models": [
+          "llm"
+        ],
+        "summary": {
+          "consensus": false,
+          "majority_pred_class": "entertainment",
+          "correct_models": [
+            "bert",
+            "distill"
+          ]
+        },
+        "note": "预计算（离线 test 集）演示响应：不是实时推理；四模型结果来自 B8 逐条预测中间文件，LLM 未授权不生成任何结果。"
+      }
+    ]
+  },
+  "llm": {
+    "status": "missing",
+    "reason": "external_provider_not_authorized",
+    "predictions": null,
+    "scores": null,
+    "data_source": null,
+    "note": "LLM 未经授权：快照不生成 LLM 预测/分数，也不使用 mock 结果冒充 live 或 cached 预测。"
+  },
+  "model_coverage": {
+    "available": [
+      "rf",
+      "fasttext",
+      "bert",
+      "distill"
+    ],
+    "missing": [
+      "llm"
+    ],
+    "missing_reason": {
+      "llm": "external_provider_not_authorized"
+    }
+  },
+  "sources": {
+    "live": {
+      "used": false,
+      "note": "快照不包含任何实时推理结果（data_source=live 仅由运行中网关返回）"
+    },
+    "mock": {
+      "used": false,
+      "note": "快照不包含 mock worker 结果，也不把 mock 冒充 live/cached"
+    },
+    "cached": {
+      "used": true,
+      "note": "本文件即离线快照（data_source=cached），断网时只读展示"
+    },
+    "offline_benchmark": {
+      "used": true,
+      "data_kind": "offline",
+      "artifact_path": "artifacts/bench/pk_2026-10-22.json",
+      "note": "B8 离线评估指标单独引用，不与运行时统计或演示缓存混合"
+    }
+  },
+  "runtime_stats": {
+    "included": false,
+    "note": "快照不包含 /stats 运行时统计；mock/cached 不写入统计基线、反馈或基准产物"
+  }
+}

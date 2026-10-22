@@ -4,11 +4,11 @@
 
 > 数据准备 → 随机森林基线 → fastText → BERT 微调 → 大模型（DeepSeek）→ 模型压缩（量化 / 蒸馏 / 剪枝）→ 统一服务层（FastAPI 网关 + 模型适配层）→ Vue 前端
 
-项目已从「课程参考代码」整理为一个可训练、可评估、可服务、可局域网访问的验证型工程。**当前定位是本地/局域网验证环境，不是生产系统**（无鉴权、无 HTTPS、无数据库、无容器化，详见「已知限制」）。
+项目已从「课程参考代码」整理为一个可训练、可评估、可服务、可局域网访问的验证型工程。**当前定位是本地/局域网验证环境，不是生产系统**（无鉴权、无 HTTPS、仅本地 SQLite 存反馈/投票、无生产级数据库/迁移、无容器化，详见「已知限制」）。
 
-> **文档状态（2026-10-21）**：代码已重构为「统一模型适配层 + 统一 worker 预测契约 + 可配置网络」，并完成 mock/真实服务/前端构建验证；学习档案已重排为 v1–v5（v3 前端 / v4 Git / v5 适配层重构）。历史文档中的固定 IP 与旧架构描述仅作历史记录。
+> **文档状态（2026-10-22 最终）**：在适配层重构之上完成了 D5 SSE、D6 B8/B12/F10/F11，以及最终收尾 B9/B10/B11/D1/D2/F14、D3/D4、F15 启动来源与缓存回退。学习档案新增 **v6**（v1–v5 保留为历史/前期归档）。历史文档中的固定 IP、旧架构和旧验收状态仅作历史记录，最新口径以本 README、`docs/PROJECT_LEARNING_GUIDE_v6_全链路交付与隔离验收.md` 与各专项文档为准。
 >
-> **当前运行状态（2026-10-21）**：以 **LAN 模式**运行，监听 `192.168.12.54:5173/8000/8101/8103~8106`，`/api/v1/readyz = ok（5/5 up）`；前端 `http://192.168.12.54:5173`；本次重构改动**未 commit**（HEAD `9f81e05`）。
+> **最终交付状态（2026-10-22）**：单模型/对比/SSE/反馈/竞技场/PK 榜/演示快照已实现；B8 的 **LLM 仍为 missing**（未授权真实 Provider），D4 已在隔离 mock/headless 环境完成 10 步正常流程与 5 个故障场景复验；真实设备、真实 LAN 断开、真实 LLM 未验收；D7 未执行。**用户 stage2 服务未由本项目测试启动/停止/压测**；本轮改动仍未 commit（HEAD 沿用既有提交）。
 
 ---
 
@@ -28,10 +28,15 @@
 | FastAPI 统一网关 | ✅ | 8000；模型清单、健康探测、单模型分类、多模型对比、统计 |
 | 统一模型适配层 | ✅ | `serving/adapters/`：`ModelAdapter` 协议 + `HttpWorkerAdapter` / `LlmAdapter`；业务层只依赖协议 |
 | 统一 worker 预测契约 | ✅ | 5 个模型统一「加载 → 标题校验 → 推理 → 白名单校验 → 结果」；保留旧 `predict(dict)`/`/predict_api` 兼容 |
-| Vue 3 单页前端 | ✅ 已实现；接口层已验证 | 5173；单模型 / 多模型对比、LLM opt-in、错误与请求编号；未做真实浏览器人工视觉验收 |
+| Vue 3 单页前端 | ✅ 已实现；headless/CDP 已验证 | 5173；分类/对比/SSE/反馈/竞技场/PK/主题/大屏/F15 来源；未做真实投影/手机人工视觉验收 |
 | 本地/LAN 可配置地址 | ✅ | 默认 `127.0.0.1`；LAN 通过环境变量覆盖（`TMF_BIND_HOST` 等），运行路径无固定 IP |
 | 一键启停（Windows） | ✅ | `启动TMF.bat` / `停止TMF.bat`，可重复执行；后端 stop 于 2026-10-20 18:17 经日志确认 |
 | 自动化验收脚本 | ✅ 已实现；已验证 | `verify_refactor_gateway.py` / `verify_refactor_workers.py` / `verify_stage2.py`（35 项）/ `verify_stage3.py`；2026-10-21 重构后均 RESULT PASS |
+| SSE 渐进对比 | ☑ 已实现；已验证 | `/api/v1/compare/stream`；逐项 model/summary/done；总截止 18000ms、断连清理；B6 67 PASS |
+| B8 离线 PK/LLM | ◐ 部分完成 | test 10,000；RF/fastText/BERT/distill + 派生集成/oracle；**LLM missing（未授权）**；B8 65 PASS |
+| B9 LLM opt-in | ☑ 已实现；已验证 | 默认 compare 不含 LLM；显式选择才请求；16 PASS |
+| B10/B11/B12 集成 | ☑ 已实现；已验证 | gateway 101 / workers 93 / stage3 mock 59；data_source；并发 3、threads 4、锁；B12 89 PASS |
+| 演示/彩排（D2/D4/F15） | ☑ 已实现；验证为隔离环境 | 8 演示标题 + 20 题 + cached 快照；启动来源 `/demo/state`；D4 隔离 10/10 + 5 故障；真实设备/LLM 未验收 |
 
 **主口径**：除蒸馏 v2b（清洗集训练，唯一例外）外，服务端模型均由**未清洗的 180,000 条**训练；量化 / 剪枝由 BERT 派生。指标为独立 `test.txt`（1 万条）实测，详见 [docs/实测指标.md](docs/实测指标.md)。
 
@@ -213,7 +218,7 @@ pnpm dev
 | 蒸馏 worker | `http://127.0.0.1:8106` | v2b 学生模型 |
 | 剪枝 | — | 无在线服务，仅离线脚本 |
 
-> 地址来源：`serving/config/processes.yaml`（网关端口）、`serving/config/workers.yaml`（worker 调用 URL）、`tmf_common/config.py`（环境变量默认/校验）、`frontend/vite.config.ts`（前端监听）、`frontend/src/api.ts`（API 基址）。换机器/换 IP 时**不需要改源码**，按 5.5 用环境变量覆盖即可。
+> 地址来源：`serving/config/processes.yaml`（网关端口）、`serving/config/workers.yaml`（worker 调用 URL）、`tmf_common/config.py`（环境变量默认/校验）、`frontend/vite.config.ts`（前端监听）、`frontend/src/api/`（API 基址）。换机器/换 IP 时**不需要改源码**，按 5.5 用环境变量覆盖即可。
 
 ### 5.5 环境配置（本地 / 局域网）
 
@@ -419,7 +424,7 @@ pnpm build
 
 ## 十二、已知限制与未完成
 
-- **非生产**：无鉴权、无 HTTPS、无用户体系、无数据库/持久化、无缓存/队列/批量分类、无 Docker/CI；网关与 worker 均为开发服务器单进程。
+- **非生产**：无鉴权、无 HTTPS、无用户体系、无生产级数据库/迁移（仅本地 SQLite 存反馈/投票）、无缓存/队列/批量分类、无 Docker/CI；网关与 worker 均为开发服务器单进程。
 - **LLM 未系统评估**：仅有样例调用与 16 次网关成功调用（2026-10-20 16:22–18:06，0.5–4.0 s，见 `serving/logs/gateway.jsonl`）；准确性、费用、稳定性未做统计评估；`/readyz` 不代表供应商当前可用。
 - **热搜业务未实现**：按用户要求延期（见 `TODO-联通清单.md`）。
 - **剪枝不压缩体积**：非结构化剪枝 + `prune.remove()` 固化后仍是稠密存储，只提升稀疏度。
@@ -459,7 +464,8 @@ pnpm build
 | [docs/PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md](docs/PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md) | v2：服务层工程化与集成验证 |
 | [docs/PROJECT_LEARNING_GUIDE_v3_前端开发全过程技术归档.md](docs/PROJECT_LEARNING_GUIDE_v3_前端开发全过程技术归档.md) | v3：前端开发全过程技术归档（历史记录，IP 为旧默认） |
 | [docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md](docs/PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md) | v4：Git/GitHub 工程归档 |
-| [docs/PROJECT_LEARNING_GUIDE_v5_模型适配层与网络配置重构.md](docs/PROJECT_LEARNING_GUIDE_v5_模型适配层与网络配置重构.md) | v5：适配层、worker 契约与网络配置重构（当前架构） |
+| [docs/PROJECT_LEARNING_GUIDE_v5_模型适配层与网络配置重构.md](docs/PROJECT_LEARNING_GUIDE_v5_模型适配层与网络配置重构.md) | v5：适配层、worker 契约与网络配置重构（前期归档） |
+| [docs/PROJECT_LEARNING_GUIDE_v6_全链路交付与隔离验收.md](docs/PROJECT_LEARNING_GUIDE_v6_全链路交付与隔离验收.md) | v6：D5/D6 全链路、离线基准、演示真实性、F15 启动来源、D4 隔离复验与工程复盘 |
 | [docs/阶段0-工程基线报告.md](docs/阶段0-工程基线报告.md) | 环境、依赖、模型基线 |
 | [TODO-联通清单.md](TODO-联通清单.md) | 待办与历史联通记录（2026-10-21 已按当前状态回填；历史段落保留） |
 
@@ -496,3 +502,57 @@ pnpm build
 ---
 
 > 本 README 于 2026-10-20 按当前工程状态系统性重写。指标与耗时均来自本机实测；环境/版本差异可能导致结果不同，以 `docs/实测指标.md` 与各模块日志为准。
+
+
+---
+
+## 十七、最终收尾状态（D1，2026-10-22）
+
+> 本节描述截至 2026-10-22 的实现与验证状态；历史章节保留原文，不追改历史归档。
+
+### 17.1 已实现能力
+
+- 分类/对比：`/classify`、`/compare` 保留；新增 `GET /compare/stream` SSE（逐模型、15s 心跳、总截止 18000ms、断连清理），`POST /compare` 行为不变。
+- 分数与拒识：`scores/score_kind/top_k`、`rejected/reject_reason/threshold_meta`；软拒识保留原预测；阈值来自 B3 合成负样本 ROC（0.518/0.699，未校准，适用范围有限）。
+- 反馈：`POST /feedback`、`GET /feedback/stats`；pending、去重、30 天清理、相似 hint；无审核后台/训练。
+- 竞技场：匿名抽题/投票/leaderboard（Elo + Wilson，n<50 预热）；人类偏好，不是准确率。
+- 离线基准：`GET /bench/pk` 读取 `artifacts/bench/pk_2026-10-22.json`；4 个本地模型（RF/fastText/BERT/distill）已评估，**LLM 为 missing（外部 Provider 未授权）**；集成/oracle 为派生指标。
+- 演示真实性：worker `/metadata.display_name` 判定 live/mock（`mock-` 前缀=mock），无法判定为 unknown；`data_source` 透传 classify/compare/SSE；统计只计 live。
+- 快照/演示数据：`artifacts/demo/snapshot_2026-10-22.json`、`frontend/public/snapshot.json`（8 条 cases，cached，LLM missing）；`serving/scripts/demo_seed.py --reset` 使用显式临时 `TMF_DB_PATH`。
+- 前端：暗色/亮色/大屏、三档断点、F10 竞技场页、F11 PK 榜、F14 可访问性/焦点/reduced-motion；`#arena`/`#bench` 懒加载，默认首页不触发竞技场抽题。
+
+### 17.2 关键接口
+
+`GET /api/v1/bench/pk`、`GET /api/v1/compare/stream`、`POST/GET /api/v1/feedback*`、`/api/v1/arena/next|vote|leaderboard`。字段与错误码见 [接口变更记录](docs/接口变更记录_2026-10-21.md) 与 [前端对接说明](docs/前端对接说明.md)。
+
+### 17.3 验证结果快照（2026-10-22）
+
+- B9：`verify_b9_llm_optin.py` **16 PASS**；默认 compare 不含 LLM、mock 调用计数 0；显式 LLM 离线 → `partial`。
+- B11：`verify_b11_data_source.py` **39 PASS**；mock/live/unknown 判定、统计只计 live、快照 meta 校验通过。
+- B10：`verify_refactor_gateway.py` **101 PASS**、`verify_refactor_workers.py` **93 PASS**、`verify_stage3.py --llm-mode mock --isolate-mock` **59 PASS**（隔离临时端口/DB，已清理）。
+- D2：8 条演示标题、20 道 arena 演示题、`frontend/public/snapshot.json`（8 cases、cached、LLM missing）；`demo_seed.py --reset` 两次临时 DB 幂等。
+- F14：6 场景/66 断言（skip link、键盘、焦点、reduced-motion、6× CPU、50 卡）PASS；`vue-tsc`/`pnpm build` 通过。
+- D4：**完整 10 步正常彩排 PASS**（隔离网关 14520 + mock worker + 临时 DB + envDir 隔离构建，10/10，7.584s）；5 个故障场景均有隔离证据：LLM 离线 partial→恢复、后端全停→cached→恢复、地址不可达 cached、mock 模式独立 10 步、并发 2/总截止 25s 实际 UI。全场景网络审计 `bad_network=[]`。详见 `docs/彩排记录_2026-10-22.md`。
+
+### 17.4 验证命令（本机、隔离环境）
+
+```powershell
+$env:PYTHONPATH='E:\AIModels\test\TouManFen\venv-gateway\Lib\site-packages'
+D:\Miniconda3\envs\py3109\python.exe serving/scripts/verify_refactor_gateway.py
+D:\Miniconda3\envs\py3109\python.exe serving/scripts/verify_refactor_workers.py
+D:\Miniconda3\envs\py3109\python.exe serving/scripts/verify_stage3.py --llm-mode mock --isolate-mock
+D:\Miniconda3\envs\py3109\python.exe serving/scripts/verify_b9_llm_optin.py
+D:\Miniconda3\envs\py3109\python.exe serving/scripts/verify_b11_data_source.py
+D:\Miniconda3\envs\py3109\python.exe serving/scripts/verify_f15_startup.py
+```
+
+> 上述后两项为 B9/B11 的隔离验收脚本；**未调用真实 LLM/Provider**。真实 stage3 与用户 stage2 未在本轮操作。
+
+### 17.5 当前限制（必须如实说明）
+
+- **B8 LLM 缺失**：LLM 未纳入离线基准；PK 榜显示 missing，不得用 mock/估算分数补齐。
+- **F15 启动来源与 cached 回退已接线并验证**：页面加载即请求 `GET /api/v1/demo/state`，由服务端 metadata 判定 mock/live；全 ready 且来源一致才显示 live/mock，混合/缺失/不可达为 unknown 并展示来源明细；后端不可达时自动读取 `public/snapshot.json`，显示“离线快照”+生成时间+8 条 cached 内容，恢复后退出；快照缺失/非法显示错误。分类/对比结果仍按各自 `data_source` 更新来源。
+- **F13 设备验收为模拟**：Edge headless/CDP 模拟 1920×1080、1280×720、390×844、125%；没有真实投影/手机/笔记本验收。
+- 未做真实 LLM 调用、未训练、未对用户 stage2 压测；B12 真实模型并发 1/3/5 为隔离本地测量。
+- D4 彩排使用隔离 mock/fixture，不等同真实生产/真实外部 Provider 验收。
+- 文案红线：反馈只能“已提交/已记录，待审核”；Elo 只能“人类偏好，仅供演示参考”；离线基准不得称“实时准确率”；mock/cached 不得标 live。

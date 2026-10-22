@@ -1,5 +1,8 @@
 # 项目工程实践与技术学习档案（v5：模型适配层、worker 契约与网络配置重构）
 
+> **状态更新（2026-10-22）**：本文为历史/前期归档，不代表最终实现；最终能力与验收状态以 [README](../README.md) 和 [v6 学习档案](PROJECT_LEARNING_GUIDE_v6_全链路交付与隔离验收.md) 为准。B8 LLM 仍 missing，D7 未执行，真实设备/真实 LLM 未验收。
+
+
 > 版本：`v5-refactor-1.1`　｜　生成时间：2026-10-21（Asia/Shanghai）
 > 对应工程：`E:\AIModels\test\TouManFen\TouManFenClassifier`
 > 基准提交：`9f81e05`（`main`，2026-10-21 初始化提交）；**本次重构改动尚未提交**。

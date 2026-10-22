@@ -1,0 +1,97 @@
+{
+  "generated_at": "2026-10-22T01:18:33.467Z",
+  "mode": "D4 normal isolated 10-step",
+  "api_base": "http://127.0.0.1:14520",
+  "static_base": "http://127.0.0.1:18084",
+  "results": [
+    {
+      "step": 1,
+      "name": "startup source",
+      "ok": true,
+      "ms": 631,
+      "detail": "演示数据（mock） 5/5 个模型已就绪"
+    },
+    {
+      "step": 2,
+      "name": "normal realtime + fastText",
+      "ok": true,
+      "ms": 1524,
+      "detail": "realtime + result mock"
+    },
+    {
+      "step": 3,
+      "name": "non-news rejection",
+      "ok": true,
+      "ms": 771,
+      "detail": "rejected copy visible"
+    },
+    {
+      "step": 4,
+      "name": "BERT top-k uncalibrated",
+      "ok": true,
+      "ms": 1233,
+      "detail": "BERT mock + uncalibrated"
+    },
+    {
+      "step": 5,
+      "name": "compare SSE",
+      "ok": true,
+      "ms": 558,
+      "detail": "4 compare cards"
+    },
+    {
+      "step": 6,
+      "name": "feedback pending",
+      "ok": true,
+      "ms": 1431,
+      "detail": "chip=财经"
+    },
+    {
+      "step": 7,
+      "name": "feedback hint",
+      "ok": true,
+      "ms": 1392,
+      "detail": "hint visible"
+    },
+    {
+      "step": 8,
+      "name": "arena vote",
+      "ok": true,
+      "ms": 933,
+      "detail": "anonymous 5 -> revealed"
+    },
+    {
+      "step": 9,
+      "name": "bench B8 + LLM missing",
+      "ok": true,
+      "ms": 647,
+      "detail": "bench meta + LLM missing"
+    },
+    {
+      "step": 10,
+      "name": "theme + large",
+      "ok": true,
+      "ms": 882,
+      "detail": "theme light->dark"
+    }
+  ],
+  "total_ms": 10002,
+  "passed": 10,
+  "failed": 0,
+  "network": [
+    "http://127.0.0.1:18084/",
+    "http://127.0.0.1:18084/assets/index-D1I5VsVd.js",
+    "http://127.0.0.1:18084/assets/index-CdycQVqg.css",
+    "http://127.0.0.1:14520/api/v1/demo/state",
+    "http://127.0.0.1:14520/api/v1/models",
+    "http://127.0.0.1:14520/api/v1/classify",
+    "http://127.0.0.1:14520/api/v1/feedback/stats",
+    "http://127.0.0.1:14520/api/v1/compare/stream?title=%E5%8C%97%E4%BA%AC%E4%BA%8C%E6%89%8B%E6%88%BF%E6%88%90%E4%BA%A4%E9%87%8F%E5%88%9B%E5%B9%B4%E5%86%85%E6%96%B0%E9%AB%98&models=rf,fasttext,bert,distill",
+    "http://127.0.0.1:14520/api/v1/feedback",
+    "http://127.0.0.1:14520/api/v1/arena/next",
+    "http://127.0.0.1:14520/api/v1/arena/vote",
+    "http://127.0.0.1:14520/api/v1/arena/leaderboard",
+    "http://127.0.0.1:14520/api/v1/bench/pk"
+  ],
+  "bad_network": []
+}

@@ -1,0 +1,20 @@
+{
+  "phase": "recover",
+  "duration_ms": 3521,
+  "current": {
+    "badge": "演示数据（mock） 5/5 个模型已就绪",
+    "cls": "demo-badge demo-mock",
+    "cached": false,
+    "generated": null,
+    "snapshotError": null
+  },
+  "network": [
+    "http://127.0.0.1:18084/",
+    "http://127.0.0.1:18084/assets/index-D1I5VsVd.js",
+    "http://127.0.0.1:18084/assets/index-CdycQVqg.css",
+    "http://127.0.0.1:14520/api/v1/demo/state",
+    "http://127.0.0.1:14520/api/v1/models"
+  ],
+  "bad_network": [],
+  "ok": true
+}

@@ -10,9 +10,31 @@ from ..schemas import (
     ClassifyResponse,
     CompareRequest,
     CompareResponse,
+    HumanFeedbackHint,
+    TopKEntry,
 )
 
 router = APIRouter(prefix="/api/v1", tags=["classification"])
+
+
+async def _human_feedback_hint(
+    request: Request, title: str
+) -> HumanFeedbackHint | None:
+    """B4：查询相似 pending 反馈；未装配/查询失败时安全跳过（不影响分类）。"""
+    feedback = getattr(request.app.state, "feedback", None)
+    if feedback is None:
+        return None
+    try:
+        hint = await feedback.similar_hint(title)
+    except Exception:
+        # 保留期清理/hint 只是增强信息，失败时绝不能改变分类结果或报错。
+        return None
+    if hint is None:
+        return None
+    return HumanFeedbackHint(
+        corrected_class=hint.corrected_class,
+        status=hint.status,
+    )
 
 
 @router.post("/classify", response_model=ClassifyResponse)
@@ -22,12 +44,34 @@ async def classify(request: Request, payload: ClassifyRequest) -> ClassifyRespon
         model_id=payload.model,
         request_id=request.state.request_id,
     )
+    scores = (
+        {entry.class_id: entry.score for entry in outcome.scores}
+        if outcome.scores is not None
+        else None
+    )
+    top_k = (
+        [TopKEntry(class_id=entry.class_id, score=entry.score) for entry in outcome.top_k]
+        if outcome.top_k is not None
+        else None
+    )
+    # hint 只追加参考信息，pred_class / latency_ms / scores / top_k 保持模型原值。
+    hint = await _human_feedback_hint(request, payload.title)
     return ClassifyResponse(
         request_id=request.state.request_id,
         model_id=outcome.model_id,
         model_version=outcome.model_version,
         pred_class=outcome.pred_class,
         latency_ms=outcome.latency_ms,
+        scores=scores,
+        score_kind=outcome.score_kind,
+        top_k=top_k,
+        # B3：业务层已判定，路由只做字段映射（软拒识保留 pred_class/分数）。
+        rejected=outcome.rejected,
+        reject_reason=outcome.reject_reason,
+        threshold_meta=outcome.threshold_meta,
+        human_feedback_hint=hint,
+        # B11：来源由适配器按 worker /metadata.display_name 判定（mock-/live/unknown）。
+        data_source=outcome.data_source,
     )
 
 
@@ -45,6 +89,8 @@ async def compare(request: Request, payload: CompareRequest):
             "model_id": item.model_id,
             "status": item.status,
             "latency_ms": item.latency_ms,
+            # B11：逐项来源（error 项也可用于区分 mock 离线等），不推断 live。
+            "data_source": item.data_source,
         }
         if item.status == "ok":
             entry["model_version"] = item.model_version

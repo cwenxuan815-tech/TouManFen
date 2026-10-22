@@ -1,0 +1,91 @@
+/* ==========================================================================
+   TMF 基础样式层（F1）
+   --------------------------------------------------------------------------
+   仅包含：reset、文档/字体默认值、基础元素与选区样式。
+   页面与组件样式在 style.css；设计值统一来自 styles/tokens.css。
+   ========================================================================== */
+
+/* 文档与字体默认值 */
+:root {
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  background: var(--surface-page);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-optical-sizing: auto;
+  font-weight: 400;
+}
+
+/* Reset */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 320px;
+  scroll-behavior: smooth;
+  scroll-padding-top: 84px;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+}
+
+/* 基础元素 */
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* 文本选区 */
+::selection {
+  background: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+/* ==========================================================================
+   F14：键盘焦点可见 + 读屏辅助
+   --------------------------------------------------------------------------
+   - 只在键盘导航（:focus-visible）时显示焦点环，鼠标点击不出现；
+   - 焦点环使用 token，暗色主题自动切换为高对比色；
+   - outline 不参与布局，offset 由 token 控制，避免被 overflow 裁切时
+     仍能看清（组件容器需保留足够留白）。
+   ========================================================================== */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
+}
+
+/* 跳转链接的落点（main）用编程方式聚焦，不应出现整块焦点环 */
+main:focus,
+main:focus-visible {
+  outline: none;
+}
+
+/* 视觉隐藏但对读屏可见：aria-live 状态区等 */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

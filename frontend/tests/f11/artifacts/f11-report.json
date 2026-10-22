@@ -1,0 +1,729 @@
+{
+  "generatedAt": "2026-10-22T00:43:22.086Z",
+  "browser": "Edg/155.0.4283.62",
+  "mode": "mock bench API + Edge headless/CDP",
+  "fixture": "E:\\AIModels\\test\\TouManFen\\TouManFenClassifier\\frontend\\tests\\f11\\fixtures\\bench_pk.mock.json",
+  "serverPort": 18090,
+  "exitCode": 0,
+  "summary": [
+    {
+      "id": "ready",
+      "name": "S1 正常：5 模型 + 集成 + oracle，meta 逐项对应，指标切换",
+      "pass": true,
+      "elapsedMs": 2216,
+      "checks": [
+        {
+          "name": "发出且仅发出 1 次 GET /api/v1/bench/pk",
+          "pass": true,
+          "detail": "1"
+        },
+        {
+          "name": "响应 Content-Type 为 application/json",
+          "pass": true,
+          "detail": "application/json"
+        },
+        {
+          "name": "页面状态 ready",
+          "pass": true,
+          "detail": "ready"
+        },
+        {
+          "name": "meta.dataset 与 JSON 逐字一致",
+          "pass": true,
+          "detail": "DOM=00-data/data/test.txt JSON=00-data/data/test.txt"
+        },
+        {
+          "name": "meta.split 与 JSON 逐字一致",
+          "pass": true,
+          "detail": "DOM=test JSON=test"
+        },
+        {
+          "name": "meta.sample_size 与 JSON 逐字一致",
+          "pass": true,
+          "detail": "DOM=10000 JSON=10000"
+        },
+        {
+          "name": "meta.generated_at 与 JSON 逐字一致",
+          "pass": true,
+          "detail": "DOM=2026-10-22T01:10:00+08:00 JSON=2026-10-22T01:10:00+08:00"
+        },
+        {
+          "name": "meta.code_version 与 JSON 逐字一致",
+          "pass": true,
+          "detail": "DOM=git:uncommitted JSON=git:uncommitted"
+        },
+        {
+          "name": "meta.metric_def 与 JSON 逐字一致",
+          "pass": true,
+          "detail": "DOM={\"f1\":\"macro\",\"acc\":\"top1\",\"latency\":\"mean_ms_per_request\",\"size\":\"bytes\"} JSON={\"f1\":\"macro\",\"acc\":\"top1\",\"latency\":\"mean_ms_per_request\",\"size\":\"bytes\"}"
+        },
+        {
+          "name": "meta.data_kind 与 JSON 逐字一致",
+          "pass": true,
+          "detail": "DOM=offline JSON=offline"
+        },
+        {
+          "name": "meta.model_versions 与 JSON 逐字一致",
+          "pass": true,
+          "detail": "DOM={\"rf\":\"rf.pkl\",\"fasttext\":\"word_auto_train.pkl\",\"bert\":\"bert.pkl\",\"distill\":\"student_v2b.pkl\"} JSON={\"rf\":\"rf.pkl\",\"fasttext\":\"word_auto_train.pkl\",\"bert\":\"bert.pkl\",\"distill\":\"student_v2b.pkl\"}"
+        },
+        {
+          "name": "meta 样本量显示 n = 10000",
+          "pass": true,
+          "detail": "n = 10000"
+        },
+        {
+          "name": "meta 数据性质显示离线评估",
+          "pass": true,
+          "detail": "离线评估（测试集）"
+        },
+        {
+          "name": "meta 产物路径可见",
+          "pass": true,
+          "detail": "artifacts/bench/pk_2026-10-22.json"
+        },
+        {
+          "name": "7 行：5 模型 + 集成 + oracle（顺序=产物顺序）",
+          "pass": true,
+          "detail": "[\"model:rf\",\"model:fasttext\",\"model:bert\",\"model:distill\",\"model:llm\",\"derived:weighted_vote\",\"derived:oracle\"]"
+        },
+        {
+          "name": "指标按钮为 F1 / 延迟 / 体积 三项",
+          "pass": true,
+          "detail": "[\"macro_f1\",\"avg_latency_ms\",\"size_bytes\"]"
+        },
+        {
+          "name": "默认指标为 macro_f1",
+          "pass": true,
+          "detail": "macro_f1"
+        },
+        {
+          "name": "F1 model:rf 数值与条形宽度对应",
+          "pass": true,
+          "detail": "value=0.8302 width=85.63 expectedWidth=85.63"
+        },
+        {
+          "name": "F1 model:fasttext 数值与条形宽度对应",
+          "pass": true,
+          "detail": "value=0.9173 width=94.62 expectedWidth=94.62"
+        },
+        {
+          "name": "F1 model:bert 数值与条形宽度对应",
+          "pass": true,
+          "detail": "value=0.9307 width=96.00 expectedWidth=96.00"
+        },
+        {
+          "name": "F1 model:distill 数值与条形宽度对应",
+          "pass": true,
+          "detail": "value=0.9074 width=93.59 expectedWidth=93.59"
+        },
+        {
+          "name": "F1 缺失行 model:llm 不画条",
+          "pass": true,
+          "detail": "/false"
+        },
+        {
+          "name": "F1 derived:weighted_vote 数值与条形宽度对应",
+          "pass": true,
+          "detail": "value=0.9388 width=96.83 expectedWidth=96.83"
+        },
+        {
+          "name": "F1 derived:oracle 数值与条形宽度对应",
+          "pass": true,
+          "detail": "value=0.9695 width=100.00 expectedWidth=100.00"
+        },
+        {
+          "name": "LLM 缺失：状态 missing、显示未纳入 + 外部 Provider 未授权、不画条",
+          "pass": true,
+          "detail": "{\"key\":\"model:llm\",\"model\":\"llm\",\"kind\":\"model\",\"derived\":\"\",\"status\":\"missing\",\"metric\":\"macro_f1\",\"metricValue\":\"\",\"barWidth\":null,\"hasBar\":false,\"valueText\":\"—\",\"missingText\":\"未纳入 · 外部 Provider 未授权\",\"tag\":\"\",\"text\":\"05LLMllm 未纳入 · 外部 Provider 未授权—\"}"
+        },
+        {
+          "name": "加权投票集成标注「非独立模型」",
+          "pass": true,
+          "detail": "\"非独立模型（加权投票集成）\""
+        },
+        {
+          "name": "oracle 标注「参考上界，非独立模型」",
+          "pass": true,
+          "detail": "\"参考上界，非独立模型\""
+        },
+        {
+          "name": "oracle 参考线存在且为 F1 最大值 100%",
+          "pass": true,
+          "detail": "{\"percent\":\"100.00\"}"
+        },
+        {
+          "name": "不出现「实时准确率 / 线上准确率」",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "明确标注离线口径与「不代表实时」",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "切换后激活平均延迟",
+          "pass": true,
+          "detail": "avg_latency_ms"
+        },
+        {
+          "name": "延迟提示为「越小越好」且单位为毫秒",
+          "pass": true,
+          "detail": "平均延迟：越小越好，单位 毫秒（ms）；条形长度按当前指标相对最大值归一化。"
+        },
+        {
+          "name": "延迟数值/条形严格对应、无 F1 残留",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "延迟指标下 oracle 不画假条",
+          "pass": true,
+          "detail": "null"
+        },
+        {
+          "name": "切换后激活模型体积",
+          "pass": true,
+          "detail": "size_bytes"
+        },
+        {
+          "name": "体积提示包含字节口径说明",
+          "pass": true,
+          "detail": "模型体积：越小越好，单位 字节（自动格式化为 B / KiB / MiB）；条形长度按当前指标相对最大值归一化。"
+        },
+        {
+          "name": "体积数值/条形严格对应、无前两指标残留",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "切回 F1 数值恢复、无体积残留",
+          "pass": true,
+          "detail": "[]"
+        }
+      ]
+    },
+    {
+      "id": "wrapped",
+      "name": "S2 包装层 {request_id, artifact_path, artifact} 兼容",
+      "pass": true,
+      "elapsedMs": 2083,
+      "checks": [
+        {
+          "name": "页面状态 ready",
+          "pass": true,
+          "detail": "ready"
+        },
+        {
+          "name": "渲染 7 行",
+          "pass": true,
+          "detail": "7"
+        },
+        {
+          "name": "包装层下 meta.dataset 仍逐字一致",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "包装层 request_id 显示（前 8 位）",
+          "pass": true,
+          "detail": "OFFLINE BENCHMARK · PK离线测试集上的模型对比。 数据来自离线基准产物，不是实时线上指标；LLM 缺失时单独标注。 离线评估数据来源 · 离线基准产物REQUEST · mock-ben数据集00-data/data/t"
+        },
+        {
+          "name": "包装层场景请求 1 次",
+          "pass": true,
+          "detail": "1"
+        }
+      ]
+    },
+    {
+      "id": "empty",
+      "name": "S3 空产物：AsyncState empty，不显示任何数值",
+      "pass": true,
+      "elapsedMs": 557,
+      "checks": [
+        {
+          "name": "页面状态 empty",
+          "pass": true,
+          "detail": "empty"
+        },
+        {
+          "name": "空态文案正确",
+          "pass": true,
+          "detail": "-暂无基准产物后端尚未生成离线基准 JSON，或产物中没有任何模型结果。此处不会展示任何占位数值。"
+        },
+        {
+          "name": "空态无数据行",
+          "pass": true,
+          "detail": "0"
+        },
+        {
+          "name": "空态无错误态",
+          "pass": true,
+          "detail": ""
+        }
+      ]
+    },
+    {
+      "id": "error",
+      "name": "S4 接口 500：AsyncState error + 重试，不显示假数据",
+      "pass": true,
+      "elapsedMs": 173,
+      "checks": [
+        {
+          "name": "页面状态 error",
+          "pass": true,
+          "detail": "error"
+        },
+        {
+          "name": "错误文案透传服务端信息",
+          "pass": true,
+          "detail": "!基准产物读取失败mock: benchmark artifact unavailable重新读取"
+        },
+        {
+          "name": "错误态提供重试按钮",
+          "pass": true,
+          "detail": "true"
+        },
+        {
+          "name": "错误态无数据行",
+          "pass": true,
+          "detail": "0"
+        }
+      ]
+    },
+    {
+      "id": "path-only",
+      "name": "S5 仅返回 artifact_path：错误提示，不伪造指标",
+      "pass": true,
+      "elapsedMs": 57,
+      "checks": [
+        {
+          "name": "页面状态 error",
+          "pass": true,
+          "detail": "error"
+        },
+        {
+          "name": "提示仅返回产物路径",
+          "pass": true,
+          "detail": "!基准产物读取失败基准接口仅返回产物路径（artifacts/bench/pk_2026-10-22.json），未返回指标数据；需后端返回完整 artifact。重新读取"
+        },
+        {
+          "name": "错误信息包含产物路径",
+          "pass": true,
+          "detail": "!基准产物读取失败基准接口仅返回产物路径（artifacts/bench/pk_2026-10-22.json），未返回指标数据；需后端返回完整 artifact。重新读取"
+        },
+        {
+          "name": "无数据行（不造假）",
+          "pass": true,
+          "detail": "0"
+        }
+      ]
+    }
+  ],
+  "evidence": {
+    "ready": {
+      "scenarioElapsedMs": 2209,
+      "scenarios": 5,
+      "dom": {
+        "state": "ready",
+        "meta": [
+          {
+            "field": "dataset",
+            "raw": "00-data/data/test.txt",
+            "display": "00-data/data/test.txt"
+          },
+          {
+            "field": "split",
+            "raw": "test",
+            "display": "test"
+          },
+          {
+            "field": "sample_size",
+            "raw": "10000",
+            "display": "n = 10000"
+          },
+          {
+            "field": "generated_at",
+            "raw": "2026-10-22T01:10:00+08:00",
+            "display": "2026-10-22T01:10:00+08:00"
+          },
+          {
+            "field": "code_version",
+            "raw": "git:uncommitted",
+            "display": "git:uncommitted"
+          },
+          {
+            "field": "metric_def",
+            "raw": "{\"f1\":\"macro\",\"acc\":\"top1\",\"latency\":\"mean_ms_per_request\",\"size\":\"bytes\"}",
+            "display": "f1=macro · acc=top1 · latency=mean_ms_per_request · size=bytes"
+          },
+          {
+            "field": "data_kind",
+            "raw": "offline",
+            "display": "离线评估（测试集）"
+          },
+          {
+            "field": "model_versions",
+            "raw": "{\"rf\":\"rf.pkl\",\"fasttext\":\"word_auto_train.pkl\",\"bert\":\"bert.pkl\",\"distill\":\"student_v2b.pkl\"}",
+            "display": "rf=rf.pkl · fasttext=word_auto_train.pkl · bert=bert.pkl · distill=student_v2b.pkl"
+          }
+        ],
+        "activeMetric": "macro_f1",
+        "metricButtons": [
+          "macro_f1",
+          "avg_latency_ms",
+          "size_bytes"
+        ],
+        "metricHint": "Macro-F1：越大越好，单位 无量纲（0–1）；条形长度按当前指标相对最大值归一化。",
+        "rows": [
+          {
+            "key": "model:rf",
+            "model": "rf",
+            "kind": "model",
+            "derived": "",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.8302",
+            "barWidth": "85.63",
+            "hasBar": true,
+            "valueText": "0.8302",
+            "missingText": "",
+            "tag": "",
+            "text": "01随机森林rf · 权重 0.150.8302原始值 0.8302"
+          },
+          {
+            "key": "model:fasttext",
+            "model": "fasttext",
+            "kind": "model",
+            "derived": "",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9173",
+            "barWidth": "94.62",
+            "hasBar": true,
+            "valueText": "0.9173",
+            "missingText": "",
+            "tag": "",
+            "text": "02fastTextfasttext · 权重 0.20.9173原始值 0.9173"
+          },
+          {
+            "key": "model:bert",
+            "model": "bert",
+            "kind": "model",
+            "derived": "",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9307",
+            "barWidth": "96.00",
+            "hasBar": true,
+            "valueText": "0.9307",
+            "missingText": "",
+            "tag": "",
+            "text": "03BERTbert · 权重 0.40.9307原始值 0.9307"
+          },
+          {
+            "key": "model:distill",
+            "model": "distill",
+            "kind": "model",
+            "derived": "",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9074",
+            "barWidth": "93.59",
+            "hasBar": true,
+            "valueText": "0.9074",
+            "missingText": "",
+            "tag": "",
+            "text": "04蒸馏模型distill · 权重 0.250.9074原始值 0.9074"
+          },
+          {
+            "key": "model:llm",
+            "model": "llm",
+            "kind": "model",
+            "derived": "",
+            "status": "missing",
+            "metric": "macro_f1",
+            "metricValue": "",
+            "barWidth": null,
+            "hasBar": false,
+            "valueText": "—",
+            "missingText": "未纳入 · 外部 Provider 未授权",
+            "tag": "",
+            "text": "05LLMllm 未纳入 · 外部 Provider 未授权—"
+          },
+          {
+            "key": "derived:weighted_vote",
+            "model": "",
+            "kind": "derived",
+            "derived": "weighted_vote",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9388",
+            "barWidth": "96.83",
+            "hasBar": true,
+            "valueText": "0.9388",
+            "missingText": "",
+            "tag": "非独立模型（加权投票集成）",
+            "text": "06dev 加权投票集成非独立模型（加权投票集成）0.9388原始值 0.9388派生指标，非独立模型"
+          },
+          {
+            "key": "derived:oracle",
+            "model": "",
+            "kind": "derived",
+            "derived": "oracle",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9695",
+            "barWidth": "100.00",
+            "hasBar": true,
+            "valueText": "0.9695",
+            "missingText": "",
+            "tag": "参考上界，非独立模型",
+            "text": "07Oracle 上界参考上界，非独立模型0.9695原始值 0.9695参考上界，非独立模型"
+          }
+        ],
+        "rowCount": 7,
+        "oracleLine": {
+          "percent": "100.00"
+        },
+        "errorText": "",
+        "emptyText": "",
+        "hasRetry": false,
+        "text": "OFFLINE BENCHMARK · PK离线测试集上的模型对比。 数据来自离线基准产物，不是实时线上指标；LLM 缺失时单独标注。 离线评估数据来源 · 离线基准产物REQUEST · mock-ben数据集00-data/data/test.txt切分test样本量n = 10000生成时间2026-10-22T01:10:00+08:00代码版本git:uncommitted指标口径f1=macro · acc=top1 · latency=mean_ms_per_request · size=bytes数据性质离线评估（测试集）模型版本rf=rf.pkl · fasttext=word_auto_train.pkl · bert=bert.pkl · distill=student_v2b.pkl 产物路径：artifacts/bench/pk_2026-10-22.jsonMacro-F1平均延迟模型体积Macro-F1：越大越好，单位 无量纲（0–1）；条形长度按当前指标相对最大值归一化。 已切换指标：Macro-F1，越大越好；数据来自离线评估（test，n=10000）。模型 / 派生项条形（F1）F101随机森林rf · 权重 0.150.8302原始值 0.830202fastTextfasttext · 权重 0.20.9173原始值 0.917303BERTbert · 权重 0.40.9307原始值 0.930704蒸馏模型distill · 权重 0.250.9074原始值 0.907405LLMllm 未纳入 · 外部 Provider 未授权—06dev 加权投票集成非独立模型（加权投票集成）0.9388原始值 0.9388派生指标，非独立模型07Oracle 上界参考上界，非独立模型0.9695原始值 0.9695参考上界，非独立模型本地模型加权投票集成（非独立模型） oracle 参考上界（非独立模型） 虚线 = oracle 参考上界（0.9695） 口径：以上均为离线测试集（test，n=10000）评估结果， 不代表实时或线上表现；派生项与 oracle 仅为参考，不与竞技场 Elo 混用。 缺失模型只标注「未纳入」，不画条形，也不参与当前指标的归一化基准。"
+      },
+      "apiRequests": [
+        {
+          "ts": 1792629797067,
+          "requestId": "22084.6",
+          "url": "http://127.0.0.1:18090/api/v1/bench/pk",
+          "method": "GET"
+        }
+      ],
+      "apiResponses": [
+        {
+          "status": 200,
+          "contentType": "application/json"
+        }
+      ]
+    },
+    "wrapped": {
+      "dom": {
+        "state": "ready",
+        "meta": [
+          {
+            "field": "dataset",
+            "raw": "00-data/data/test.txt",
+            "display": "00-data/data/test.txt"
+          },
+          {
+            "field": "split",
+            "raw": "test",
+            "display": "test"
+          },
+          {
+            "field": "sample_size",
+            "raw": "10000",
+            "display": "n = 10000"
+          },
+          {
+            "field": "generated_at",
+            "raw": "2026-10-22T01:10:00+08:00",
+            "display": "2026-10-22T01:10:00+08:00"
+          },
+          {
+            "field": "code_version",
+            "raw": "git:uncommitted",
+            "display": "git:uncommitted"
+          },
+          {
+            "field": "metric_def",
+            "raw": "{\"f1\":\"macro\",\"acc\":\"top1\",\"latency\":\"mean_ms_per_request\",\"size\":\"bytes\"}",
+            "display": "f1=macro · acc=top1 · latency=mean_ms_per_request · size=bytes"
+          },
+          {
+            "field": "data_kind",
+            "raw": "offline",
+            "display": "离线评估（测试集）"
+          },
+          {
+            "field": "model_versions",
+            "raw": "{\"rf\":\"rf.pkl\",\"fasttext\":\"word_auto_train.pkl\",\"bert\":\"bert.pkl\",\"distill\":\"student_v2b.pkl\"}",
+            "display": "rf=rf.pkl · fasttext=word_auto_train.pkl · bert=bert.pkl · distill=student_v2b.pkl"
+          }
+        ],
+        "activeMetric": "macro_f1",
+        "metricButtons": [
+          "macro_f1",
+          "avg_latency_ms",
+          "size_bytes"
+        ],
+        "metricHint": "Macro-F1：越大越好，单位 无量纲（0–1）；条形长度按当前指标相对最大值归一化。",
+        "rows": [
+          {
+            "key": "model:rf",
+            "model": "rf",
+            "kind": "model",
+            "derived": "",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.8302",
+            "barWidth": "85.63",
+            "hasBar": true,
+            "valueText": "0.8302",
+            "missingText": "",
+            "tag": "",
+            "text": "01随机森林rf · 权重 0.150.8302原始值 0.8302"
+          },
+          {
+            "key": "model:fasttext",
+            "model": "fasttext",
+            "kind": "model",
+            "derived": "",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9173",
+            "barWidth": "94.62",
+            "hasBar": true,
+            "valueText": "0.9173",
+            "missingText": "",
+            "tag": "",
+            "text": "02fastTextfasttext · 权重 0.20.9173原始值 0.9173"
+          },
+          {
+            "key": "model:bert",
+            "model": "bert",
+            "kind": "model",
+            "derived": "",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9307",
+            "barWidth": "96.00",
+            "hasBar": true,
+            "valueText": "0.9307",
+            "missingText": "",
+            "tag": "",
+            "text": "03BERTbert · 权重 0.40.9307原始值 0.9307"
+          },
+          {
+            "key": "model:distill",
+            "model": "distill",
+            "kind": "model",
+            "derived": "",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9074",
+            "barWidth": "93.59",
+            "hasBar": true,
+            "valueText": "0.9074",
+            "missingText": "",
+            "tag": "",
+            "text": "04蒸馏模型distill · 权重 0.250.9074原始值 0.9074"
+          },
+          {
+            "key": "model:llm",
+            "model": "llm",
+            "kind": "model",
+            "derived": "",
+            "status": "missing",
+            "metric": "macro_f1",
+            "metricValue": "",
+            "barWidth": null,
+            "hasBar": false,
+            "valueText": "—",
+            "missingText": "未纳入 · 外部 Provider 未授权",
+            "tag": "",
+            "text": "05LLMllm 未纳入 · 外部 Provider 未授权—"
+          },
+          {
+            "key": "derived:weighted_vote",
+            "model": "",
+            "kind": "derived",
+            "derived": "weighted_vote",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9388",
+            "barWidth": "96.83",
+            "hasBar": true,
+            "valueText": "0.9388",
+            "missingText": "",
+            "tag": "非独立模型（加权投票集成）",
+            "text": "06dev 加权投票集成非独立模型（加权投票集成）0.9388原始值 0.9388派生指标，非独立模型"
+          },
+          {
+            "key": "derived:oracle",
+            "model": "",
+            "kind": "derived",
+            "derived": "oracle",
+            "status": "ok",
+            "metric": "macro_f1",
+            "metricValue": "0.9695",
+            "barWidth": "100.00",
+            "hasBar": true,
+            "valueText": "0.9695",
+            "missingText": "",
+            "tag": "参考上界，非独立模型",
+            "text": "07Oracle 上界参考上界，非独立模型0.9695原始值 0.9695参考上界，非独立模型"
+          }
+        ],
+        "rowCount": 7,
+        "oracleLine": {
+          "percent": "100.00"
+        },
+        "errorText": "",
+        "emptyText": "",
+        "hasRetry": false,
+        "text": "OFFLINE BENCHMARK · PK离线测试集上的模型对比。 数据来自离线基准产物，不是实时线上指标；LLM 缺失时单独标注。 离线评估数据来源 · 离线基准产物REQUEST · mock-ben数据集00-data/data/test.txt切分test样本量n = 10000生成时间2026-10-22T01:10:00+08:00代码版本git:uncommitted指标口径f1=macro · acc=top1 · latency=mean_ms_per_request · size=bytes数据性质离线评估（测试集）模型版本rf=rf.pkl · fasttext=word_auto_train.pkl · bert=bert.pkl · distill=student_v2b.pkl 产物路径：artifacts/bench/pk_2026-10-22.jsonMacro-F1平均延迟模型体积Macro-F1：越大越好，单位 无量纲（0–1）；条形长度按当前指标相对最大值归一化。 模型 / 派生项条形（F1）F101随机森林rf · 权重 0.150.8302原始值 0.830202fastTextfasttext · 权重 0.20.9173原始值 0.917303BERTbert · 权重 0.40.9307原始值 0.930704蒸馏模型distill · 权重 0.250.9074原始值 0.907405LLMllm 未纳入 · 外部 Provider 未授权—06dev 加权投票集成非独立模型（加权投票集成）0.9388原始值 0.9388派生指标，非独立模型07Oracle 上界参考上界，非独立模型0.9695原始值 0.9695参考上界，非独立模型本地模型加权投票集成（非独立模型） oracle 参考上界（非独立模型） 虚线 = oracle 参考上界（0.9695） 口径：以上均为离线测试集（test，n=10000）评估结果， 不代表实时或线上表现；派生项与 oracle 仅为参考，不与竞技场 Elo 混用。 缺失模型只标注「未纳入」，不画条形，也不参与当前指标的归一化基准。"
+      }
+    },
+    "empty": {
+      "dom": {
+        "state": "empty",
+        "meta": [],
+        "activeMetric": null,
+        "metricButtons": [],
+        "metricHint": "",
+        "rows": [],
+        "rowCount": 0,
+        "oracleLine": null,
+        "errorText": "",
+        "emptyText": "-暂无基准产物后端尚未生成离线基准 JSON，或产物中没有任何模型结果。此处不会展示任何占位数值。",
+        "hasRetry": false,
+        "text": "OFFLINE BENCHMARK · PK离线测试集上的模型对比。 数据来自离线基准产物，不是实时线上指标；LLM 缺失时单独标注。 -暂无基准产物后端尚未生成离线基准 JSON，或产物中没有任何模型结果。此处不会展示任何占位数值。"
+      }
+    },
+    "error": {
+      "dom": {
+        "state": "error",
+        "meta": [],
+        "activeMetric": null,
+        "metricButtons": [],
+        "metricHint": "",
+        "rows": [],
+        "rowCount": 0,
+        "oracleLine": null,
+        "errorText": "!基准产物读取失败mock: benchmark artifact unavailable重新读取",
+        "emptyText": "",
+        "hasRetry": true,
+        "text": "OFFLINE BENCHMARK · PK离线测试集上的模型对比。 数据来自离线基准产物，不是实时线上指标；LLM 缺失时单独标注。 !基准产物读取失败mock: benchmark artifact unavailable重新读取"
+      }
+    },
+    "path-only": {
+      "dom": {
+        "state": "error",
+        "meta": [],
+        "activeMetric": null,
+        "metricButtons": [],
+        "metricHint": "",
+        "rows": [],
+        "rowCount": 0,
+        "oracleLine": null,
+        "errorText": "!基准产物读取失败基准接口仅返回产物路径（artifacts/bench/pk_2026-10-22.json），未返回指标数据；需后端返回完整 artifact。重新读取",
+        "emptyText": "",
+        "hasRetry": true,
+        "text": "OFFLINE BENCHMARK · PK离线测试集上的模型对比。 数据来自离线基准产物，不是实时线上指标；LLM 缺失时单独标注。 !基准产物读取失败基准接口仅返回产物路径（artifacts/bench/pk_2026-10-22.json），未返回指标数据；需后端返回完整 artifact。重新读取"
+      }
+    }
+  }
+}

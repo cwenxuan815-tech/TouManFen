@@ -9,6 +9,7 @@ embedding/hidden/层数，无需改代码即可切换模型。默认加载
 
 import re
 import sys
+import threading
 from pathlib import Path
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -21,9 +22,20 @@ from transformers import BertTokenizer  # noqa: E402
 from config import Config  # noqa: E402
 from student_bilstm_v2 import BiLSTMStudentV2  # noqa: E402
 
-from tmf_common.prediction import PredictService  # noqa: E402
+from tmf_common.prediction import (  # noqa: E402
+    ModelOutput,
+    PredictService,
+    SCORE_KIND_RAW_SOFTMAX,
+)
 
 config = Config()
+
+# B12：推理线程数必须在模型加载前生效（默认 4，TMF_TORCH_THREADS 可覆盖）。
+torch.set_num_threads(config.torch_threads)
+
+#: B12：进程内推理串行锁。单个 worker 进程内一次只允许一个 infer，
+#: 避免同一进程内并发请求互相抢占 torch 线程；不同 worker 是不同进程，互不影响。
+_INFER_LOCK = threading.Lock()
 
 
 class StudentPredictService(PredictService):
@@ -39,21 +51,32 @@ class StudentPredictService(PredictService):
         self._device = device
         self._max_length = max_length
 
-    def infer(self, title: str) -> str:
-        encoded = self._tokenizer(
-            [title],
-            padding="max_length",
-            truncation=True,
-            max_length=self._max_length,
-            return_tensors="pt",
-        )
-        input_ids = encoded["input_ids"].to(self._device)
-        attention_mask = encoded["attention_mask"].to(self._device)
+    def infer(self, title: str) -> ModelOutput:
+        # B12：锁内只做 tokenize + forward + 取分数，不做 I/O/日志。
+        with _INFER_LOCK:
+            encoded = self._tokenizer(
+                [title],
+                padding="max_length",
+                truncation=True,
+                max_length=self._max_length,
+                return_tensors="pt",
+            )
+            input_ids = encoded["input_ids"].to(self._device)
+            attention_mask = encoded["attention_mask"].to(self._device)
 
-        with torch.no_grad():
-            output = self._model(input_ids, attention_mask)
-            pred_index = torch.argmax(output, dim=-1).item()
-        return self.class_list[pred_index]
+            with torch.no_grad():
+                output = self._model(input_ids, attention_mask)
+                pred_index = torch.argmax(output, dim=-1).item()
+                # 分数来自同一 logits 向量的 softmax（未校准），不是按 argmax 重算。
+                probabilities = torch.softmax(output, dim=-1)[0]
+            scores = None
+            if probabilities.shape[-1] == len(self.class_list):
+                scores = tuple(float(value) for value in probabilities.tolist())
+            return ModelOutput(
+                pred_class=self.class_list[pred_index],
+                scores=scores,
+                score_kind=SCORE_KIND_RAW_SOFTMAX if scores is not None else None,
+            )
 
 
 def _load_model():

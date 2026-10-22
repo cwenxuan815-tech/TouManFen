@@ -1,0 +1,152 @@
+{
+  "results": [
+    {
+      "name": "F13 初始主题为 light（系统默认）",
+      "ok": true,
+      "detail": "{\"width\":1920,\"clientWidth\":1920,\"scrollWidth\":1920,\"bodyScrollWidth\":1920,\"theme\":\"light\",\"presentation\":\"normal\",\"storedTheme\":null}"
+    },
+    {
+      "name": "F13 手动切换暗色",
+      "ok": true,
+      "detail": "{\"width\":1920,\"clientWidth\":1920,\"scrollWidth\":1920,\"bodyScrollWidth\":1920,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    },
+    {
+      "name": "F13 刷新后暗色保留（localStorage）",
+      "ok": true,
+      "detail": "{\"width\":1920,\"clientWidth\":1920,\"scrollWidth\":1920,\"bodyScrollWidth\":1920,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    },
+    {
+      "name": "F13 暗色正文对比度 >= 4.5:1",
+      "ok": true,
+      "detail": "{\"hero\":{\"color\":\"rgb(167, 178, 194)\",\"background\":\"rgb(15, 20, 32)\",\"ratio\":8.57868861823549},\"section\":{\"color\":\"rgb(167, 178, 194)\",\"background\":\"rgb(15, 20, 32)\",\"ratio\":8.57868861823549},\"nav\":{\"color\":\"rgb(255, 255, 255)\",\"background\":\"rgb(15, 20, 32)\",\"ratio\":16.686388520455917},\"footer\":{\"color\":\"rgb(167, 178, 194)\",\"background\":\"rgb(15, 20, 32)\",\"ratio\":8.57868861823549}}"
+    },
+    {
+      "name": "F13 390px 无横向滚动",
+      "ok": true,
+      "detail": "{\"width\":390,\"clientWidth\":390,\"scrollWidth\":390,\"bodyScrollWidth\":390,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    },
+    {
+      "name": "F13 640px 无横向滚动",
+      "ok": true,
+      "detail": "{\"width\":640,\"clientWidth\":640,\"scrollWidth\":640,\"bodyScrollWidth\":640,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    },
+    {
+      "name": "F13 768px 无横向滚动",
+      "ok": true,
+      "detail": "{\"width\":768,\"clientWidth\":768,\"scrollWidth\":768,\"bodyScrollWidth\":768,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    },
+    {
+      "name": "F13 1024px 无横向滚动",
+      "ok": true,
+      "detail": "{\"width\":1024,\"clientWidth\":1024,\"scrollWidth\":1024,\"bodyScrollWidth\":1024,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    },
+    {
+      "name": "F13 1280px 无横向滚动",
+      "ok": true,
+      "detail": "{\"width\":1280,\"clientWidth\":1280,\"scrollWidth\":1280,\"bodyScrollWidth\":1280,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    },
+    {
+      "name": "F13 1920px 无横向滚动",
+      "ok": true,
+      "detail": "{\"width\":1920,\"clientWidth\":1920,\"scrollWidth\":1920,\"bodyScrollWidth\":1920,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    },
+    {
+      "name": "F13 投影 1280×720：关键标题/数字字号可读",
+      "ok": true,
+      "detail": "{\"h2\":{\"text\":\"从一个标题开始。\",\"fontSize\":\"40px\"},\"stat\":{\"text\":\"10\",\"fontSize\":\"16px\"},\"label\":{\"text\":\"新闻频道\",\"fontSize\":\"9px\"}}"
+    },
+    {
+      "name": "F13 125% 缩放模拟无横向滚动",
+      "ok": true,
+      "detail": "{\"width\":1536,\"clientWidth\":1536,\"scrollWidth\":1536,\"bodyScrollWidth\":1536,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    },
+    {
+      "name": "F13 大屏模式：×1.25、拒绝全屏不报错、调试信息隐藏",
+      "ok": true,
+      "detail": "{\"large\":{\"width\":1920,\"clientWidth\":1920,\"scrollWidth\":1920,\"bodyScrollWidth\":1920,\"theme\":\"dark\",\"presentation\":\"large\",\"storedTheme\":\"dark\"},\"largeDetail\":{\"presentation\":\"large\",\"zoom\":\"1.25\",\"debugDisplay\":\"none\",\"debugVisible\":false,\"denied\":true}}"
+    },
+    {
+      "name": "F13 退出大屏恢复 normal",
+      "ok": true,
+      "detail": "{\"width\":1920,\"clientWidth\":1920,\"scrollWidth\":1920,\"bodyScrollWidth\":1920,\"theme\":\"dark\",\"presentation\":\"normal\",\"storedTheme\":\"dark\"}"
+    }
+  ],
+  "widthChecks": {
+    "390": {
+      "width": 390,
+      "clientWidth": 390,
+      "scrollWidth": 390,
+      "bodyScrollWidth": 390,
+      "theme": "dark",
+      "presentation": "normal",
+      "storedTheme": "dark"
+    },
+    "640": {
+      "width": 640,
+      "clientWidth": 640,
+      "scrollWidth": 640,
+      "bodyScrollWidth": 640,
+      "theme": "dark",
+      "presentation": "normal",
+      "storedTheme": "dark"
+    },
+    "768": {
+      "width": 768,
+      "clientWidth": 768,
+      "scrollWidth": 768,
+      "bodyScrollWidth": 768,
+      "theme": "dark",
+      "presentation": "normal",
+      "storedTheme": "dark"
+    },
+    "1024": {
+      "width": 1024,
+      "clientWidth": 1024,
+      "scrollWidth": 1024,
+      "bodyScrollWidth": 1024,
+      "theme": "dark",
+      "presentation": "normal",
+      "storedTheme": "dark"
+    },
+    "1280": {
+      "width": 1280,
+      "clientWidth": 1280,
+      "scrollWidth": 1280,
+      "bodyScrollWidth": 1280,
+      "theme": "dark",
+      "presentation": "normal",
+      "storedTheme": "dark"
+    },
+    "1920": {
+      "width": 1920,
+      "clientWidth": 1920,
+      "scrollWidth": 1920,
+      "bodyScrollWidth": 1920,
+      "theme": "dark",
+      "presentation": "normal",
+      "storedTheme": "dark"
+    }
+  },
+  "contrastChecks": {
+    "hero": {
+      "color": "rgb(167, 178, 194)",
+      "background": "rgb(15, 20, 32)",
+      "ratio": 8.57868861823549
+    },
+    "section": {
+      "color": "rgb(167, 178, 194)",
+      "background": "rgb(15, 20, 32)",
+      "ratio": 8.57868861823549
+    },
+    "nav": {
+      "color": "rgb(255, 255, 255)",
+      "background": "rgb(15, 20, 32)",
+      "ratio": 16.686388520455917
+    },
+    "footer": {
+      "color": "rgb(167, 178, 194)",
+      "background": "rgb(15, 20, 32)",
+      "ratio": 8.57868861823549
+    }
+  }
+}

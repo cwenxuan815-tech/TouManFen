@@ -1,0 +1,9 @@
+{
+  "phase": "offline",
+  "duration_ms": 1969,
+  "text": "MODEL COMPARISON · STREAMING 同一个标题，4 个模型完成判断。 REQUEST · d7930343 ◐ 部分结果已返回 4 成功 · 1 失败 · 用时 532 ms · 总截止 18000 ms 流式实时（SSE） 首结果 22 ms 模型间存在分歧（1 个不同） test title 排序 按延迟 按一致度 一致度 = 与多数预测相同 REQUEST · d7930343 蒸 蒸馏 BiLSTM 演示数据（mock） 房产 realty 与多数一致 分类完成 8 ms 随 随机森林 演示数据（mock） 房产 realty 与多数一致 分类完成 10 ms f fastText 演示数据（mock） 房产 realty 与多数一致 分类完成 10 ms B BERT 演示数据（mock） 教育 education 与多数不同 分类完成 11 ms 大 大模型 演示数据（mock） 所选模型服务不可达 错误码 WORKER_UNAVAILABLE WORKER_UNAVAILABLE 525 ms",
+  "network": [
+    "http://127.0.0.1:14520/api/v1/compare/stream?title=test%20title&models=rf,fasttext,bert,distill,llm"
+  ],
+  "ok": true
+}

@@ -1,0 +1,136 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-10-22T07:55:36+08:00",
+  "purpose": "D2 演示数据验收证据",
+  "checks": [
+    "8 cases: titles/line_index/true_label/4-model preds match test.txt + B8",
+    "20 arena questions: line_index/title/true_label all match test.txt",
+    "snapshot: 8 cases (5 cached + 3 no-pred), LLM missing, no fake LLM/scores",
+    "snapshot meta data_kind=demo via tools/validate_meta.py; B11 snapshot referenced read-only",
+    "demo_seed --reset idempotent: same semantic state digest across A x2, repeat DB B, now-time x2",
+    "demo_seed: feedback=3, vote=2, vote_item=6, arena_model=5, arena_item=2; default DB untouched",
+    "demo_seed: 2 demo votes < 50 -> warming_up (no fabricated ranking)",
+    "fixed --at: DB A (run2) full rows incl timestamps == repeat DB B",
+    "default serving/run/tmf.db exists=False (must be False)"
+  ],
+  "expected_table": [
+    {
+      "case_id": "demo-normal-sports-consensus",
+      "category": "normal",
+      "expected_state": "classified_ok",
+      "expected_pred": "sports"
+    },
+    {
+      "case_id": "demo-normal-finance-consensus",
+      "category": "normal",
+      "expected_state": "classified_ok",
+      "expected_pred": "finance"
+    },
+    {
+      "case_id": "demo-normal-game-consensus",
+      "category": "normal",
+      "expected_state": "classified_ok",
+      "expected_pred": "game"
+    },
+    {
+      "case_id": "demo-confusing-education-disagree",
+      "category": "confusing",
+      "expected_state": "classified_confusing",
+      "expected_pred": "education"
+    },
+    {
+      "case_id": "demo-correctable-entertainment-disagree",
+      "category": "correctable",
+      "expected_state": "classified_correctable",
+      "expected_pred": "entertainment"
+    },
+    {
+      "case_id": "demo-non-news-synthetic-negative",
+      "category": "non_news",
+      "expected_state": "soft_rejected_or_no_realtime",
+      "expected_pred": null
+    },
+    {
+      "case_id": "demo-slow-response-mock",
+      "category": "slow_response",
+      "expected_state": "mock_slow",
+      "expected_pred": null
+    },
+    {
+      "case_id": "demo-too-long-title",
+      "category": "too_long",
+      "expected_state": "too_long_rejected",
+      "expected_pred": null
+    }
+  ],
+  "snapshot": {
+    "path": "frontend/public/snapshot.json",
+    "sha256": "db2278804321a1731224625b1a80fabfa5ea5883d5b80ed91ae00c3c88b40705",
+    "meta_check": "PASS (tools/validate_meta.py, data_kind=demo)",
+    "title_count": 8,
+    "category_counts": {
+      "normal": 3,
+      "non_news": 1,
+      "confusing": 1,
+      "correctable": 1,
+      "slow_response": 1,
+      "too_long": 1
+    },
+    "llm": {
+      "status": "missing",
+      "reason": "external_provider_not_authorized",
+      "predictions": null
+    },
+    "sources": {
+      "live": false,
+      "mock": false,
+      "cached": true,
+      "offline_benchmark": true,
+      "synthetic": true
+    }
+  },
+  "b11_snapshot": {
+    "path": "artifacts/demo/snapshot_2026-10-22.json",
+    "sha256": "29b5b58fdea491e3af88f32d5c05802a5fef5be04bd6d6047fd71e5d67230b71",
+    "overwritten": false
+  },
+  "bench": {
+    "artifact": "artifacts/bench/pk_2026-10-22.json",
+    "sha256": "4aef918ed2e8b4740a5cd6cfcb23c35daf6a2a41c71c77b8314c58a3825252cd"
+  },
+  "demo_seed": {
+    "temp_db_paths": [
+      "artifacts/demo/_verify/tmf_a.db",
+      "artifacts/demo/_verify/tmf_b.db",
+      "artifacts/demo/_verify/tmf_c.db"
+    ],
+    "semantic_state_digest": "8d39dcd3b53267af3deceff7611c8daf2f04033bb76f44928ca109eb0a58430f",
+    "counts": {
+      "feedback": 3,
+      "arena_item": 2,
+      "arena_model": 5,
+      "vote": 2,
+      "vote_item": 6
+    },
+    "arena_model_ratings": {
+      "rf": 1177.652570223992,
+      "fasttext": 1176.8696989965226,
+      "bert": 1221.1665570647117,
+      "llm": 1200.0,
+      "distill": 1224.3111737147738
+    },
+    "warmup": {
+      "total_votes": 2,
+      "warmup_threshold": 50,
+      "state": "warming_up",
+      "note": "演示种子票数远小于 50，榜单保持预热态；不伪造正式排名/准确率"
+    },
+    "default_db_touched": false,
+    "cleanup": "临时 DB/WAL 已删除；报告保留在 artifacts/demo/demo_seed_report_*.json"
+  },
+  "cleanup": {
+    "temp_db_dir": "artifacts/demo/_verify",
+    "removed": true,
+    "services_started": false
+  }
+}

@@ -30,6 +30,7 @@ from .config import (  # noqa: F401
 from .prediction import (  # noqa: F401
     InferenceError,
     ModelNotReadyError,
+    ModelOutput,
     ModelOutputError,
     PredictionError,
     PredictionResult,
@@ -55,6 +56,7 @@ __all__ = [
     "validate_http_url",
     "validate_origin",
     "PredictionResult",
+    "ModelOutput",
     "PredictionError",
     "TitleValidationError",
     "ModelOutputError",

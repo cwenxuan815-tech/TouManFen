@@ -32,6 +32,8 @@ class JsonFormatter(logging.Formatter):
             "worker_id",
             "model_status",
             "error_code",
+            "data_source",
+            "stats_counted",
         ):
             value = getattr(record, key, None)
             if value is not None:

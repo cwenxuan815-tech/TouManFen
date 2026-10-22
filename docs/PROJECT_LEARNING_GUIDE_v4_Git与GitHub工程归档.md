@@ -1,5 +1,8 @@
 # 项目工程实践与技术学习档案（v4：Git / GitHub 工程归档）
 
+> **状态更新（2026-10-22）**：本文为历史/前期归档，不代表最终实现；最终能力与验收状态以 [README](../README.md) 和 [v6 学习档案](PROJECT_LEARNING_GUIDE_v6_全链路交付与隔离验收.md) 为准。B8 LLM 仍 missing，D7 未执行，真实设备/真实 LLM 未验收。
+
+
 > 文档版本：`v4-git-1.0`　｜　生成时间：2026-10-21 09:56（Asia/Shanghai）
 > 对应工程提交：`9f81e05bb9c251a5c4003a2ce5fe3045d9301f6c`（分支 `main`）
 > 本文是**新建文档**，不修改也不覆盖 `docs/` 下已有的历史归档；既有的 `PROJECT_LEARNING_GUIDE.md`、`PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md`、`PROJECT_LEARNING_GUIDE_v3_前端开发全过程技术归档.md` 等仍是各自阶段的事实来源。

@@ -1,0 +1,276 @@
+/* ==========================================================================
+   TMF 设计 token（F1）
+   --------------------------------------------------------------------------
+   分层约定：
+     1. tokens.css —— 本文件：颜色/间距/圆角/阴影/动效等设计值，唯一来源；
+     2. base.css   —— reset、字体、基础元素默认样式；
+     3. style.css  —— 页面与区块样式，只引用本文件中的语义变量。
+   命名约定：
+     - --color-*   基础色板（尽量少，供语义层引用）；
+     - --text-*    文本色；--surface-* 表面色；--border-* 边框色；
+     - --brand-*   品牌色；--cat-* 10 组类别色；--space-* 间距；
+     - --radius-*  圆角；--duration-* 动效时长；--layout-* 布局宽度。
+   注意：本阶段只做 token 可覆盖性，不包含主题切换 UI 或暗色功能。
+   ========================================================================== */
+
+:root {
+  /* 字体 */
+  --font-sans: 'DM Sans', 'Noto Sans SC', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', sans-serif;
+
+  /* ------------------------------------------------------------------
+     基础色板（只在语义 token 需要复用同一字面量时使用）
+     ------------------------------------------------------------------ */
+  --color-white: #fff;
+  --color-white-ghost: #fff9;
+  --color-ink: #171b24;
+  --color-ink-strong: #1d2634;
+  --color-gray-600: #657184;
+  --color-gray-500: #929baa;
+  --color-gray-400: #9ba3af;
+  --color-gray-300: #a0a8b4;
+  --color-line: #e5e9f0;
+  --color-line-card: #e7ebf1;
+  --color-line-control: #e5eaf1;
+  --color-page: #f6f8fb;
+  --color-blue: #286cff;
+  --color-blue-strong: #3475f5;
+  --color-blue-light: #8bb4ff;
+  --color-blue-dark: #1254e8;
+  --color-blue-50: #eaf2ff;
+  --color-blue-soft: #edf3ff;
+  --color-blue-soft-alt: #e8f1ff;
+  --color-green-50: #e2f6ec;
+  --color-red-50: #fff0ef;
+  --color-amber-strong: #d89a31;
+
+  /* ------------------------------------------------------------------
+     语义色：文本 / 表面 / 边框 / 品牌 / 状态
+     ------------------------------------------------------------------ */
+  --text-primary: var(--color-ink);
+  --text-strong: var(--color-ink-strong);
+  --text-secondary: var(--color-gray-600);
+  --text-muted: #737c8c;
+  --text-quiet: var(--color-gray-500);
+  --text-faint: var(--color-gray-400);
+  --text-subtle: var(--color-gray-300);
+  --text-on-brand: var(--color-white);
+  --text-on-dark: var(--color-white);
+
+  --surface-page: var(--color-page);
+  --surface-card: var(--color-white);
+  --surface-inverse: var(--color-white);
+
+  --border: var(--color-line);
+  --border-card: var(--color-line-card);
+  --border-control: var(--color-line-control);
+  --border-on-art: var(--color-white-ghost);
+
+  --brand: var(--color-blue);
+  --brand-hover: #1558eb;
+  --brand-strong: var(--color-blue-strong);
+  --brand-light: var(--color-blue-light);
+  --brand-tint: var(--color-blue-50);
+  --brand-soft: var(--color-blue-soft);
+  --brand-soft-alt: var(--color-blue-soft-alt);
+  --brand-dark: var(--color-blue-dark);
+
+  --selection-bg: #cfe0ff;
+  --selection-text: #123b91;
+
+  --success-soft: var(--color-green-50);
+  --danger-soft: var(--color-red-50);
+  --warning-strong: var(--color-amber-strong);
+  --ring-success: 0 0 0 4px var(--success-soft);
+
+  /* F4 统一状态/提示组件使用 */
+  --success-text: #246b4d;
+  --danger-text: #a74640;
+  --danger-border: #f3c7c4;
+  --warning-soft: #fff8e9;
+  --warning-border: #f1e0b8;
+  --warning-text: #87651e;
+  --toast-shadow: 0 14px 32px #273b5a18;
+
+  /* F14 键盘焦点环（亮色下高对比；暗色在主题层覆盖） */
+  --focus-ring: #1e63f0;
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* ------------------------------------------------------------------
+     10 组类别色
+     App.vue 的 categoryNames[].color 与下列颜色槽一一对应：
+       finance → violet,   realty → blue,    stocks → cyan,
+       education → amber,  science → indigo, society → green,
+       politics → red,     sports → orange,  game → pink,
+       entertainment → purple
+     类别色只允许在本文件中定义，组件样式通过 var(--cat-*) 引用。
+     ------------------------------------------------------------------ */
+  --cat-blue-bg: linear-gradient(110deg, var(--color-blue-50), #dbe9ff 55%, #ebf5ff);
+  --cat-blue-mark: #3675ee;
+  --cat-blue-text: #3473ea;
+
+  --cat-violet-bg: linear-gradient(110deg, #f0edff, #e3ddff);
+  --cat-violet-mark: #7254ce;
+  --cat-violet-text: #7556c8;
+
+  --cat-cyan-bg: linear-gradient(110deg, #e8faff, #d6f2fb);
+  --cat-cyan-mark: #2184ae;
+  --cat-cyan-text: #2789a9;
+
+  --cat-amber-bg: linear-gradient(110deg, #fff7e7, #faebc7);
+  --cat-amber-mark: #ae7b1c;
+  --cat-amber-text: #b18121;
+
+  --cat-indigo-bg: linear-gradient(110deg, #edf0ff, #dfe5ff);
+  --cat-indigo-mark: #526ac8;
+  --cat-indigo-text: #596ec9;
+
+  --cat-green-bg: linear-gradient(110deg, #ebf9f0, #d9f1e2);
+  --cat-green-mark: #298553;
+  --cat-green-text: #328653;
+
+  --cat-red-bg: linear-gradient(110deg, var(--danger-soft), #ffe0df);
+  --cat-red-mark: #c15353;
+  --cat-red-text: var(--cat-red-mark);
+
+  --cat-orange-bg: linear-gradient(110deg, #fff2e9, #ffe3d1);
+  --cat-orange-mark: #c36b2e;
+  --cat-orange-text: #c46c31;
+
+  --cat-pink-bg: linear-gradient(110deg, #fff0f6, #f8dcec);
+  --cat-pink-mark: #bd4d88;
+  --cat-pink-text: #b94f86;
+
+  --cat-purple-bg: linear-gradient(110deg, #f6efff, #eadfff);
+  --cat-purple-mark: #8053c7;
+  --cat-purple-text: #8054c8;
+
+  /* ------------------------------------------------------------------
+     间距（px 数值刻度；页面百分比留白属于布局，不进入此表）
+     ------------------------------------------------------------------ */
+  --space-4: 4px;
+  --space-5: 5px;
+  --space-6: 6px;
+  --space-7: 7px;
+  --space-8: 8px;
+  --space-9: 9px;
+  --space-10: 10px;
+  --space-11: 11px;
+  --space-12: 12px;
+  --space-14: 14px;
+  --space-15: 15px;
+  --space-16: 16px;
+  --space-17: 17px;
+  --space-24: 24px;
+  --space-30: 30px;
+
+  /* ------------------------------------------------------------------
+     圆角
+     ------------------------------------------------------------------ */
+  --radius-xs: 9px;
+  --radius-sm: 11px;
+  --radius-md: 12px;
+  --radius-lg: 14px;
+  --radius-xl: 15px;
+  --radius-2xl: 17px;
+  --radius-3xl: 18px;
+  --radius-4xl: 22px;
+  --radius-5xl: 24px;
+  --radius-pill: 999px;
+  --radius-circle: 50%;
+
+  /* ------------------------------------------------------------------
+     动效
+     ------------------------------------------------------------------ */
+  --duration-fast: .2s;
+  --duration-medium: .35s;
+  --duration-slow: .7s;
+  --duration-pulse: 1.2s;
+
+  /* ------------------------------------------------------------------
+     布局宽度
+     ------------------------------------------------------------------ */
+  --layout-wide: 1440px;
+  --layout-content: 1280px;
+}
+
+/* ==========================================================================
+   F13：暗色主题（手动切换或 prefers-color-scheme 默认）
+   组件优先消费语义 token；少量历史硬编码色由 style.css 的主题层收敛。
+   ========================================================================== */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --surface-page: #0f1420;
+  --surface-card: #171e2c;
+  --surface-inverse: #0b101a;
+  --text-primary: #eef2f8;
+  --text-strong: #ffffff;
+  --text-secondary: #c5cedb;
+  --text-muted: #b3bdcb;
+  --text-quiet: #a7b2c2;
+  --text-faint: #929dae;
+  --text-subtle: #7f8a9b;
+  --text-on-brand: #ffffff;
+  --text-on-dark: #ffffff;
+  /* F14：暗色背景下提高焦点环对比度 */
+  --focus-ring: #9cc4ff;
+  --color-white: #ffffff;
+  --color-white-ghost: #ffffff22;
+  --border: #2a3446;
+  --border-card: #253044;
+  --border-control: #334157;
+  --border-on-art: #ffffff33;
+  --brand: #6d9bff;
+  --brand-hover: #8bb0ff;
+  --brand-strong: #7fa8ff;
+  --brand-light: #5b86e8;
+  --brand-dark: #a8c4ff;
+  --brand-tint: #1b2b46;
+  --brand-soft: #182337;
+  --brand-soft-alt: #1b2a43;
+  --selection-bg: #25406f;
+  --selection-text: #eef2f8;
+  --success-soft: #15291f;
+  --success-text: #9fe3c0;
+  --danger-soft: #2d1b1c;
+  --danger-text: #ffb5ae;
+  --danger-border: #5b3335;
+  --warning-soft: #2a2415;
+  --warning-border: #574a28;
+  --warning-text: #f0d38a;
+  --warning-strong: #e5b95e;
+  --toast-shadow: 0 14px 32px #0008;
+  --ring-success: 0 0 0 4px #1b3a2b;
+
+  --cat-blue-bg: linear-gradient(110deg, #14243d, #1b3352);
+  --cat-blue-mark: #9cc4ff;
+  --cat-blue-text: #a9cbff;
+  --cat-violet-bg: linear-gradient(110deg, #241f3a, #30274d);
+  --cat-violet-mark: #c4b3ff;
+  --cat-violet-text: #c9b9ff;
+  --cat-cyan-bg: linear-gradient(110deg, #122b33, #173b47);
+  --cat-cyan-mark: #91e1f5;
+  --cat-cyan-text: #a1e7f8;
+  --cat-amber-bg: linear-gradient(110deg, #332914, #45361b);
+  --cat-amber-mark: #f2cf88;
+  --cat-amber-text: #f3d591;
+  --cat-indigo-bg: linear-gradient(110deg, #1d2340, #272f54);
+  --cat-indigo-mark: #b2c0ff;
+  --cat-indigo-text: #bdc9ff;
+  --cat-green-bg: linear-gradient(110deg, #142c22, #1b3b2d);
+  --cat-green-mark: #9be1b5;
+  --cat-green-text: #a8e7c0;
+  --cat-red-bg: linear-gradient(110deg, #351d1e, #472628);
+  --cat-red-mark: #ffb4ae;
+  --cat-red-text: #ffc0ba;
+  --cat-orange-bg: linear-gradient(110deg, #352319, #473022);
+  --cat-orange-mark: #ffc18e;
+  --cat-orange-text: #ffc99a;
+  --cat-pink-bg: linear-gradient(110deg, #351f2b, #47293a);
+  --cat-pink-mark: #f4b2d3;
+  --cat-pink-text: #f7c0db;
+  --cat-purple-bg: linear-gradient(110deg, #2b1f3c, #392a50);
+  --cat-purple-mark: #d0afff;
+  --cat-purple-text: #d7baff;
+}

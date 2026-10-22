@@ -1,0 +1,2584 @@
+{
+  "generatedAt": "2026-10-22T00:43:14.478Z",
+  "browser": "Edg/155.0.4283.62",
+  "mode": "mock-sse + Edge headless/CDP",
+  "serverPort": 18080,
+  "exitCode": 0,
+  "summary": [
+    {
+      "id": "normal",
+      "name": "S1 正常：多模型按 SSE 逐条落位（含心跳/无效 JSON/重复 model）",
+      "pass": true,
+      "checks": [
+        {
+          "name": "只发起 1 条 SSE GET /compare/stream",
+          "pass": true,
+          "detail": "实际 1"
+        },
+        {
+          "name": "未发起回退 POST /compare",
+          "pass": true,
+          "detail": "实际 0"
+        },
+        {
+          "name": "SSE 请求带 title/models query",
+          "pass": true,
+          "detail": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-normal&models=rf,fasttext,bert,distill,llm"
+        },
+        {
+          "name": "响应 Content-Type 为 text/event-stream",
+          "pass": true,
+          "detail": "text/event-stream; charset=utf-8"
+        },
+        {
+          "name": "summary.status=ok",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-normal\",\"status\":\"ok\",\"total\":5,\"ok\":5,\"failed\":0,\"elapsed_ms\":2200,\"total_timeout_ms\":18000,\"partial\":false}"
+        },
+        {
+          "name": "summary 计数 5/5/0",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-normal\",\"status\":\"ok\",\"total\":5,\"ok\":5,\"failed\":0,\"elapsed_ms\":2200,\"total_timeout_ms\":18000,\"partial\":false}"
+        },
+        {
+          "name": "done.status=ok",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-normal\",\"status\":\"ok\",\"total\":5,\"ok\":5,\"failed\":0}"
+        },
+        {
+          "name": "5 个模型全部落位（model 事件各一次）",
+          "pass": true,
+          "detail": "[\"rf\",\"fasttext\",\"bert\",\"distill\",\"llm\"]"
+        },
+        {
+          "name": "到达顺序 = 服务端完成顺序",
+          "pass": true,
+          "detail": "[\"rf\",\"fasttext\",\"bert\",\"distill\",\"llm\"]"
+        },
+        {
+          "name": "重复 model_id 被去重（rf 延迟保持 90ms，未被 999ms 覆盖）",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-normal\",\"model_id\":\"rf\",\"status\":\"ok\",\"latency_ms\":90,\"model_version\":\"rf.pkl\",\"pred_class\":\"finance\",\"error\":null,\"data_source\":null}"
+        },
+        {
+          "name": "无效 JSON 被丢弃且未触发回退",
+          "pass": true,
+          "detail": "fallback=false"
+        },
+        {
+          "name": "首事件 ≤ 1000ms",
+          "pass": true,
+          "detail": "123 ms"
+        },
+        {
+          "name": "浏览器侧事件顺序 = 服务端 emit 顺序",
+          "pass": true,
+          "detail": "browser=[\"rf\",\"fasttext\",\"bert\",\"distill\",\"rf\",\"llm\"] server=[\"rf\",\"fasttext\",\"bert\",\"distill\",\"rf\",\"llm\"]"
+        },
+        {
+          "name": "DOM 渲染 5 张模型卡片",
+          "pass": true,
+          "detail": "5"
+        },
+        {
+          "name": "DOM 概览显示「全部模型已完成」",
+          "pass": true,
+          "detail": "✓全部模型已完成5 成功 · 0 失败 · 用时 2200 ms · 总截止 18000 ms流式实时（SSE）首结果 123 ms 模型间存在分歧（1 个不同） f9-normal"
+        },
+        {
+          "name": "DOM 显示流式徽标",
+          "pass": true,
+          "detail": "✓全部模型已完成5 成功 · 0 失败 · 用时 2200 ms · 总截止 18000 ms流式实时（SSE）首结果 123 ms 模型间存在分歧（1 个不同） f9-normal"
+        },
+        {
+          "name": "分歧高亮：distill 与多数不同",
+          "pass": true,
+          "detail": "{\"modelId\":\"distill\",\"status\":\"ok\",\"consistency\":\"differ\",\"text\":\"蒸蒸馏模型股票stocks与多数不同分类完成300 ms\",\"latency\":\"300\"}"
+        },
+        {
+          "name": "「与多数一致」卡片存在",
+          "pass": true,
+          "detail": "[\"rf:match\",\"fasttext:match\",\"bert:match\",\"distill:differ\",\"llm:match\"]"
+        },
+        {
+          "name": "按一致度排序：分歧项后置",
+          "pass": true,
+          "detail": "[\"rf\",\"fasttext\",\"bert\",\"llm\",\"distill\"]"
+        },
+        {
+          "name": "一致度排序按钮激活",
+          "pass": true,
+          "detail": "consensus"
+        },
+        {
+          "name": "按延迟排序升序（90/110/220/300/1400）",
+          "pass": true,
+          "detail": "[\"rf\",\"fasttext\",\"bert\",\"distill\",\"llm\"]"
+        }
+      ],
+      "elapsedMs": 3670
+    },
+    {
+      "id": "llm-offline",
+      "name": "S2 LLM 离线：单模型 error + 其余成功（summary=partial）",
+      "pass": true,
+      "checks": [
+        {
+          "name": "只发起 1 条 SSE GET",
+          "pass": true,
+          "detail": "实际 1"
+        },
+        {
+          "name": "未回退 POST（LLM 单项失败不应整页回退）",
+          "pass": true,
+          "detail": "实际 0"
+        },
+        {
+          "name": "summary.status=partial",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"status\":\"partial\",\"total\":5,\"ok\":4,\"failed\":1,\"elapsed_ms\":500,\"total_timeout_ms\":18000,\"partial\":true}"
+        },
+        {
+          "name": "summary 计数 5/4/1",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"status\":\"partial\",\"total\":5,\"ok\":4,\"failed\":1,\"elapsed_ms\":500,\"total_timeout_ms\":18000,\"partial\":true}"
+        },
+        {
+          "name": "done.status=partial",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"status\":\"partial\",\"total\":5,\"ok\":4,\"failed\":1}"
+        },
+        {
+          "name": "LLM 项 status=error 且错误码 WORKER_UNAVAILABLE",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"model_id\":\"llm\",\"status\":\"error\",\"latency_ms\":0,\"model_version\":null,\"pred_class\":null,\"error\":{\"code\":\"WORKER_UNAVAILABLE\",\"message\":\"LLM worker 不可达（mock）\"},\"data_source\":null}"
+        },
+        {
+          "name": "其余 4 个模型保持成功（未被 error 覆盖）",
+          "pass": true,
+          "detail": "{\"rf\":\"ok\",\"fasttext\":\"ok\",\"bert\":\"ok\",\"distill\":\"ok\"}"
+        },
+        {
+          "name": "DOM 概览显示「部分结果已返回」",
+          "pass": true,
+          "detail": "◐部分结果已返回4 成功 · 1 失败 · 用时 500 ms · 总截止 18000 ms流式实时（SSE）首结果 77 ms 模型间存在分歧（1 个不同） f9-llm-offline"
+        },
+        {
+          "name": "DOM LLM 卡片显示错误信息且不污染其他卡片",
+          "pass": true,
+          "detail": "{\"modelId\":\"llm\",\"status\":\"error\",\"consistency\":\"none\",\"text\":\"LLLMLLM worker 不可达（mock） 错误码 WORKER_UNAVAILABLEWORKER_UNAVAILABLE0 ms\",\"latency\":\"0\"}"
+        },
+        {
+          "name": "DOM 其他 4 张卡片正常",
+          "pass": true,
+          "detail": "[\"llm:error\",\"rf:ok\",\"fasttext:ok\",\"bert:ok\",\"distill:ok\"]"
+        }
+      ],
+      "elapsedMs": 1029
+    },
+    {
+      "id": "all-failed",
+      "name": "S2b 全失败：summary=all_failed 的完整/部分/全失败第三态",
+      "pass": true,
+      "checks": [
+        {
+          "name": "summary.status=all_failed",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-all-failed\",\"status\":\"all_failed\",\"total\":2,\"ok\":0,\"failed\":2,\"elapsed_ms\":260,\"total_timeout_ms\":18000,\"partial\":false}"
+        },
+        {
+          "name": "summary 计数 2/0/2",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-all-failed\",\"status\":\"all_failed\",\"total\":2,\"ok\":0,\"failed\":2,\"elapsed_ms\":260,\"total_timeout_ms\":18000,\"partial\":false}"
+        },
+        {
+          "name": "done.status=all_failed",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-all-failed\",\"status\":\"all_failed\",\"total\":2,\"ok\":0,\"failed\":2}"
+        },
+        {
+          "name": "两个模型均为 error 且错误码不同",
+          "pass": true,
+          "detail": "{\"rf\":{\"code\":\"WORKER_TIMEOUT\",\"message\":\"随机森林响应超时（mock）\"},\"bert\":{\"code\":\"WORKER_UNAVAILABLE\",\"message\":\"BERT 服务不可达（mock）\"}}"
+        },
+        {
+          "name": "DOM 概览显示「模型暂时无法完成判断」",
+          "pass": true,
+          "detail": "!模型暂时无法完成判断0 成功 · 2 失败 · 用时 260 ms · 总截止 18000 ms流式实时（SSE）首结果 86 msf9-all-failed"
+        },
+        {
+          "name": "无分歧徽标（没有成功预测）",
+          "pass": true,
+          "detail": "false"
+        }
+      ],
+      "elapsedMs": 726
+    },
+    {
+      "id": "switch",
+      "name": "S3 中途切面板：连接关闭、无后续更新、无重连",
+      "pass": true,
+      "checks": [
+        {
+          "name": "切换时已收到首个 model 事件",
+          "pass": true,
+          "detail": "[\"rf\"]"
+        },
+        {
+          "name": "切换后不再收到后续 model（2.2s 内状态冻结）",
+          "pass": true,
+          "detail": "切换前=1 切换后=1"
+        },
+        {
+          "name": "切换后状态回到 idle",
+          "pass": true,
+          "detail": "idle"
+        },
+        {
+          "name": "结果区已隐藏（无残留面板）",
+          "pass": true,
+          "detail": "null"
+        },
+        {
+          "name": "服务端检测到客户端关闭连接",
+          "pass": true,
+          "detail": "{\"openedAt\":1792629786674,\"closedAt\":1792629787056}"
+        },
+        {
+          "name": "连接关闭后服务端未再 push 任何事件",
+          "pass": true,
+          "detail": "[]"
+        },
+        {
+          "name": "关闭发生在切换后 1.5s 内（未等待慢模型）",
+          "pass": true,
+          "detail": "0 ms"
+        },
+        {
+          "name": "只有 1 条 SSE 连接（未自动重连）",
+          "pass": true,
+          "detail": "实际 1"
+        },
+        {
+          "name": "未发起回退 POST",
+          "pass": true,
+          "detail": "实际 0"
+        }
+      ],
+      "elapsedMs": 2815
+    },
+    {
+      "id": "fallback",
+      "name": "S4 断网/无 SSE：3s 内无有效首事件 → 关闭 SSE 并回退 POST /compare",
+      "pass": true,
+      "checks": [
+        {
+          "name": "fallback 标记为 true",
+          "pass": true,
+          "detail": "true"
+        },
+        {
+          "name": "最终状态 fallback 且结果完整",
+          "pass": true,
+          "detail": "status=fallback arrived=5"
+        },
+        {
+          "name": "首事件来自 POST 回退，耗时 ≥ 3s",
+          "pass": true,
+          "detail": "3282 ms"
+        },
+        {
+          "name": "只发起 1 条 SSE GET",
+          "pass": true,
+          "detail": "实际 1"
+        },
+        {
+          "name": "只发起 1 次 POST /compare（无重复回退）",
+          "pass": true,
+          "detail": "实际 1: [\"http://127.0.0.1:18080/api/v1/compare\"]"
+        },
+        {
+          "name": "SSE 约在 3s 被前端主动关闭",
+          "pass": true,
+          "detail": "3015 ms"
+        },
+        {
+          "name": "POST 在 SSE 关闭之后（客户端先 close 再 POST；服务端 close 日志允许 ±200ms 竞态）",
+          "pass": true,
+          "detail": "post.ts=1792629792406 stream.closedAt=1792629792410"
+        },
+        {
+          "name": "流内没有任何 model 事件（SSE 结果未混入 POST 结果）",
+          "pass": true,
+          "detail": "[]"
+        },
+        {
+          "name": "DOM 显示「已回退完整请求（POST）」",
+          "pass": true,
+          "detail": "✓全部模型已完成5 成功 · 0 失败 · 用时 3282 ms已回退完整请求（POST）首结果 3282 ms 模型间存在分歧（1 个不同） f9-fallback"
+        },
+        {
+          "name": "DOM 概览显示「全部模型已完成」",
+          "pass": true,
+          "detail": "✓全部模型已完成5 成功 · 0 失败 · 用时 3282 ms已回退完整请求（POST）首结果 3282 ms 模型间存在分歧（1 个不同） f9-fallback"
+        },
+        {
+          "name": "DOM 渲染 5 张卡片",
+          "pass": true,
+          "detail": "5"
+        }
+      ],
+      "elapsedMs": 3756
+    },
+    {
+      "id": "stream-error",
+      "name": "S5 附加：流级 event:error → 面板错误态、不回退 POST",
+      "pass": true,
+      "checks": [
+        {
+          "name": "status=error",
+          "pass": true,
+          "detail": "error"
+        },
+        {
+          "name": "记录流级错误码 INTERNAL_ERROR",
+          "pass": true,
+          "detail": "{\"request_id\":\"mock-stream-f9-stream-error\",\"code\":\"INTERNAL_ERROR\",\"message\":\"mock: compare stream broke\"}"
+        },
+        {
+          "name": "已到达的 rf 结果保留（不被错误清空）",
+          "pass": true,
+          "detail": "[\"rf\"]"
+        },
+        {
+          "name": "流级错误不触发 POST 回退",
+          "pass": true,
+          "detail": "实际 0"
+        },
+        {
+          "name": "DOM 呈现错误态（AsyncState）",
+          "pass": true,
+          "detail": "MODEL COMPARISON · STREAMING对比没有完成，请稍后重试。 REQUEST · mock-str!对比流中断已返回 1 / 5流式实时（SSE）首结果 113 msf9-stream-error!暂时无法完成服务暂时不可用，请稍后重试。请求编号 mock-stream-f9-stream-err"
+        }
+      ],
+      "elapsedMs": 753
+    },
+    {
+      "id": "connect-error",
+      "name": "S6 附加：SSE 连接失败（503）→ 立即回退 POST /compare",
+      "pass": true,
+      "checks": [
+        {
+          "name": "SSE 端点返回 503",
+          "pass": true,
+          "detail": "503"
+        },
+        {
+          "name": "连接失败后 fallback=true",
+          "pass": true,
+          "detail": "true"
+        },
+        {
+          "name": "立即回退（<3s，不等首事件超时）",
+          "pass": true,
+          "detail": "269 ms"
+        },
+        {
+          "name": "1 次 SSE GET + 1 次 POST",
+          "pass": true,
+          "detail": "1/1"
+        },
+        {
+          "name": "回退结果覆盖 3 个请求模型",
+          "pass": true,
+          "detail": "[\"rf\",\"fasttext\",\"bert\"]"
+        },
+        {
+          "name": "DOM 显示回退徽标",
+          "pass": true,
+          "detail": "✓全部模型已完成3 成功 · 0 失败 · 用时 269 ms已回退完整请求（POST）首结果 269 msf9-connect-error"
+        }
+      ],
+      "elapsedMs": 625
+    }
+  ],
+  "evidence": {
+    "normal": {
+      "scenarioStartedAt": 1792629781254,
+      "network": {
+        "requests": [
+          {
+            "ts": 1792629781261,
+            "requestId": "20620.7",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-normal&models=rf,fasttext,bert,distill,llm",
+            "method": "GET",
+            "type": "EventSource",
+            "headers": {
+              "sec-ch-ua-platform": "\"Windows\"",
+              "Referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+              "Accept": "text/event-stream",
+              "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+              "sec-ch-ua-mobile": "?0"
+            }
+          }
+        ],
+        "responses": [
+          {
+            "ts": 1792629781296,
+            "requestId": "20620.7",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-normal&models=rf,fasttext,bert,distill,llm",
+            "status": 200,
+            "mimeType": "text/event-stream",
+            "headers": {
+              "Transfer-Encoding": "chunked",
+              "Cache-Control": "no-cache, no-transform",
+              "X-Accel-Buffering": "no",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+              "Access-Control-Allow-Origin": "*",
+              "Date": "Thu, 22 Oct 2026 00:43:01 GMT",
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Access-Control-Allow-Headers": "Content-Type,X-Request-ID"
+            }
+          }
+        ],
+        "sse": [
+          {
+            "ts": 1792629781316,
+            "requestId": "20620.7",
+            "eventName": "model",
+            "data": "{\"oops\": "
+          },
+          {
+            "ts": 1792629781382,
+            "requestId": "20620.7",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-normal\",\"model_id\":\"rf\",\"status\":\"ok\",\"latency_ms\":90,\"model_version\":\"rf.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          },
+          {
+            "ts": 1792629781783,
+            "requestId": "20620.7",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-normal\",\"model_id\":\"fasttext\",\"status\":\"ok\",\"latency_ms\":110,\"model_version\":\"fasttext.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          },
+          {
+            "ts": 1792629782185,
+            "requestId": "20620.7",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-normal\",\"model_id\":\"bert\",\"status\":\"ok\",\"latency_ms\":220,\"model_version\":\"bert.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          },
+          {
+            "ts": 1792629782585,
+            "requestId": "20620.7",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-normal\",\"model_id\":\"distill\",\"status\":\"ok\",\"latency_ms\":300,\"model_version\":\"distill.pkl\",\"pred_class\":\"stocks\",\"error\":null}"
+          },
+          {
+            "ts": 1792629782976,
+            "requestId": "20620.7",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-normal\",\"model_id\":\"rf\",\"status\":\"ok\",\"latency_ms\":999,\"model_version\":\"rf.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          },
+          {
+            "ts": 1792629783651,
+            "requestId": "20620.7",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-normal\",\"model_id\":\"llm\",\"status\":\"ok\",\"latency_ms\":1400,\"model_version\":\"llm.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          },
+          {
+            "ts": 1792629783660,
+            "requestId": "20620.7",
+            "eventName": "summary",
+            "data": "{\"request_id\":\"mock-stream-f9-normal\",\"status\":\"ok\",\"total\":5,\"ok\":5,\"failed\":0,\"elapsed_ms\":2200,\"total_timeout_ms\":18000,\"partial\":false}"
+          },
+          {
+            "ts": 1792629783672,
+            "requestId": "20620.7",
+            "eventName": "done",
+            "data": "{\"request_id\":\"mock-stream-f9-normal\",\"status\":\"ok\",\"total\":5,\"ok\":5,\"failed\":0}"
+          }
+        ],
+        "failed": [
+          {
+            "ts": 1792629783676,
+            "requestId": "20620.7",
+            "errorText": "net::ERR_ABORTED",
+            "canceled": true
+          }
+        ]
+      },
+      "contentTypes": [
+        {
+          "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-normal&models=rf,fasttext,bert,distill,llm",
+          "status": 200,
+          "contentType": "text/event-stream; charset=utf-8"
+        }
+      ],
+      "serverRequests": [
+        {
+          "ts": 1792629781260,
+          "method": "GET",
+          "url": "/api/v1/compare/stream?title=f9-normal&models=rf,fasttext,bert,distill,llm",
+          "kind": "stream",
+          "path": "/api/v1/compare/stream",
+          "title": "f9-normal",
+          "models": [
+            "rf",
+            "fasttext",
+            "bert",
+            "distill",
+            "llm"
+          ],
+          "headers": {
+            "host": "127.0.0.1:18080",
+            "connection": "keep-alive",
+            "pragma": "no-cache",
+            "cache-control": "no-cache",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+            "accept": "text/event-stream",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+          },
+          "openedAt": 1792629781260,
+          "closedAt": 1792629783620,
+          "status": 200,
+          "finishedAt": 1792629783567
+        }
+      ],
+      "serverStreamEvents": [
+        {
+          "ts": 1792629781377,
+          "scenario": "f9-normal",
+          "requestId": "mock-stream-f9-normal",
+          "event": "model",
+          "model_id": "rf",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629781766,
+          "scenario": "f9-normal",
+          "requestId": "mock-stream-f9-normal",
+          "event": "model",
+          "model_id": "fasttext",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629782171,
+          "scenario": "f9-normal",
+          "requestId": "mock-stream-f9-normal",
+          "event": "model",
+          "model_id": "bert",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629782574,
+          "scenario": "f9-normal",
+          "requestId": "mock-stream-f9-normal",
+          "event": "model",
+          "model_id": "distill",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629782962,
+          "scenario": "f9-normal",
+          "requestId": "mock-stream-f9-normal",
+          "event": "model",
+          "model_id": "rf",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629783381,
+          "scenario": "f9-normal",
+          "requestId": "mock-stream-f9-normal",
+          "event": "model",
+          "model_id": "llm",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629783477,
+          "scenario": "f9-normal",
+          "requestId": "mock-stream-f9-normal",
+          "event": "summary",
+          "model_id": null,
+          "status": "ok"
+        },
+        {
+          "ts": 1792629783559,
+          "scenario": "f9-normal",
+          "requestId": "mock-stream-f9-normal",
+          "event": "done",
+          "model_id": null,
+          "status": "ok"
+        }
+      ],
+      "streamRequest": {
+        "ts": 1792629781260,
+        "method": "GET",
+        "url": "/api/v1/compare/stream?title=f9-normal&models=rf,fasttext,bert,distill,llm",
+        "kind": "stream",
+        "path": "/api/v1/compare/stream",
+        "title": "f9-normal",
+        "models": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "headers": {
+          "host": "127.0.0.1:18080",
+          "connection": "keep-alive",
+          "pragma": "no-cache",
+          "cache-control": "no-cache",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+          "accept": "text/event-stream",
+          "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
+          "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        },
+        "openedAt": 1792629781260,
+        "closedAt": 1792629783620,
+        "status": 200,
+        "finishedAt": 1792629783567
+      },
+      "postRequest": null,
+      "snapshot": {
+        "status": "done",
+        "requestId": "mock-stream-f9-normal",
+        "requestedModelIds": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "arrived": {
+          "rf": {
+            "request_id": "mock-stream-f9-normal",
+            "model_id": "rf",
+            "status": "ok",
+            "latency_ms": 90,
+            "model_version": "rf.pkl",
+            "pred_class": "finance",
+            "error": null,
+            "data_source": null
+          },
+          "fasttext": {
+            "request_id": "mock-stream-f9-normal",
+            "model_id": "fasttext",
+            "status": "ok",
+            "latency_ms": 110,
+            "model_version": "fasttext.pkl",
+            "pred_class": "finance",
+            "error": null,
+            "data_source": null
+          },
+          "bert": {
+            "request_id": "mock-stream-f9-normal",
+            "model_id": "bert",
+            "status": "ok",
+            "latency_ms": 220,
+            "model_version": "bert.pkl",
+            "pred_class": "finance",
+            "error": null,
+            "data_source": null
+          },
+          "distill": {
+            "request_id": "mock-stream-f9-normal",
+            "model_id": "distill",
+            "status": "ok",
+            "latency_ms": 300,
+            "model_version": "distill.pkl",
+            "pred_class": "stocks",
+            "error": null,
+            "data_source": null
+          },
+          "llm": {
+            "request_id": "mock-stream-f9-normal",
+            "model_id": "llm",
+            "status": "ok",
+            "latency_ms": 1400,
+            "model_version": "llm.pkl",
+            "pred_class": "finance",
+            "error": null,
+            "data_source": null
+          }
+        },
+        "arrivalOrder": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "summary": {
+          "request_id": "mock-stream-f9-normal",
+          "status": "ok",
+          "total": 5,
+          "ok": 5,
+          "failed": 0,
+          "elapsed_ms": 2200,
+          "total_timeout_ms": 18000,
+          "partial": false
+        },
+        "done": {
+          "request_id": "mock-stream-f9-normal",
+          "status": "ok",
+          "total": 5,
+          "ok": 5,
+          "failed": 0
+        },
+        "streamError": null,
+        "error": "",
+        "fallback": false,
+        "firstEvent": true,
+        "firstEventAt": 1792629781379,
+        "firstEventLatencyMs": 123,
+        "startedAt": 1792629781256,
+        "finishedAt": 1792629783570
+      },
+      "dom": {
+        "resultMode": "stream",
+        "overview": "✓全部模型已完成5 成功 · 0 失败 · 用时 2200 ms · 总截止 18000 ms流式实时（SSE）首结果 123 ms 模型间存在分歧（1 个不同） f9-normal",
+        "sortActive": "latency",
+        "cards": [
+          {
+            "modelId": "rf",
+            "status": "ok",
+            "consistency": "match",
+            "text": "随随机森林财经finance与多数一致分类完成90 ms",
+            "latency": "90"
+          },
+          {
+            "modelId": "fasttext",
+            "status": "ok",
+            "consistency": "match",
+            "text": "ffastText财经finance与多数一致分类完成110 ms",
+            "latency": "110"
+          },
+          {
+            "modelId": "bert",
+            "status": "ok",
+            "consistency": "match",
+            "text": "BBERT财经finance与多数一致分类完成220 ms",
+            "latency": "220"
+          },
+          {
+            "modelId": "distill",
+            "status": "ok",
+            "consistency": "differ",
+            "text": "蒸蒸馏模型股票stocks与多数不同分类完成300 ms",
+            "latency": "300"
+          },
+          {
+            "modelId": "llm",
+            "status": "ok",
+            "consistency": "match",
+            "text": "LLLM财经finance与多数一致分类完成1400 ms",
+            "latency": "1400"
+          }
+        ],
+        "divergence": true,
+        "text": "对比完成：5 个模型完成判断。 MODEL COMPARISON · STREAMING同一个标题，5 个模型完成判断。 REQUEST · mock-str✓全部模型已完成5 成功 · 0 失败 · 用时 2200 ms · 总截止 18000 ms流式实时（SSE）首结果 123 ms 模型间存在分歧（1 个不同） f9-normal排序 按延迟 按一致度 一致度 = 与多数预测相同REQUEST · mock-str随随机森林财经finance与多数一致分类完成90 msffastText财经finance与多数一致分类完成110 msBBERT财经finance与多数一致分类完成220 ms蒸蒸馏模型股票stocks与多数不同分类完成300 msLLLM财经finance与多数一致分类完成1400 ms"
+      }
+    },
+    "llm-offline": {
+      "scenarioStartedAt": 1792629784927,
+      "network": {
+        "requests": [
+          {
+            "ts": 1792629784934,
+            "requestId": "20620.13",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-llm-offline&models=rf,fasttext,bert,distill,llm",
+            "method": "GET",
+            "type": "EventSource",
+            "headers": {
+              "sec-ch-ua-platform": "\"Windows\"",
+              "Referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+              "Accept": "text/event-stream",
+              "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+              "sec-ch-ua-mobile": "?0"
+            }
+          }
+        ],
+        "responses": [
+          {
+            "ts": 1792629784937,
+            "requestId": "20620.13",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-llm-offline&models=rf,fasttext,bert,distill,llm",
+            "status": 200,
+            "mimeType": "text/event-stream",
+            "headers": {
+              "Transfer-Encoding": "chunked",
+              "Cache-Control": "no-cache, no-transform",
+              "X-Accel-Buffering": "no",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+              "Access-Control-Allow-Origin": "*",
+              "Date": "Thu, 22 Oct 2026 00:43:04 GMT",
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Access-Control-Allow-Headers": "Content-Type,X-Request-ID"
+            }
+          }
+        ],
+        "sse": [
+          {
+            "ts": 1792629785007,
+            "requestId": "20620.13",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"model_id\":\"rf\",\"status\":\"ok\",\"latency_ms\":90,\"model_version\":\"rf.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          },
+          {
+            "ts": 1792629785100,
+            "requestId": "20620.13",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"model_id\":\"fasttext\",\"status\":\"ok\",\"latency_ms\":110,\"model_version\":\"fasttext.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          },
+          {
+            "ts": 1792629785178,
+            "requestId": "20620.13",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"model_id\":\"bert\",\"status\":\"ok\",\"latency_ms\":220,\"model_version\":\"bert.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          },
+          {
+            "ts": 1792629785272,
+            "requestId": "20620.13",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"model_id\":\"distill\",\"status\":\"ok\",\"latency_ms\":300,\"model_version\":\"distill.pkl\",\"pred_class\":\"stocks\",\"error\":null}"
+          },
+          {
+            "ts": 1792629785367,
+            "requestId": "20620.13",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"model_id\":\"llm\",\"status\":\"error\",\"latency_ms\":0,\"model_version\":null,\"pred_class\":null,\"error\":{\"code\":\"WORKER_UNAVAILABLE\",\"message\":\"LLM worker 不可达（mock）\"}}"
+          },
+          {
+            "ts": 1792629785445,
+            "requestId": "20620.13",
+            "eventName": "summary",
+            "data": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"status\":\"partial\",\"total\":5,\"ok\":4,\"failed\":1,\"elapsed_ms\":500,\"total_timeout_ms\":18000,\"partial\":true}"
+          },
+          {
+            "ts": 1792629785477,
+            "requestId": "20620.13",
+            "eventName": "done",
+            "data": "{\"request_id\":\"mock-stream-f9-llm-offline\",\"status\":\"partial\",\"total\":5,\"ok\":4,\"failed\":1}"
+          }
+        ],
+        "failed": [
+          {
+            "ts": 1792629785477,
+            "requestId": "20620.13",
+            "errorText": "net::ERR_ABORTED",
+            "canceled": true
+          }
+        ]
+      },
+      "contentTypes": [
+        {
+          "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-llm-offline&models=rf,fasttext,bert,distill,llm",
+          "status": 200,
+          "contentType": "text/event-stream; charset=utf-8"
+        }
+      ],
+      "serverRequests": [
+        {
+          "ts": 1792629784933,
+          "method": "GET",
+          "url": "/api/v1/compare/stream?title=f9-llm-offline&models=rf,fasttext,bert,distill,llm",
+          "kind": "stream",
+          "path": "/api/v1/compare/stream",
+          "title": "f9-llm-offline",
+          "models": [
+            "rf",
+            "fasttext",
+            "bert",
+            "distill",
+            "llm"
+          ],
+          "headers": {
+            "host": "127.0.0.1:18080",
+            "connection": "keep-alive",
+            "pragma": "no-cache",
+            "cache-control": "no-cache",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+            "accept": "text/event-stream",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+          },
+          "openedAt": 1792629784933,
+          "closedAt": 1792629785476,
+          "status": 200
+        }
+      ],
+      "serverStreamEvents": [
+        {
+          "ts": 1792629785004,
+          "scenario": "f9-llm-offline",
+          "requestId": "mock-stream-f9-llm-offline",
+          "event": "model",
+          "model_id": "rf",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629785098,
+          "scenario": "f9-llm-offline",
+          "requestId": "mock-stream-f9-llm-offline",
+          "event": "model",
+          "model_id": "fasttext",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629785176,
+          "scenario": "f9-llm-offline",
+          "requestId": "mock-stream-f9-llm-offline",
+          "event": "model",
+          "model_id": "bert",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629785270,
+          "scenario": "f9-llm-offline",
+          "requestId": "mock-stream-f9-llm-offline",
+          "event": "model",
+          "model_id": "distill",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629785365,
+          "scenario": "f9-llm-offline",
+          "requestId": "mock-stream-f9-llm-offline",
+          "event": "model",
+          "model_id": "llm",
+          "status": "error"
+        },
+        {
+          "ts": 1792629785443,
+          "scenario": "f9-llm-offline",
+          "requestId": "mock-stream-f9-llm-offline",
+          "event": "summary",
+          "model_id": null,
+          "status": "partial"
+        },
+        {
+          "ts": 1792629785474,
+          "scenario": "f9-llm-offline",
+          "requestId": "mock-stream-f9-llm-offline",
+          "event": "done",
+          "model_id": null,
+          "status": "partial"
+        }
+      ],
+      "streamRequest": {
+        "ts": 1792629784933,
+        "method": "GET",
+        "url": "/api/v1/compare/stream?title=f9-llm-offline&models=rf,fasttext,bert,distill,llm",
+        "kind": "stream",
+        "path": "/api/v1/compare/stream",
+        "title": "f9-llm-offline",
+        "models": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "headers": {
+          "host": "127.0.0.1:18080",
+          "connection": "keep-alive",
+          "pragma": "no-cache",
+          "cache-control": "no-cache",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+          "accept": "text/event-stream",
+          "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
+          "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        },
+        "openedAt": 1792629784933,
+        "closedAt": 1792629785476,
+        "status": 200
+      },
+      "postRequest": null,
+      "snapshot": {
+        "status": "done",
+        "requestId": "mock-stream-f9-llm-offline",
+        "requestedModelIds": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "arrived": {
+          "rf": {
+            "request_id": "mock-stream-f9-llm-offline",
+            "model_id": "rf",
+            "status": "ok",
+            "latency_ms": 90,
+            "model_version": "rf.pkl",
+            "pred_class": "finance",
+            "error": null,
+            "data_source": null
+          },
+          "fasttext": {
+            "request_id": "mock-stream-f9-llm-offline",
+            "model_id": "fasttext",
+            "status": "ok",
+            "latency_ms": 110,
+            "model_version": "fasttext.pkl",
+            "pred_class": "finance",
+            "error": null,
+            "data_source": null
+          },
+          "bert": {
+            "request_id": "mock-stream-f9-llm-offline",
+            "model_id": "bert",
+            "status": "ok",
+            "latency_ms": 220,
+            "model_version": "bert.pkl",
+            "pred_class": "finance",
+            "error": null,
+            "data_source": null
+          },
+          "distill": {
+            "request_id": "mock-stream-f9-llm-offline",
+            "model_id": "distill",
+            "status": "ok",
+            "latency_ms": 300,
+            "model_version": "distill.pkl",
+            "pred_class": "stocks",
+            "error": null,
+            "data_source": null
+          },
+          "llm": {
+            "request_id": "mock-stream-f9-llm-offline",
+            "model_id": "llm",
+            "status": "error",
+            "latency_ms": 0,
+            "model_version": null,
+            "pred_class": null,
+            "error": {
+              "code": "WORKER_UNAVAILABLE",
+              "message": "LLM worker 不可达（mock）"
+            },
+            "data_source": null
+          }
+        },
+        "arrivalOrder": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "summary": {
+          "request_id": "mock-stream-f9-llm-offline",
+          "status": "partial",
+          "total": 5,
+          "ok": 4,
+          "failed": 1,
+          "elapsed_ms": 500,
+          "total_timeout_ms": 18000,
+          "partial": true
+        },
+        "done": {
+          "request_id": "mock-stream-f9-llm-offline",
+          "status": "partial",
+          "total": 5,
+          "ok": 4,
+          "failed": 1
+        },
+        "streamError": null,
+        "error": "",
+        "fallback": false,
+        "firstEvent": true,
+        "firstEventAt": 1792629785006,
+        "firstEventLatencyMs": 77,
+        "startedAt": 1792629784929,
+        "finishedAt": 1792629785475
+      },
+      "dom": {
+        "resultMode": "stream",
+        "overview": "◐部分结果已返回4 成功 · 1 失败 · 用时 500 ms · 总截止 18000 ms流式实时（SSE）首结果 77 ms 模型间存在分歧（1 个不同） f9-llm-offline",
+        "sortActive": "latency",
+        "cards": [
+          {
+            "modelId": "llm",
+            "status": "error",
+            "consistency": "none",
+            "text": "LLLMLLM worker 不可达（mock） 错误码 WORKER_UNAVAILABLEWORKER_UNAVAILABLE0 ms",
+            "latency": "0"
+          },
+          {
+            "modelId": "rf",
+            "status": "ok",
+            "consistency": "match",
+            "text": "随随机森林财经finance与多数一致分类完成90 ms",
+            "latency": "90"
+          },
+          {
+            "modelId": "fasttext",
+            "status": "ok",
+            "consistency": "match",
+            "text": "ffastText财经finance与多数一致分类完成110 ms",
+            "latency": "110"
+          },
+          {
+            "modelId": "bert",
+            "status": "ok",
+            "consistency": "match",
+            "text": "BBERT财经finance与多数一致分类完成220 ms",
+            "latency": "220"
+          },
+          {
+            "modelId": "distill",
+            "status": "ok",
+            "consistency": "differ",
+            "text": "蒸蒸馏模型股票stocks与多数不同分类完成300 ms",
+            "latency": "300"
+          }
+        ],
+        "divergence": true,
+        "text": "对比完成：4 个模型完成判断。 MODEL COMPARISON · STREAMING同一个标题，4 个模型完成判断。 REQUEST · mock-str◐部分结果已返回4 成功 · 1 失败 · 用时 500 ms · 总截止 18000 ms流式实时（SSE）首结果 77 ms 模型间存在分歧（1 个不同） f9-llm-offline排序 按延迟 按一致度 一致度 = 与多数预测相同REQUEST · mock-strLLLMLLM worker 不可达（mock） 错误码 WORKER_UNAVAILABLEWORKER_UNAVAILABLE0 ms随随机森林财经finance与多数一致分类完成90 msffastText财经finance与多数一致分类完成110 msBBERT财经finance与多数一致分类完成220 ms蒸蒸馏模型股票stocks与多数不同分类完成300 ms"
+      }
+    },
+    "all-failed": {
+      "scenarioStartedAt": 1792629785851,
+      "network": {
+        "requests": [
+          {
+            "ts": 1792629785857,
+            "requestId": "20620.19",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-all-failed&models=rf,bert",
+            "method": "GET",
+            "type": "EventSource",
+            "headers": {
+              "sec-ch-ua-platform": "\"Windows\"",
+              "Referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+              "Accept": "text/event-stream",
+              "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+              "sec-ch-ua-mobile": "?0"
+            }
+          }
+        ],
+        "responses": [
+          {
+            "ts": 1792629785858,
+            "requestId": "20620.19",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-all-failed&models=rf,bert",
+            "status": 200,
+            "mimeType": "text/event-stream",
+            "headers": {
+              "Transfer-Encoding": "chunked",
+              "Cache-Control": "no-cache, no-transform",
+              "X-Accel-Buffering": "no",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+              "Access-Control-Allow-Origin": "*",
+              "Date": "Thu, 22 Oct 2026 00:43:05 GMT",
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Access-Control-Allow-Headers": "Content-Type,X-Request-ID"
+            }
+          }
+        ],
+        "sse": [
+          {
+            "ts": 1792629785942,
+            "requestId": "20620.19",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-all-failed\",\"model_id\":\"rf\",\"status\":\"error\",\"latency_ms\":0,\"model_version\":null,\"pred_class\":null,\"error\":{\"code\":\"WORKER_TIMEOUT\",\"message\":\"随机森林响应超时（mock）\"}}"
+          },
+          {
+            "ts": 1792629786036,
+            "requestId": "20620.19",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-all-failed\",\"model_id\":\"bert\",\"status\":\"error\",\"latency_ms\":0,\"model_version\":null,\"pred_class\":null,\"error\":{\"code\":\"WORKER_UNAVAILABLE\",\"message\":\"BERT 服务不可达（mock）\"}}"
+          },
+          {
+            "ts": 1792629786126,
+            "requestId": "20620.19",
+            "eventName": "summary",
+            "data": "{\"request_id\":\"mock-stream-f9-all-failed\",\"status\":\"all_failed\",\"total\":2,\"ok\":0,\"failed\":2,\"elapsed_ms\":260,\"total_timeout_ms\":18000,\"partial\":false}"
+          },
+          {
+            "ts": 1792629786159,
+            "requestId": "20620.19",
+            "eventName": "done",
+            "data": "{\"request_id\":\"mock-stream-f9-all-failed\",\"status\":\"all_failed\",\"total\":2,\"ok\":0,\"failed\":2}"
+          }
+        ],
+        "failed": [
+          {
+            "ts": 1792629786159,
+            "requestId": "20620.19",
+            "errorText": "net::ERR_ABORTED",
+            "canceled": true
+          }
+        ]
+      },
+      "contentTypes": [
+        {
+          "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-all-failed&models=rf,bert",
+          "status": 200,
+          "contentType": "text/event-stream; charset=utf-8"
+        }
+      ],
+      "serverRequests": [
+        {
+          "ts": 1792629785856,
+          "method": "GET",
+          "url": "/api/v1/compare/stream?title=f9-all-failed&models=rf,bert",
+          "kind": "stream",
+          "path": "/api/v1/compare/stream",
+          "title": "f9-all-failed",
+          "models": [
+            "rf",
+            "bert"
+          ],
+          "headers": {
+            "host": "127.0.0.1:18080",
+            "connection": "keep-alive",
+            "pragma": "no-cache",
+            "cache-control": "no-cache",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+            "accept": "text/event-stream",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+          },
+          "openedAt": 1792629785856,
+          "closedAt": 1792629786158,
+          "status": 200
+        }
+      ],
+      "serverStreamEvents": [
+        {
+          "ts": 1792629785939,
+          "scenario": "f9-all-failed",
+          "requestId": "mock-stream-f9-all-failed",
+          "event": "model",
+          "model_id": "rf",
+          "status": "error"
+        },
+        {
+          "ts": 1792629786032,
+          "scenario": "f9-all-failed",
+          "requestId": "mock-stream-f9-all-failed",
+          "event": "model",
+          "model_id": "bert",
+          "status": "error"
+        },
+        {
+          "ts": 1792629786124,
+          "scenario": "f9-all-failed",
+          "requestId": "mock-stream-f9-all-failed",
+          "event": "summary",
+          "model_id": null,
+          "status": "all_failed"
+        },
+        {
+          "ts": 1792629786155,
+          "scenario": "f9-all-failed",
+          "requestId": "mock-stream-f9-all-failed",
+          "event": "done",
+          "model_id": null,
+          "status": "all_failed"
+        }
+      ],
+      "streamRequest": {
+        "ts": 1792629785856,
+        "method": "GET",
+        "url": "/api/v1/compare/stream?title=f9-all-failed&models=rf,bert",
+        "kind": "stream",
+        "path": "/api/v1/compare/stream",
+        "title": "f9-all-failed",
+        "models": [
+          "rf",
+          "bert"
+        ],
+        "headers": {
+          "host": "127.0.0.1:18080",
+          "connection": "keep-alive",
+          "pragma": "no-cache",
+          "cache-control": "no-cache",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+          "accept": "text/event-stream",
+          "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
+          "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        },
+        "openedAt": 1792629785856,
+        "closedAt": 1792629786158,
+        "status": 200
+      },
+      "postRequest": null,
+      "snapshot": {
+        "status": "done",
+        "requestId": "mock-stream-f9-all-failed",
+        "requestedModelIds": [
+          "rf",
+          "bert"
+        ],
+        "arrived": {
+          "rf": {
+            "request_id": "mock-stream-f9-all-failed",
+            "model_id": "rf",
+            "status": "error",
+            "latency_ms": 0,
+            "model_version": null,
+            "pred_class": null,
+            "error": {
+              "code": "WORKER_TIMEOUT",
+              "message": "随机森林响应超时（mock）"
+            },
+            "data_source": null
+          },
+          "bert": {
+            "request_id": "mock-stream-f9-all-failed",
+            "model_id": "bert",
+            "status": "error",
+            "latency_ms": 0,
+            "model_version": null,
+            "pred_class": null,
+            "error": {
+              "code": "WORKER_UNAVAILABLE",
+              "message": "BERT 服务不可达（mock）"
+            },
+            "data_source": null
+          }
+        },
+        "arrivalOrder": [
+          "rf",
+          "bert"
+        ],
+        "summary": {
+          "request_id": "mock-stream-f9-all-failed",
+          "status": "all_failed",
+          "total": 2,
+          "ok": 0,
+          "failed": 2,
+          "elapsed_ms": 260,
+          "total_timeout_ms": 18000,
+          "partial": false
+        },
+        "done": {
+          "request_id": "mock-stream-f9-all-failed",
+          "status": "all_failed",
+          "total": 2,
+          "ok": 0,
+          "failed": 2
+        },
+        "streamError": null,
+        "error": "",
+        "fallback": false,
+        "firstEvent": true,
+        "firstEventAt": 1792629785940,
+        "firstEventLatencyMs": 86,
+        "startedAt": 1792629785854,
+        "finishedAt": 1792629786157
+      },
+      "dom": {
+        "resultMode": "stream",
+        "overview": "!模型暂时无法完成判断0 成功 · 2 失败 · 用时 260 ms · 总截止 18000 ms流式实时（SSE）首结果 86 msf9-all-failed",
+        "sortActive": "latency",
+        "cards": [
+          {
+            "modelId": "rf",
+            "status": "error",
+            "consistency": "none",
+            "text": "随随机森林随机森林响应超时（mock） 错误码 WORKER_TIMEOUTWORKER_TIMEOUT0 ms",
+            "latency": "0"
+          },
+          {
+            "modelId": "bert",
+            "status": "error",
+            "consistency": "none",
+            "text": "BBERTBERT 服务不可达（mock） 错误码 WORKER_UNAVAILABLEWORKER_UNAVAILABLE0 ms",
+            "latency": "0"
+          }
+        ],
+        "divergence": false,
+        "text": "对比完成：0 个模型完成判断。 MODEL COMPARISON · STREAMING同一个标题，0 个模型完成判断。 REQUEST · mock-str!模型暂时无法完成判断0 成功 · 2 失败 · 用时 260 ms · 总截止 18000 ms流式实时（SSE）首结果 86 msf9-all-failed排序 按延迟 按一致度 当前无多数预测，一致度显示 —REQUEST · mock-str随随机森林随机森林响应超时（mock） 错误码 WORKER_TIMEOUTWORKER_TIMEOUT0 msBBERTBERT 服务不可达（mock） 错误码 WORKER_UNAVAILABLEWORKER_UNAVAILABLE0 ms"
+      }
+    },
+    "switch": {
+      "scenarioStartedAt": 1792629786670,
+      "network": {
+        "requests": [
+          {
+            "ts": 1792629786682,
+            "requestId": "20620.25",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-switch&models=rf,fasttext,bert,distill,llm",
+            "method": "GET",
+            "type": "EventSource",
+            "headers": {
+              "sec-ch-ua-platform": "\"Windows\"",
+              "Referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+              "Accept": "text/event-stream",
+              "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+              "sec-ch-ua-mobile": "?0"
+            }
+          }
+        ],
+        "responses": [
+          {
+            "ts": 1792629786683,
+            "requestId": "20620.25",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-switch&models=rf,fasttext,bert,distill,llm",
+            "status": 200,
+            "mimeType": "text/event-stream",
+            "headers": {
+              "Transfer-Encoding": "chunked",
+              "Cache-Control": "no-cache, no-transform",
+              "X-Accel-Buffering": "no",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+              "Access-Control-Allow-Origin": "*",
+              "Date": "Thu, 22 Oct 2026 00:43:06 GMT",
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Access-Control-Allow-Headers": "Content-Type,X-Request-ID"
+            }
+          }
+        ],
+        "sse": [
+          {
+            "ts": 1792629787047,
+            "requestId": "20620.25",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-switch\",\"model_id\":\"rf\",\"status\":\"ok\",\"latency_ms\":90,\"model_version\":\"rf.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          }
+        ],
+        "failed": [
+          {
+            "ts": 1792629787057,
+            "requestId": "20620.25",
+            "errorText": "net::ERR_ABORTED",
+            "canceled": true
+          }
+        ]
+      },
+      "contentTypes": [
+        {
+          "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-switch&models=rf,fasttext,bert,distill,llm",
+          "status": 200,
+          "contentType": "text/event-stream; charset=utf-8"
+        }
+      ],
+      "serverRequests": [
+        {
+          "ts": 1792629786674,
+          "method": "GET",
+          "url": "/api/v1/compare/stream?title=f9-switch&models=rf,fasttext,bert,distill,llm",
+          "kind": "stream",
+          "path": "/api/v1/compare/stream",
+          "title": "f9-switch",
+          "models": [
+            "rf",
+            "fasttext",
+            "bert",
+            "distill",
+            "llm"
+          ],
+          "headers": {
+            "host": "127.0.0.1:18080",
+            "connection": "keep-alive",
+            "pragma": "no-cache",
+            "cache-control": "no-cache",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+            "accept": "text/event-stream",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+          },
+          "openedAt": 1792629786674,
+          "closedAt": 1792629787056,
+          "status": 200
+        }
+      ],
+      "serverStreamEvents": [
+        {
+          "ts": 1792629786787,
+          "scenario": "f9-switch",
+          "requestId": "mock-stream-f9-switch",
+          "event": "model",
+          "model_id": "rf",
+          "status": "ok"
+        }
+      ],
+      "streamRequest": {
+        "ts": 1792629786674,
+        "method": "GET",
+        "url": "/api/v1/compare/stream?title=f9-switch&models=rf,fasttext,bert,distill,llm",
+        "kind": "stream",
+        "path": "/api/v1/compare/stream",
+        "title": "f9-switch",
+        "models": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "headers": {
+          "host": "127.0.0.1:18080",
+          "connection": "keep-alive",
+          "pragma": "no-cache",
+          "cache-control": "no-cache",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+          "accept": "text/event-stream",
+          "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
+          "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        },
+        "openedAt": 1792629786674,
+        "closedAt": 1792629787056,
+        "status": 200
+      },
+      "postRequest": null,
+      "snapshot": {
+        "status": "idle",
+        "requestId": "mock-stream-f9-switch",
+        "requestedModelIds": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "arrived": {
+          "rf": {
+            "request_id": "mock-stream-f9-switch",
+            "model_id": "rf",
+            "status": "ok",
+            "latency_ms": 90,
+            "model_version": "rf.pkl",
+            "pred_class": "finance",
+            "error": null,
+            "data_source": null
+          }
+        },
+        "arrivalOrder": [
+          "rf"
+        ],
+        "summary": null,
+        "done": null,
+        "streamError": null,
+        "error": "",
+        "fallback": false,
+        "firstEvent": true,
+        "firstEventAt": 1792629786788,
+        "firstEventLatencyMs": 116,
+        "startedAt": 1792629786672,
+        "finishedAt": 1792629787055
+      },
+      "dom": {
+        "resultMode": null,
+        "overview": "",
+        "sortActive": null,
+        "cards": [],
+        "divergence": false,
+        "text": ""
+      }
+    },
+    "fallback": {
+      "scenarioStartedAt": 1792629789385,
+      "network": {
+        "requests": [
+          {
+            "ts": 1792629789395,
+            "requestId": "20620.31",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-fallback&models=rf,fasttext,bert,distill,llm",
+            "method": "GET",
+            "type": "EventSource",
+            "headers": {
+              "sec-ch-ua-platform": "\"Windows\"",
+              "Referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+              "Accept": "text/event-stream",
+              "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+              "sec-ch-ua-mobile": "?0"
+            }
+          },
+          {
+            "ts": 1792629792406,
+            "requestId": "20620.32",
+            "url": "http://127.0.0.1:18080/api/v1/compare",
+            "method": "POST",
+            "type": "Fetch",
+            "headers": {
+              "X-Request-ID": "046c9acc-dc9d-49c3-8e7f-428dac39b0b3",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "Referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+              "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+              "Content-Type": "application/json",
+              "sec-ch-ua-mobile": "?0"
+            }
+          }
+        ],
+        "responses": [
+          {
+            "ts": 1792629789397,
+            "requestId": "20620.31",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-fallback&models=rf,fasttext,bert,distill,llm",
+            "status": 200,
+            "mimeType": "text/event-stream",
+            "headers": {
+              "Transfer-Encoding": "chunked",
+              "Cache-Control": "no-cache, no-transform",
+              "X-Accel-Buffering": "no",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+              "Access-Control-Allow-Origin": "*",
+              "Date": "Thu, 22 Oct 2026 00:43:09 GMT",
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Access-Control-Allow-Headers": "Content-Type,X-Request-ID"
+            }
+          },
+          {
+            "ts": 1792629792672,
+            "requestId": "20620.32",
+            "url": "http://127.0.0.1:18080/api/v1/compare",
+            "status": 200,
+            "mimeType": "application/json",
+            "headers": {
+              "Transfer-Encoding": "chunked",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+              "Access-Control-Allow-Origin": "*",
+              "Keep-Alive": "timeout=5",
+              "Date": "Thu, 22 Oct 2026 00:43:12 GMT",
+              "Content-Type": "application/json; charset=utf-8",
+              "Access-Control-Allow-Headers": "Content-Type,X-Request-ID"
+            }
+          }
+        ],
+        "sse": [],
+        "failed": [
+          {
+            "ts": 1792629792411,
+            "requestId": "20620.31",
+            "errorText": "net::ERR_ABORTED",
+            "canceled": true
+          }
+        ]
+      },
+      "contentTypes": [
+        {
+          "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-fallback&models=rf,fasttext,bert,distill,llm",
+          "status": 200,
+          "contentType": "text/event-stream; charset=utf-8"
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/compare",
+          "status": 200,
+          "contentType": "application/json; charset=utf-8"
+        }
+      ],
+      "serverRequests": [
+        {
+          "ts": 1792629789395,
+          "method": "GET",
+          "url": "/api/v1/compare/stream?title=f9-fallback&models=rf,fasttext,bert,distill,llm",
+          "kind": "stream",
+          "path": "/api/v1/compare/stream",
+          "title": "f9-fallback",
+          "models": [
+            "rf",
+            "fasttext",
+            "bert",
+            "distill",
+            "llm"
+          ],
+          "headers": {
+            "host": "127.0.0.1:18080",
+            "connection": "keep-alive",
+            "pragma": "no-cache",
+            "cache-control": "no-cache",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+            "accept": "text/event-stream",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+          },
+          "openedAt": 1792629789395,
+          "closedAt": 1792629792410,
+          "status": 200
+        },
+        {
+          "ts": 1792629792406,
+          "method": "POST",
+          "url": "/api/v1/compare",
+          "kind": "compare",
+          "path": "/api/v1/compare",
+          "title": "f9-fallback",
+          "models": [
+            "rf",
+            "fasttext",
+            "bert",
+            "distill",
+            "llm"
+          ],
+          "headers": {
+            "host": "127.0.0.1:18080",
+            "connection": "keep-alive",
+            "content-length": "73",
+            "x-request-id": "046c9acc-dc9d-49c3-8e7f-428dac39b0b3",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "content-type": "application/json",
+            "sec-ch-ua-mobile": "?0",
+            "accept": "*/*",
+            "origin": "http://127.0.0.1:18080",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+          },
+          "body": "{\"title\":\"f9-fallback\",\"models\":[\"rf\",\"fasttext\",\"bert\",\"distill\",\"llm\"]}",
+          "respondedAt": 1792629792670
+        }
+      ],
+      "serverStreamEvents": [],
+      "streamRequest": {
+        "ts": 1792629789395,
+        "method": "GET",
+        "url": "/api/v1/compare/stream?title=f9-fallback&models=rf,fasttext,bert,distill,llm",
+        "kind": "stream",
+        "path": "/api/v1/compare/stream",
+        "title": "f9-fallback",
+        "models": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "headers": {
+          "host": "127.0.0.1:18080",
+          "connection": "keep-alive",
+          "pragma": "no-cache",
+          "cache-control": "no-cache",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+          "accept": "text/event-stream",
+          "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
+          "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        },
+        "openedAt": 1792629789395,
+        "closedAt": 1792629792410,
+        "status": 200
+      },
+      "postRequest": {
+        "ts": 1792629792406,
+        "method": "POST",
+        "url": "/api/v1/compare",
+        "kind": "compare",
+        "path": "/api/v1/compare",
+        "title": "f9-fallback",
+        "models": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "headers": {
+          "host": "127.0.0.1:18080",
+          "connection": "keep-alive",
+          "content-length": "73",
+          "x-request-id": "046c9acc-dc9d-49c3-8e7f-428dac39b0b3",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+          "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "content-type": "application/json",
+          "sec-ch-ua-mobile": "?0",
+          "accept": "*/*",
+          "origin": "http://127.0.0.1:18080",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
+          "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        },
+        "body": "{\"title\":\"f9-fallback\",\"models\":[\"rf\",\"fasttext\",\"bert\",\"distill\",\"llm\"]}",
+        "respondedAt": 1792629792670
+      },
+      "snapshot": {
+        "status": "fallback",
+        "requestId": "mock-post-1792629792406",
+        "requestedModelIds": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "arrived": {
+          "rf": {
+            "request_id": "mock-post-1792629792406",
+            "model_id": "rf",
+            "status": "ok",
+            "latency_ms": 90,
+            "model_version": "rf.pkl",
+            "pred_class": "finance",
+            "error": null
+          },
+          "fasttext": {
+            "request_id": "mock-post-1792629792406",
+            "model_id": "fasttext",
+            "status": "ok",
+            "latency_ms": 110,
+            "model_version": "fasttext.pkl",
+            "pred_class": "finance",
+            "error": null
+          },
+          "bert": {
+            "request_id": "mock-post-1792629792406",
+            "model_id": "bert",
+            "status": "ok",
+            "latency_ms": 220,
+            "model_version": "bert.pkl",
+            "pred_class": "finance",
+            "error": null
+          },
+          "distill": {
+            "request_id": "mock-post-1792629792406",
+            "model_id": "distill",
+            "status": "ok",
+            "latency_ms": 300,
+            "model_version": "distill.pkl",
+            "pred_class": "stocks",
+            "error": null
+          },
+          "llm": {
+            "request_id": "mock-post-1792629792406",
+            "model_id": "llm",
+            "status": "ok",
+            "latency_ms": 1400,
+            "model_version": "llm.pkl",
+            "pred_class": "finance",
+            "error": null
+          }
+        },
+        "arrivalOrder": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "summary": {
+          "request_id": "mock-post-1792629792406",
+          "status": "ok",
+          "total": 5,
+          "ok": 5,
+          "failed": 0,
+          "elapsed_ms": 3282,
+          "total_timeout_ms": 0,
+          "partial": false
+        },
+        "done": {
+          "request_id": "mock-post-1792629792406",
+          "status": "ok",
+          "total": 5,
+          "ok": 5,
+          "failed": 0
+        },
+        "streamError": null,
+        "error": "",
+        "fallback": true,
+        "firstEvent": true,
+        "firstEventAt": 1792629792673,
+        "firstEventLatencyMs": 3282,
+        "startedAt": 1792629789391,
+        "finishedAt": 1792629792673
+      },
+      "dom": {
+        "resultMode": "stream",
+        "overview": "✓全部模型已完成5 成功 · 0 失败 · 用时 3282 ms已回退完整请求（POST）首结果 3282 ms 模型间存在分歧（1 个不同） f9-fallback",
+        "sortActive": "latency",
+        "cards": [
+          {
+            "modelId": "rf",
+            "status": "ok",
+            "consistency": "match",
+            "text": "随随机森林财经finance与多数一致分类完成90 ms",
+            "latency": "90"
+          },
+          {
+            "modelId": "fasttext",
+            "status": "ok",
+            "consistency": "match",
+            "text": "ffastText财经finance与多数一致分类完成110 ms",
+            "latency": "110"
+          },
+          {
+            "modelId": "bert",
+            "status": "ok",
+            "consistency": "match",
+            "text": "BBERT财经finance与多数一致分类完成220 ms",
+            "latency": "220"
+          },
+          {
+            "modelId": "distill",
+            "status": "ok",
+            "consistency": "differ",
+            "text": "蒸蒸馏模型股票stocks与多数不同分类完成300 ms",
+            "latency": "300"
+          },
+          {
+            "modelId": "llm",
+            "status": "ok",
+            "consistency": "match",
+            "text": "LLLM财经finance与多数一致分类完成1400 ms",
+            "latency": "1400"
+          }
+        ],
+        "divergence": true,
+        "text": "对比完成：5 个模型完成判断。 MODEL COMPARISON · POST FALLBACK流式不可用，已回退完整请求：5 个模型完成判断。 REQUEST · mock-pos✓全部模型已完成5 成功 · 0 失败 · 用时 3282 ms已回退完整请求（POST）首结果 3282 ms 模型间存在分歧（1 个不同） f9-fallback排序 按延迟 按一致度 一致度 = 与多数预测相同REQUEST · mock-pos随随机森林财经finance与多数一致分类完成90 msffastText财经finance与多数一致分类完成110 msBBERT财经finance与多数一致分类完成220 ms蒸蒸馏模型股票stocks与多数不同分类完成300 msLLLM财经finance与多数一致分类完成1400 ms"
+      }
+    },
+    "stream-error": {
+      "scenarioStartedAt": 1792629793146,
+      "network": {
+        "requests": [
+          {
+            "ts": 1792629793156,
+            "requestId": "20620.38",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-stream-error&models=rf,fasttext,bert,distill,llm",
+            "method": "GET",
+            "type": "EventSource",
+            "headers": {
+              "sec-ch-ua-platform": "\"Windows\"",
+              "Referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+              "Accept": "text/event-stream",
+              "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+              "sec-ch-ua-mobile": "?0"
+            }
+          }
+        ],
+        "responses": [
+          {
+            "ts": 1792629793158,
+            "requestId": "20620.38",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-stream-error&models=rf,fasttext,bert,distill,llm",
+            "status": 200,
+            "mimeType": "text/event-stream",
+            "headers": {
+              "Transfer-Encoding": "chunked",
+              "Cache-Control": "no-cache, no-transform",
+              "X-Accel-Buffering": "no",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+              "Access-Control-Allow-Origin": "*",
+              "Date": "Thu, 22 Oct 2026 00:43:13 GMT",
+              "Content-Type": "text/event-stream; charset=utf-8",
+              "Access-Control-Allow-Headers": "Content-Type,X-Request-ID"
+            }
+          }
+        ],
+        "sse": [
+          {
+            "ts": 1792629793266,
+            "requestId": "20620.38",
+            "eventName": "model",
+            "data": "{\"request_id\":\"mock-stream-f9-stream-error\",\"model_id\":\"rf\",\"status\":\"ok\",\"latency_ms\":90,\"model_version\":\"rf.pkl\",\"pred_class\":\"finance\",\"error\":null}"
+          },
+          {
+            "ts": 1792629793518,
+            "requestId": "20620.38",
+            "eventName": "error",
+            "data": "{\"request_id\":\"mock-stream-f9-stream-error\",\"code\":\"INTERNAL_ERROR\",\"message\":\"mock: compare stream broke\"}"
+          }
+        ],
+        "failed": [
+          {
+            "ts": 1792629793525,
+            "requestId": "20620.38",
+            "errorText": "net::ERR_ABORTED",
+            "canceled": true
+          }
+        ]
+      },
+      "contentTypes": [
+        {
+          "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-stream-error&models=rf,fasttext,bert,distill,llm",
+          "status": 200,
+          "contentType": "text/event-stream; charset=utf-8"
+        }
+      ],
+      "serverRequests": [
+        {
+          "ts": 1792629793156,
+          "method": "GET",
+          "url": "/api/v1/compare/stream?title=f9-stream-error&models=rf,fasttext,bert,distill,llm",
+          "kind": "stream",
+          "path": "/api/v1/compare/stream",
+          "title": "f9-stream-error",
+          "models": [
+            "rf",
+            "fasttext",
+            "bert",
+            "distill",
+            "llm"
+          ],
+          "headers": {
+            "host": "127.0.0.1:18080",
+            "connection": "keep-alive",
+            "pragma": "no-cache",
+            "cache-control": "no-cache",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+            "accept": "text/event-stream",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+          },
+          "openedAt": 1792629793156,
+          "closedAt": 1792629793524,
+          "status": 200
+        }
+      ],
+      "serverStreamEvents": [
+        {
+          "ts": 1792629793264,
+          "scenario": "f9-stream-error",
+          "requestId": "mock-stream-f9-stream-error",
+          "event": "model",
+          "model_id": "rf",
+          "status": "ok"
+        },
+        {
+          "ts": 1792629793514,
+          "scenario": "f9-stream-error",
+          "requestId": "mock-stream-f9-stream-error",
+          "event": "error",
+          "model_id": null,
+          "status": null
+        }
+      ],
+      "streamRequest": {
+        "ts": 1792629793156,
+        "method": "GET",
+        "url": "/api/v1/compare/stream?title=f9-stream-error&models=rf,fasttext,bert,distill,llm",
+        "kind": "stream",
+        "path": "/api/v1/compare/stream",
+        "title": "f9-stream-error",
+        "models": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "headers": {
+          "host": "127.0.0.1:18080",
+          "connection": "keep-alive",
+          "pragma": "no-cache",
+          "cache-control": "no-cache",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+          "accept": "text/event-stream",
+          "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
+          "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        },
+        "openedAt": 1792629793156,
+        "closedAt": 1792629793524,
+        "status": 200
+      },
+      "postRequest": null,
+      "snapshot": {
+        "status": "error",
+        "requestId": "mock-stream-f9-stream-error",
+        "requestedModelIds": [
+          "rf",
+          "fasttext",
+          "bert",
+          "distill",
+          "llm"
+        ],
+        "arrived": {
+          "rf": {
+            "request_id": "mock-stream-f9-stream-error",
+            "model_id": "rf",
+            "status": "ok",
+            "latency_ms": 90,
+            "model_version": "rf.pkl",
+            "pred_class": "finance",
+            "error": null,
+            "data_source": null
+          }
+        },
+        "arrivalOrder": [
+          "rf"
+        ],
+        "summary": null,
+        "done": null,
+        "streamError": {
+          "request_id": "mock-stream-f9-stream-error",
+          "code": "INTERNAL_ERROR",
+          "message": "mock: compare stream broke"
+        },
+        "error": "服务暂时不可用，请稍后重试。",
+        "fallback": false,
+        "firstEvent": true,
+        "firstEventAt": 1792629793265,
+        "firstEventLatencyMs": 113,
+        "startedAt": 1792629793152,
+        "finishedAt": 1792629793516
+      },
+      "dom": {
+        "resultMode": "stream",
+        "overview": "!对比流中断已返回 1 / 5流式实时（SSE）首结果 113 msf9-stream-error",
+        "sortActive": "latency",
+        "cards": [
+          {
+            "modelId": "rf",
+            "status": "ok",
+            "consistency": "none",
+            "text": "随随机森林财经finance分类完成90 ms",
+            "latency": "90"
+          },
+          {
+            "modelId": "fasttext",
+            "status": "missing",
+            "consistency": "none",
+            "text": "ffastText 未在总截止前返回结果 未返回—",
+            "latency": ""
+          },
+          {
+            "modelId": "bert",
+            "status": "missing",
+            "consistency": "none",
+            "text": "BBERT 未在总截止前返回结果 未返回—",
+            "latency": ""
+          },
+          {
+            "modelId": "distill",
+            "status": "missing",
+            "consistency": "none",
+            "text": "蒸蒸馏模型 未在总截止前返回结果 未返回—",
+            "latency": ""
+          },
+          {
+            "modelId": "llm",
+            "status": "missing",
+            "consistency": "none",
+            "text": "LLLM 未在总截止前返回结果 未返回—",
+            "latency": ""
+          }
+        ],
+        "divergence": false,
+        "text": "MODEL COMPARISON · STREAMING对比没有完成，请稍后重试。 REQUEST · mock-str!对比流中断已返回 1 / 5流式实时（SSE）首结果 113 msf9-stream-error!暂时无法完成服务暂时不可用，请稍后重试。请求编号 mock-stream-f9-stream-error排序 按延迟 按一致度 当前无多数预测，一致度显示 —REQUEST · mock-str随随机森林财经finance分类完成90 msffastText 未在总截止前返回结果 未返回—BBERT 未在总截止前返回结果 未返回—蒸蒸馏模型 未在总截止前返回结果 未返回—LLLM 未在总截止前返回结果 未返回—"
+      }
+    },
+    "connect-error": {
+      "scenarioStartedAt": 1792629793901,
+      "network": {
+        "requests": [
+          {
+            "ts": 1792629793907,
+            "requestId": "20620.44",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-connect-error&models=rf,fasttext,bert",
+            "method": "GET",
+            "type": "EventSource",
+            "headers": {
+              "sec-ch-ua-platform": "\"Windows\"",
+              "Referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+              "Accept": "text/event-stream",
+              "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+              "sec-ch-ua-mobile": "?0"
+            }
+          },
+          {
+            "ts": 1792629793909,
+            "requestId": "20620.45",
+            "url": "http://127.0.0.1:18080/api/v1/compare",
+            "method": "POST",
+            "type": "Fetch",
+            "headers": {
+              "X-Request-ID": "19da93b1-76b2-4e9b-86c3-e213f89ea07e",
+              "sec-ch-ua-platform": "\"Windows\"",
+              "Referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+              "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+              "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+              "Content-Type": "application/json",
+              "sec-ch-ua-mobile": "?0"
+            }
+          }
+        ],
+        "responses": [
+          {
+            "ts": 1792629793909,
+            "requestId": "20620.44",
+            "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-connect-error&models=rf,fasttext,bert",
+            "status": 503,
+            "mimeType": "application/json",
+            "headers": {
+              "Transfer-Encoding": "chunked",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+              "Access-Control-Allow-Origin": "*",
+              "Keep-Alive": "timeout=5",
+              "Date": "Thu, 22 Oct 2026 00:43:13 GMT",
+              "Content-Type": "application/json; charset=utf-8",
+              "Access-Control-Allow-Headers": "Content-Type,X-Request-ID"
+            }
+          },
+          {
+            "ts": 1792629794171,
+            "requestId": "20620.45",
+            "url": "http://127.0.0.1:18080/api/v1/compare",
+            "status": 200,
+            "mimeType": "application/json",
+            "headers": {
+              "Transfer-Encoding": "chunked",
+              "Connection": "keep-alive",
+              "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+              "Access-Control-Allow-Origin": "*",
+              "Keep-Alive": "timeout=5",
+              "Date": "Thu, 22 Oct 2026 00:43:14 GMT",
+              "Content-Type": "application/json; charset=utf-8",
+              "Access-Control-Allow-Headers": "Content-Type,X-Request-ID"
+            }
+          }
+        ],
+        "sse": [],
+        "failed": []
+      },
+      "contentTypes": [
+        {
+          "url": "http://127.0.0.1:18080/api/v1/compare/stream?title=f9-connect-error&models=rf,fasttext,bert",
+          "status": 503,
+          "contentType": "application/json; charset=utf-8"
+        },
+        {
+          "url": "http://127.0.0.1:18080/api/v1/compare",
+          "status": 200,
+          "contentType": "application/json; charset=utf-8"
+        }
+      ],
+      "serverRequests": [
+        {
+          "ts": 1792629793905,
+          "method": "GET",
+          "url": "/api/v1/compare/stream?title=f9-connect-error&models=rf,fasttext,bert",
+          "kind": "stream",
+          "path": "/api/v1/compare/stream",
+          "title": "f9-connect-error",
+          "models": [
+            "rf",
+            "fasttext",
+            "bert"
+          ],
+          "headers": {
+            "host": "127.0.0.1:18080",
+            "connection": "keep-alive",
+            "pragma": "no-cache",
+            "cache-control": "no-cache",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+            "accept": "text/event-stream",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+          },
+          "openedAt": 1792629793905,
+          "closedAt": null,
+          "status": 503,
+          "respondedAt": 1792629793906
+        },
+        {
+          "ts": 1792629793908,
+          "method": "POST",
+          "url": "/api/v1/compare",
+          "kind": "compare",
+          "path": "/api/v1/compare",
+          "title": "f9-connect-error",
+          "models": [
+            "rf",
+            "fasttext",
+            "bert"
+          ],
+          "headers": {
+            "host": "127.0.0.1:18080",
+            "connection": "keep-alive",
+            "content-length": "62",
+            "x-request-id": "19da93b1-76b2-4e9b-86c3-e213f89ea07e",
+            "sec-ch-ua-platform": "\"Windows\"",
+            "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+            "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+            "content-type": "application/json",
+            "sec-ch-ua-mobile": "?0",
+            "accept": "*/*",
+            "origin": "http://127.0.0.1:18080",
+            "sec-fetch-site": "same-origin",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-dest": "empty",
+            "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+          },
+          "body": "{\"title\":\"f9-connect-error\",\"models\":[\"rf\",\"fasttext\",\"bert\"]}",
+          "respondedAt": 1792629794170
+        }
+      ],
+      "serverStreamEvents": [],
+      "streamRequest": {
+        "ts": 1792629793905,
+        "method": "GET",
+        "url": "/api/v1/compare/stream?title=f9-connect-error&models=rf,fasttext,bert",
+        "kind": "stream",
+        "path": "/api/v1/compare/stream",
+        "title": "f9-connect-error",
+        "models": [
+          "rf",
+          "fasttext",
+          "bert"
+        ],
+        "headers": {
+          "host": "127.0.0.1:18080",
+          "connection": "keep-alive",
+          "pragma": "no-cache",
+          "cache-control": "no-cache",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+          "accept": "text/event-stream",
+          "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "sec-ch-ua-mobile": "?0",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
+          "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        },
+        "openedAt": 1792629793905,
+        "closedAt": null,
+        "status": 503,
+        "respondedAt": 1792629793906
+      },
+      "postRequest": {
+        "ts": 1792629793908,
+        "method": "POST",
+        "url": "/api/v1/compare",
+        "kind": "compare",
+        "path": "/api/v1/compare",
+        "title": "f9-connect-error",
+        "models": [
+          "rf",
+          "fasttext",
+          "bert"
+        ],
+        "headers": {
+          "host": "127.0.0.1:18080",
+          "connection": "keep-alive",
+          "content-length": "62",
+          "x-request-id": "19da93b1-76b2-4e9b-86c3-e213f89ea07e",
+          "sec-ch-ua-platform": "\"Windows\"",
+          "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/155.0.0.0 Safari/537.36 Edg/155.0.0.0",
+          "sec-ch-ua": "\"Microsoft Edge\";v=\"155\", \"Chromium\";v=\"155\", \"Not(A:Brand\";v=\"24\"",
+          "content-type": "application/json",
+          "sec-ch-ua-mobile": "?0",
+          "accept": "*/*",
+          "origin": "http://127.0.0.1:18080",
+          "sec-fetch-site": "same-origin",
+          "sec-fetch-mode": "cors",
+          "sec-fetch-dest": "empty",
+          "referer": "http://127.0.0.1:18080/tests/f9/harness.html",
+          "accept-encoding": "gzip, deflate, br, zstd",
+          "accept-language": "zh-CN,zh;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6"
+        },
+        "body": "{\"title\":\"f9-connect-error\",\"models\":[\"rf\",\"fasttext\",\"bert\"]}",
+        "respondedAt": 1792629794170
+      },
+      "snapshot": {
+        "status": "fallback",
+        "requestId": "mock-post-1792629793908",
+        "requestedModelIds": [
+          "rf",
+          "fasttext",
+          "bert"
+        ],
+        "arrived": {
+          "rf": {
+            "request_id": "mock-post-1792629793908",
+            "model_id": "rf",
+            "status": "ok",
+            "latency_ms": 90,
+            "model_version": "rf.pkl",
+            "pred_class": "finance",
+            "error": null
+          },
+          "fasttext": {
+            "request_id": "mock-post-1792629793908",
+            "model_id": "fasttext",
+            "status": "ok",
+            "latency_ms": 110,
+            "model_version": "fasttext.pkl",
+            "pred_class": "finance",
+            "error": null
+          },
+          "bert": {
+            "request_id": "mock-post-1792629793908",
+            "model_id": "bert",
+            "status": "ok",
+            "latency_ms": 220,
+            "model_version": "bert.pkl",
+            "pred_class": "finance",
+            "error": null
+          }
+        },
+        "arrivalOrder": [
+          "rf",
+          "fasttext",
+          "bert"
+        ],
+        "summary": {
+          "request_id": "mock-post-1792629793908",
+          "status": "ok",
+          "total": 3,
+          "ok": 3,
+          "failed": 0,
+          "elapsed_ms": 269,
+          "total_timeout_ms": 0,
+          "partial": false
+        },
+        "done": {
+          "request_id": "mock-post-1792629793908",
+          "status": "ok",
+          "total": 3,
+          "ok": 3,
+          "failed": 0
+        },
+        "streamError": null,
+        "error": "",
+        "fallback": true,
+        "firstEvent": true,
+        "firstEventAt": 1792629794172,
+        "firstEventLatencyMs": 269,
+        "startedAt": 1792629793903,
+        "finishedAt": 1792629794172
+      },
+      "dom": {
+        "resultMode": "stream",
+        "overview": "✓全部模型已完成3 成功 · 0 失败 · 用时 269 ms已回退完整请求（POST）首结果 269 msf9-connect-error",
+        "sortActive": "latency",
+        "cards": [
+          {
+            "modelId": "rf",
+            "status": "ok",
+            "consistency": "match",
+            "text": "随随机森林财经finance与多数一致分类完成90 ms",
+            "latency": "90"
+          },
+          {
+            "modelId": "fasttext",
+            "status": "ok",
+            "consistency": "match",
+            "text": "ffastText财经finance与多数一致分类完成110 ms",
+            "latency": "110"
+          },
+          {
+            "modelId": "bert",
+            "status": "ok",
+            "consistency": "match",
+            "text": "BBERT财经finance与多数一致分类完成220 ms",
+            "latency": "220"
+          }
+        ],
+        "divergence": false,
+        "text": "对比完成：3 个模型完成判断。 MODEL COMPARISON · POST FALLBACK流式不可用，已回退完整请求：3 个模型完成判断。 REQUEST · mock-pos✓全部模型已完成3 成功 · 0 失败 · 用时 269 ms已回退完整请求（POST）首结果 269 msf9-connect-error排序 按延迟 按一致度 一致度 = 与多数预测相同REQUEST · mock-pos随随机森林财经finance与多数一致分类完成90 msffastText财经finance与多数一致分类完成110 msBBERT财经finance与多数一致分类完成220 ms"
+      }
+    }
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "generated_at": "2026-10-22T00:30:25.948Z",
+  "env": {
+    "TMF_COMPARE_CONCURRENCY": "2",
+    "TMF_COMPARE_TOTAL_TIMEOUT_MS": "25000"
+  },
+  "duration_ms": 1499,
+  "ok": true,
+  "text": "MODEL COMPARISON · STREAMING 同一个标题，4 个模型完成判断。 REQUEST · 3932624b ✓ 全部模型已完成 4 成功 · 0 失败 · 用时 31 ms · 总截止 25000 ms 流式实时（SSE） 首结果 25 ms 北京二手房成交量创年内新高 排序 按延迟 按一致度 一致度 = 与多数预测相同 REQUEST · 3932624b 随 随机森林 体育 sports 与多数一致 分类完成 4 ms f fastText 体育 sports 与多数一致 分类完成 4 ms 蒸 蒸馏 BiLSTM 体育 sports 与多数一致 分类完成 5 ms B BERT 体育 sports 与多数一致 分类完成 7 ms",
+  "has25s": true,
+  "cards": 4
+}

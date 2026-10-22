@@ -1,0 +1,341 @@
+{
+  "meta": {
+    "dataset": "00-data/data/dev.txt(前N条) + artifacts/b3/synthetic_negatives.jsonl",
+    "split": "dev",
+    "sample_size": 3200,
+    "generated_at": "2026-10-22T00:02:56+08:00",
+    "code_version": "uncommitted",
+    "model_versions": {
+      "fasttext": "word_auto_train.pkl"
+    },
+    "metric_def": {
+      "negative_recall": "合成负样本被拒识比例",
+      "positive_retention": "dev 正样本未被拒识比例",
+      "auc": "ROC 梯形积分（x=正样本误拒率, y=负样本拒识召回）",
+      "entropy": "归一化 10 类分数 Shannon entropy（base=e）"
+    },
+    "data_kind": "offline"
+  },
+  "generated_by": "tools/eval_reject.py",
+  "seed": 20261021,
+  "sampling": {
+    "dev": {
+      "method": "file_order_first_n",
+      "sample_size": 2000
+    },
+    "negatives": {
+      "method": "synthetic_template_combination",
+      "generator": "tools/make_negatives.py",
+      "sample_size": 1200,
+      "per_kind": 300
+    },
+    "total_sample_size": 3200,
+    "positive_sample_size": 2000,
+    "negative_sample_size": 1200,
+    "test_set_used": false
+  },
+  "features": [
+    "max_score",
+    "entropy"
+  ],
+  "entropy_base": "e",
+  "rule": "max_score < max_score_threshold OR entropy > entropy_threshold",
+  "selection_policy": {
+    "priority": "recall_first",
+    "description": "固定『正样本保留率下限』后最大化负样本拒识召回；同分时优先更高正样本保留率，再要求两个特征都真正参与拒识（min 单特征负样本覆盖率更大），最后取阈值到分布边界余量更大者。",
+    "positive_retention_floors": [
+      0.94,
+      0.9,
+      0.85
+    ],
+    "floor_rationale": "0.95 档位无法拒识验收样例「今天天气不错」（entropy≈0.8067，高于该档位可选的 entropy 阈值），故主约束取仍能覆盖该样例的 0.94；更低档位只会增加正样本误拒，故不采用。",
+    "used_constraint": {
+      "positive_retention_min": 0.94
+    },
+    "candidate_grid": {
+      "max_score_candidates": 160,
+      "entropy_candidates": 183,
+      "combinations": 29280
+    },
+    "margin_note": "margin<0 表示阈值落在负样本分布内部（合成负样本与 dev 正样本分布重叠），仅在召回/保留率同分时用于 tie-break，不代表阈值越界。",
+    "test_set_used": false
+  },
+  "selected": {
+    "max_score_threshold": 0.518,
+    "entropy_threshold": 0.699,
+    "negative_recall": 0.604167,
+    "positive_retention": 0.9405,
+    "margin": -0.657298,
+    "feature_participation": 0.2975,
+    "metrics": {
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "negative_rejected": 725,
+      "negative_total": 1200,
+      "positive_kept": 1881,
+      "positive_total": 2000
+    },
+    "per_kind_negative": {
+      "chitchat": {
+        "total": 300,
+        "rejected": 165,
+        "reject_rate": 0.55
+      },
+      "code": {
+        "total": 300,
+        "rejected": 259,
+        "reject_rate": 0.863333
+      },
+      "product": {
+        "total": 300,
+        "rejected": 166,
+        "reject_rate": 0.553333
+      },
+      "symbols": {
+        "total": 300,
+        "rejected": 135,
+        "reject_rate": 0.45
+      }
+    }
+  },
+  "operating_point_alternatives": [
+    {
+      "positive_retention_floor": 0.99,
+      "best": {
+        "max_score_threshold": 0.4082,
+        "entropy_threshold": 1.4199,
+        "negative_recall": 0.253333,
+        "positive_retention": 0.99
+      }
+    },
+    {
+      "positive_retention_floor": 0.97,
+      "best": {
+        "max_score_threshold": 0.4734,
+        "entropy_threshold": 1.0214,
+        "negative_recall": 0.454167,
+        "positive_retention": 0.9705
+      }
+    },
+    {
+      "positive_retention_floor": 0.95,
+      "best": {
+        "max_score_threshold": 0.518,
+        "entropy_threshold": 0.8269,
+        "negative_recall": 0.545,
+        "positive_retention": 0.9505
+      }
+    },
+    {
+      "positive_retention_floor": 0.9,
+      "best": {
+        "max_score_threshold": 0.1908,
+        "entropy_threshold": 0.5148,
+        "negative_recall": 0.718333,
+        "positive_retention": 0.902
+      }
+    },
+    {
+      "positive_retention_floor": 0.85,
+      "best": {
+        "max_score_threshold": 0.1908,
+        "entropy_threshold": 0.2841,
+        "negative_recall": 0.8225,
+        "positive_retention": 0.851
+      }
+    }
+  ],
+  "top_candidates": [
+    {
+      "max_score_threshold": 0.518,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.2975
+    },
+    {
+      "max_score_threshold": 0.5137,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.289167
+    },
+    {
+      "max_score_threshold": 0.5036,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.280833
+    },
+    {
+      "max_score_threshold": 0.4945,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.273333
+    },
+    {
+      "max_score_threshold": 0.4865,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.265
+    },
+    {
+      "max_score_threshold": 0.4813,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.2575
+    },
+    {
+      "max_score_threshold": 0.4734,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.249167
+    },
+    {
+      "max_score_threshold": 0.4607,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.239167
+    },
+    {
+      "max_score_threshold": 0.453,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.228333
+    },
+    {
+      "max_score_threshold": 0.445,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.219167
+    },
+    {
+      "max_score_threshold": 0.4343,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.2075
+    },
+    {
+      "max_score_threshold": 0.4247,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.198333
+    },
+    {
+      "max_score_threshold": 0.4161,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.189167
+    },
+    {
+      "max_score_threshold": 0.4082,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.179167
+    },
+    {
+      "max_score_threshold": 0.3976,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.169167
+    },
+    {
+      "max_score_threshold": 0.3897,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.158333
+    },
+    {
+      "max_score_threshold": 0.376,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.148333
+    },
+    {
+      "max_score_threshold": 0.3683,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.1375
+    },
+    {
+      "max_score_threshold": 0.3601,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.1275
+    },
+    {
+      "max_score_threshold": 0.3543,
+      "entropy_threshold": 0.699,
+      "negative_recall": 0.604167,
+      "positive_retention": 0.9405,
+      "margin": -0.657298,
+      "feature_participation": 0.118333
+    }
+  ],
+  "rules_roc_summary": {
+    "max_score": {
+      "auc": 0.910082,
+      "point_count": 1537
+    },
+    "entropy": {
+      "auc": 0.920454,
+      "point_count": 1895
+    },
+    "combined_or": {
+      "auc": 0.920586,
+      "point_count": 235
+    }
+  },
+  "demo_reference": {
+    "title": "今天天气不错，适合出去走走",
+    "max_score": 0.395427,
+    "entropy": 1.443676,
+    "pred_class": "game",
+    "rejected": true
+  },
+  "artifacts": {
+    "roc": "artifacts/b3/reject_roc.json",
+    "threshold_selection": "artifacts/b3/threshold_selection.json",
+    "negatives": "artifacts/b3/synthetic_negatives.jsonl"
+  },
+  "limitations": [
+    "负样本为模板/组合合成的四类分布，不代表真实用户输入分布，结论须限定适用范围。",
+    "仅使用 fastText 单模型未校准分数标定；分数未校准（calibrated=false），不跨模型比较。",
+    "仅使用 dev 抽样 + 合成负样本，未使用 test 集，未做任何训练或重校准。"
+  ]
+}

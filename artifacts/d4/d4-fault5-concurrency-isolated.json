@@ -1,0 +1,20 @@
+{
+  "mode": "concurrency downgrade",
+  "env": {
+    "TMF_COMPARE_CONCURRENCY": "2",
+    "TMF_COMPARE_TOTAL_TIMEOUT_MS": "25000"
+  },
+  "duration_ms": 1342,
+  "ok": true,
+  "text": "MODEL COMPARISON · STREAMING 同一个标题，4 个模型完成判断。 REQUEST · f9ae815d ✓ 全部模型已完成 4 成功 · 0 失败 · 用时 32 ms · 总截止 25000 ms 流式实时（SSE） 首结果 26 ms 模型间存在分歧（1 个不同） test title 排序 按延迟 按一致度 一致度 = 与多数预测相同 REQUEST · f9ae815d 蒸 蒸馏 BiLSTM 演示数据（mock） 房产 realty 与多数一致 分类完成 4 ms f fastText 演示数据（mock） 房产 realty 与多数一致 分类完成 5 ms B BERT 演示数据（mock） 教育 education 与多数不同 分类完成 8 ms 随 随机森林 演示数据（mock） 房产 realty 与多数一致 分类完成 9 ms",
+  "network": [
+    "http://127.0.0.1:18084/",
+    "http://127.0.0.1:18084/assets/index-D1I5VsVd.js",
+    "http://127.0.0.1:18084/assets/index-CdycQVqg.css",
+    "http://127.0.0.1:14520/api/v1/demo/state",
+    "http://127.0.0.1:14520/api/v1/models",
+    "http://127.0.0.1:14520/api/v1/classify",
+    "http://127.0.0.1:14520/api/v1/compare/stream?title=test%20title&models=rf,fasttext,bert,distill"
+  ],
+  "bad_network": []
+}

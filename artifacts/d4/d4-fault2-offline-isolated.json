@@ -1,0 +1,21 @@
+{
+  "phase": "offline",
+  "duration_ms": 3567,
+  "current": {
+    "badge": "离线快照 生成于 2026-10-22T07:53:25+08:00",
+    "cls": "demo-badge demo-cached",
+    "cached": true,
+    "generated": "2026-10-22T07:53:25+08:00",
+    "snapshotError": null
+  },
+  "network": [
+    "http://127.0.0.1:18084/",
+    "http://127.0.0.1:18084/assets/index-D1I5VsVd.js",
+    "http://127.0.0.1:18084/assets/index-CdycQVqg.css",
+    "http://127.0.0.1:14520/api/v1/demo/state",
+    "http://127.0.0.1:14520/api/v1/models",
+    "http://127.0.0.1:18084/snapshot.json"
+  ],
+  "bad_network": [],
+  "ok": true
+}

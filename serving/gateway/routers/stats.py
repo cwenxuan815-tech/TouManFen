@@ -20,6 +20,9 @@ async def get_stats(request: Request) -> StatsResponse:
     return StatsResponse(
         request_id=request.state.request_id,
         process_local=True,
-        note="进程内内存统计，重启后清零；不包含预测/准确率/LLM 成本",
+        note=(
+            "进程内内存统计，重启后清零；model_calls 仅计 live 调用"
+            "（mock/unknown/cached 不计入）；不包含预测/准确率/LLM 成本"
+        ),
         **snapshot,
     )

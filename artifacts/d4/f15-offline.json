@@ -1,0 +1,12 @@
+{
+  "phase": "offline",
+  "current": {
+    "badge": "离线快照 生成于 2026-10-22T07:53:25+08:00 演示参数 demo=cached（仅提示文案，不改变数据来源）",
+    "cached": true,
+    "cachedText": "OFFLINE SNAPSHOT · 非实时 离线快照 后端当前不可达，以下内容来自构建产物 public/snapshot.json， 生成于 2026-10-22T07:53:25+08:00，数据来源统一标注为 cached；不写入运行时统计，LLM 未纳入。 重试后端 demo-normal-sports-consensus 里皮回避卸任问题谈世界杯卫冕：只靠年轻人是不够的 classified_ok 预期：体育 rf：体育；f",
+    "snapshotError": null,
+    "lab": true,
+    "modelCount": 0
+  },
+  "ok": true
+}

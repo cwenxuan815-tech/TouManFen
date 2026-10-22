@@ -1,0 +1,14 @@
+{
+  "scenario": "目标地址不可达（隔离）",
+  "generated_at": "2026-10-22T08:32:00+08:00",
+  "method": "前端构建 VITE_API_BASE_URL=http://127.0.0.1:18991（无监听），并临时移除 dist/snapshot.json；未修改真实 IP/网络/用户服务",
+  "observed": {
+    "badge": "来源待确认",
+    "cached": false,
+    "snapshotError": "离线快照不可用：HTTP 404",
+    "stateError": "! 暂时无法完成 无法连接分类服务，请确认后端已启动。 重新连接"
+  },
+  "expected": "显示后端不可达错误 + 快照不可用；不伪造 cached 成功",
+  "ok": true,
+  "cleanup": "静态服务/Edge/临时端口关闭；dist/snapshot.json 已通过正常 build 恢复"
+}

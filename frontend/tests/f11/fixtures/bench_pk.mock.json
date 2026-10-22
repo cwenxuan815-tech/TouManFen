@@ -1,0 +1,118 @@
+{
+  "_mock": true,
+  "_fixture_note": "F11 验收用显式 mock fixture；数值为结构一致的演示值（部分取自 docs/实测指标.md），真实数值以 B8 生成的 artifacts/bench/pk_*.json 为准。",
+  "request_id": "mock-bench-request",
+  "artifact_path": "artifacts/bench/pk_2026-10-22.json",
+  "meta": {
+    "dataset": "00-data/data/test.txt",
+    "split": "test",
+    "sample_size": 10000,
+    "generated_at": "2026-10-22T01:10:00+08:00",
+    "code_version": "git:uncommitted",
+    "model_versions": {
+      "rf": "rf.pkl",
+      "fasttext": "word_auto_train.pkl",
+      "bert": "bert.pkl",
+      "distill": "student_v2b.pkl"
+    },
+    "metric_def": {
+      "f1": "macro",
+      "acc": "top1",
+      "latency": "mean_ms_per_request",
+      "size": "bytes"
+    },
+    "data_kind": "offline"
+  },
+  "models": [
+    {
+      "model_id": "rf",
+      "display_name": "随机森林",
+      "status": "ok",
+      "metrics": {
+        "macro_f1": 0.8302,
+        "accuracy": 0.8293,
+        "avg_latency_ms": 12.5,
+        "size_bytes": 1512000000
+      },
+      "confusion_matrix": [[812, 12], [9, 167]],
+      "weight": 0.15
+    },
+    {
+      "model_id": "fasttext",
+      "display_name": "fastText",
+      "status": "ok",
+      "metrics": {
+        "macro_f1": 0.9173,
+        "accuracy": 0.9173,
+        "avg_latency_ms": 6.8,
+        "size_bytes": 451000000
+      },
+      "confusion_matrix": [[901, 8], [11, 80]],
+      "weight": 0.2
+    },
+    {
+      "model_id": "bert",
+      "display_name": "BERT",
+      "status": "ok",
+      "metrics": {
+        "macro_f1": 0.9307,
+        "accuracy": 0.9305,
+        "avg_latency_ms": 210,
+        "size_bytes": 409169600
+      },
+      "confusion_matrix": [[925, 5], [7, 63]],
+      "weight": 0.4
+    },
+    {
+      "model_id": "distill",
+      "display_name": "蒸馏模型",
+      "status": "ok",
+      "metrics": {
+        "macro_f1": 0.9074,
+        "accuracy": 0.9075,
+        "avg_latency_ms": 18,
+        "size_bytes": 38490838
+      },
+      "confusion_matrix": [[890, 9], [14, 87]],
+      "weight": 0.25
+    },
+    {
+      "model_id": "llm",
+      "display_name": "LLM",
+      "status": "missing",
+      "metrics": null,
+      "reason": "external_provider_not_authorized"
+    }
+  ],
+  "derived": [
+    {
+      "kind": "weighted_vote",
+      "display_name": "dev 加权投票集成",
+      "status": "ok",
+      "metrics": {
+        "macro_f1": 0.9388,
+        "accuracy": 0.9381,
+        "avg_latency_ms": 236.5,
+        "size_bytes": null
+      },
+      "note": "派生指标，非独立模型"
+    },
+    {
+      "kind": "oracle",
+      "display_name": "Oracle 上界",
+      "status": "ok",
+      "metrics": {
+        "macro_f1": 0.9695,
+        "accuracy": 0.9688,
+        "avg_latency_ms": null,
+        "size_bytes": null
+      },
+      "note": "参考上界，非独立模型"
+    }
+  ],
+  "missing_models": ["llm"],
+  "reproduction": {
+    "command": "python tools/bench_signature.py --split test",
+    "seed": 42
+  }
+}

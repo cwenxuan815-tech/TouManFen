@@ -1,0 +1,23 @@
+{
+  "phase": "online",
+  "startup": {
+    "badge": "来源待确认 演示参数 demo=cached（仅提示文案，不改变数据来源）",
+    "cached": false,
+    "cachedText": null,
+    "snapshotError": null,
+    "lab": true,
+    "modelCount": 0
+  },
+  "inputOk": true,
+  "submitOk": true,
+  "after": {
+    "badge": "演示数据（mock） 演示参数 demo=cached（仅提示文案，不改变数据来源）",
+    "cached": false,
+    "cachedText": null,
+    "snapshotError": null,
+    "lab": true,
+    "modelCount": 0
+  },
+  "urlHintVisible": true,
+  "ok": true
+}

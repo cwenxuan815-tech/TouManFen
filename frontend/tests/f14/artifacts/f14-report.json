@@ -1,0 +1,2032 @@
+{
+  "generatedAt": "2026-10-22T00:43:37.703Z",
+  "browser": "Edg/155.0.4283.62",
+  "mode": "本地 mock API + Edge headless/CDP",
+  "viewport": {
+    "width": 1440,
+    "height": 900
+  },
+  "environment": {
+    "mobileViewport": "390×844（CDP device metrics，模拟）",
+    "cpuThrottle": "6×（CDP Emulation.setCPUThrottlingRate，模拟）",
+    "reducedMotion": "CDP Emulation.setEmulatedMedia(prefers-reduced-motion: reduce)"
+  },
+  "exitCode": 0,
+  "summary": [
+    {
+      "id": "skip-link-focus-ring",
+      "name": "S1 skip link / 焦点环（亮+暗）/ Tab 顺序",
+      "pass": true,
+      "checks": [
+        {
+          "name": "App 已渲染主内容区",
+          "pass": true,
+          "detail": "{\"id\":\"main-content\",\"tabindex\":\"-1\",\"targetExists\":true}"
+        },
+        {
+          "name": "main 使用 id=\"main-content\" 且 tabindex=\"-1\"",
+          "pass": true,
+          "detail": "{\"id\":\"main-content\",\"tabindex\":\"-1\",\"targetExists\":true}"
+        },
+        {
+          "name": "skip link 存在且指向 main-content",
+          "pass": true,
+          "detail": "{\"href\":\"#main-content\",\"text\":\"跳到主要内容\",\"first\":true}"
+        },
+        {
+          "name": "skip link 是页面首个可聚焦元素",
+          "pass": true,
+          "detail": "[{\"tag\":\"a\",\"id\":\"\",\"cls\":\"skip-link\",\"text\":\"跳到主要内容\",\"href\":\"#main-content\",\"ariaLabel\":null,\"tabindex\":null,\"isSkipLink\":true},{\"tag\":\"a\",\"id\":\"\",\"cls\":\"brand\",\"text\":\"T·投满分 TMF\",\"href\":\"#top\",\"ariaLabel\":\"投满分首页\",\"tabindex\":null,\"isSkipLink\":false},{\"tag\":\"a\",\"id\":\"\",\"cls\":\"nav-active\",\"text\":\"分类实验台\",\"href\":\"#lab\",\"ariaLabel\":null,\"tabindex\":null,\"isSkipLink\":false}]"
+        },
+        {
+          "name": "skip link 未聚焦时移出视口（不遮挡页面）",
+          "pass": true,
+          "detail": "{\"bottom\":-12,\"transform\":\"matrix(1, 0, 0, 1, 0, -64)\",\"opacity\":\"1\"}"
+        },
+        {
+          "name": "Tab 首次聚焦 skip link",
+          "pass": true,
+          "detail": "{\"tag\":\"a\",\"id\":\"\",\"cls\":\"skip-link\",\"text\":\"跳到主要内容\",\"href\":\"#main-content\",\"role\":null,\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":false,\"rect\":{\"x\":12,\"y\":-52,\"width\":112,\"height\":40}}"
+        },
+        {
+          "name": "skip link 聚焦后出现在视口内且焦点环可见（≥2px 实线、未被裁切）",
+          "pass": true,
+          "detail": "{\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":12,\"y\":12,\"width\":112,\"height\":40}}"
+        },
+        {
+          "name": "Enter 激活 skip link 后焦点落到 main",
+          "pass": true,
+          "detail": "{\"tag\":\"main\",\"id\":\"main-content\",\"cls\":\"\",\"text\":\"来源待确认 NEWS ROUTING · TMF LAB让每一条新闻，找到它的频道。从标题出发，看看不同模型如何理解同一条新闻。一个轻量、直观的中文新闻分类实验\",\"href\":null,\"role\":null,\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":3,\"outlineStyle\":\"none\",\"outlineColor\":\"rgb(23, 27, 36)\",\"outlineOffset\":2,\"clipped\":true,\"clippingAncestors\":[\"div.site-shell\"],\"inViewport\":false,\"rect\":{\"x\":0,\"y\":76,\"width\":1440,\"height\":2464.46875}}"
+        },
+        {
+          "name": "激活 skip link 后 URL hash=#main-content",
+          "pass": true,
+          "detail": "#main-content"
+        },
+        {
+          "name": "Tab 顺序：品牌 → 分类实验台 → 模型矩阵 → 竞技场 → PK 榜单 → 关于",
+          "pass": true,
+          "detail": "[\"#top\",\"#lab\",\"#models\",\"#arena\",\"#bench\",\"#about\",null,null]"
+        },
+        {
+          "name": "导航链接有可见焦点环",
+          "pass": true,
+          "detail": "{\"tag\":\"a\",\"id\":\"\",\"cls\":\"nav-active\",\"text\":\"分类实验台\",\"href\":\"#lab\",\"role\":null,\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":430,\"y\":27.5,\"width\":75,\"height\":21}}"
+        },
+        {
+          "name": "导航焦点环未被 overflow 裁切且在视口内",
+          "pass": true,
+          "detail": "{\"clipped\":false,\"inViewport\":true}"
+        },
+        {
+          "name": "导航锚点 #lab/#models/#about 均能定位到页面区块",
+          "pass": true,
+          "detail": "[{\"href\":\"#lab\",\"exists\":true},{\"href\":\"#models\",\"exists\":true},{\"href\":\"#about\",\"exists\":true}]"
+        },
+        {
+          "name": "暗色主题焦点环可见（浅蓝 + 与页面背景对比度 ≥ 3:1）",
+          "pass": true,
+          "detail": "{\"ring\":{\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(156, 196, 255)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":430,\"y\":27.5,\"width\":75,\"height\":21}},\"background\":\"rgb(15, 20, 32)\",\"contrast\":10.299016083354692}"
+        }
+      ],
+      "elapsedMs": 2389
+    },
+    {
+      "id": "keyboard-only-flow",
+      "name": "S2 键盘-only：输入 → 提交 → 纠错反馈（焦点管理）→ Arena 投票",
+      "pass": true,
+      "checks": [
+        {
+          "name": "键盘输入进入标题框",
+          "pass": true,
+          "detail": "北京二手房成交量创年内新高"
+        },
+        {
+          "name": "输入框焦点可见（包裹层 focus-within 高亮）",
+          "pass": true,
+          "detail": "{\"activeIsArea\":true,\"wrapShadow\":\"rgba(0, 0, 0, 0) 0px 0px 0px 0px\",\"wrapBorder\":\"rgb(229, 234, 241)\"}"
+        },
+        {
+          "name": "输入后字符计数同步更新",
+          "pass": true,
+          "detail": "13 / 200"
+        },
+        {
+          "name": "Enter 提交后渲染结果卡",
+          "pass": true,
+          "detail": "{\"exists\":true,\"sectionAriaLive\":null,\"heading\":\"这条新闻，属于 财经\",\"cards\":1,\"liveText\":\"分类完成：财经，由 随机森林 判断。\"}"
+        },
+        {
+          "name": "结果区不再整体 aria-live（避免整块朗读）",
+          "pass": true,
+          "detail": "null"
+        },
+        {
+          "name": "结果摘要通过独立 sr-only aria-live 播报一次",
+          "pass": true,
+          "detail": "{\"liveText\":\"分类完成：财经，由 随机森林 判断。\"}"
+        },
+        {
+          "name": "打开反馈面板后焦点进入第一项",
+          "pass": true,
+          "detail": "{\"tag\":\"button\",\"id\":\"\",\"cls\":\"feedback-chip cat-blue\",\"text\":\"房产\",\"href\":null,\"role\":null,\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":791.734375,\"y\":598.6875,\"width\":44,\"height\":31}}"
+        },
+        {
+          "name": "Escape 关闭面板",
+          "pass": true,
+          "detail": ""
+        },
+        {
+          "name": "关闭后焦点回到触发按钮",
+          "pass": true,
+          "detail": "{\"tag\":\"button\",\"id\":\"\",\"cls\":\"feedback-toggle\",\"text\":\"判错了\",\"href\":null,\"role\":null,\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":1189.734375,\"y\":515.1875,\"width\":54,\"height\":27}}"
+        },
+        {
+          "name": "面板 Tab 循环：末尾控件 Tab 回到触发按钮",
+          "pass": true,
+          "detail": "{\"tag\":\"button\",\"id\":\"\",\"cls\":\"feedback-toggle\",\"text\":\"收起\",\"href\":null,\"role\":null,\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":1199.734375,\"y\":350.1875,\"width\":44,\"height\":27}}"
+        },
+        {
+          "name": "面板 Tab 循环：触发按钮 Shift+Tab 回到末尾控件",
+          "pass": true,
+          "detail": "{\"tag\":\"button\",\"id\":\"\",\"cls\":\"feedback-cancel\",\"text\":\"取消\",\"href\":null,\"role\":null,\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":782.734375,\"y\":476.6875,\"width\":46,\"height\":31}}"
+        },
+        {
+          "name": "键盘选中纠正类别",
+          "pass": true,
+          "detail": "房产"
+        },
+        {
+          "name": "反馈提交成功有「待审核」提示",
+          "pass": true,
+          "detail": "[\"i反馈已提交，待审核 ×\"]"
+        },
+        {
+          "name": "提交后焦点回到触发按钮",
+          "pass": true,
+          "detail": "{\"tag\":\"button\",\"id\":\"\",\"cls\":\"feedback-toggle\",\"text\":\"判错了\",\"href\":null,\"role\":null,\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":1189.734375,\"y\":350.1875,\"width\":54,\"height\":27}}"
+        },
+        {
+          "name": "反馈状态只通过 Toaster 单条播报（无重复 live 区）",
+          "pass": true,
+          "detail": "[{\"tag\":\"article\",\"cls\":\"toast toast-success toast-enter-from toast-enter-active\",\"role\":\"status\",\"live\":null,\"atomic\":\"true\",\"text\":\"i反馈已提交，待审核 ×\",\"srOnly\":false}]"
+        },
+        {
+          "name": "Enter 激活导航进入 Arena",
+          "pass": true,
+          "detail": "{\"state\":\"ready\",\"cards\":5,\"revealed\":false}"
+        },
+        {
+          "name": "匿名卡片键盘焦点环可见且未被裁切",
+          "pass": true,
+          "detail": "{\"tag\":\"button\",\"id\":\"\",\"cls\":\"arena-card\",\"text\":\"A匿名候选财经finance选择它\",\"href\":null,\"role\":null,\"ariaLabel\":\"选择匿名候选 A，预测类别 财经\",\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":195.71875,\"y\":447.6875,\"width\":113.53125,\"height\":172}}"
+        },
+        {
+          "name": "Enter 投票后翻牌揭晓",
+          "pass": true,
+          "detail": "{\"state\":\"revealed\",\"cards\":5,\"revealed\":true}"
+        },
+        {
+          "name": "揭晓后焦点落到揭晓状态区（卡片 disabled 不丢焦点）",
+          "pass": true,
+          "detail": "{\"tag\":\"p\",\"id\":\"\",\"cls\":\"arena-reveal-note\",\"text\":\"已揭晓：随机森林（rf），预测类别 财经\",\"href\":null,\"role\":\"status\",\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":195.71875,\"y\":631.6875,\"width\":607.703125,\"height\":40.6875}}"
+        },
+        {
+          "name": "键盘触发「再抽一题」可继续",
+          "pass": true,
+          "detail": "arena ready"
+        }
+      ],
+      "elapsedMs": 1657
+    },
+    {
+      "id": "reduced-motion",
+      "name": "S3 reduced-motion：F10 翻牌 / F11 条形 / F6 分数条 / Toaster / spinner 均无动画",
+      "pass": true,
+      "checks": [
+        {
+          "name": "浏览器已应用 prefers-reduced-motion: reduce",
+          "pass": true,
+          "detail": "true"
+        },
+        {
+          "name": "reduce：F6 分数条无过渡（≤1ms）",
+          "pass": true,
+          "detail": "{\"animationName\":\"none\",\"animationDurations\":[0.01],\"transitionDurations\":[0.01]}"
+        },
+        {
+          "name": "reduce：结果区无动画",
+          "pass": true,
+          "detail": "{\"animationName\":\"none\",\"animationDurations\":[0.01],\"transitionDurations\":[0.01]}"
+        },
+        {
+          "name": "reduce：loading spinner 无旋转动画",
+          "pass": true,
+          "detail": "{\"animationName\":\"none\",\"animationDurations\":[0.01],\"transitionDurations\":[0.01]}"
+        },
+        {
+          "name": "reduce：F10 翻牌无动画（animation-name=none、时长≤1ms）",
+          "pass": true,
+          "detail": "{\"animationName\":\"none\",\"animationDurations\":[0.01],\"transitionDurations\":[0.01]}"
+        },
+        {
+          "name": "reduce：Toaster 无过渡动画",
+          "pass": true,
+          "detail": "{\"animationName\":\"none\",\"animationDurations\":[0.01],\"transitionDurations\":[0.01]}"
+        },
+        {
+          "name": "reduce：F11 条形无过渡（≤1ms）",
+          "pass": true,
+          "detail": "{\"animationName\":\"none\",\"animationDurations\":[0.01],\"transitionDurations\":[0.01]}"
+        },
+        {
+          "name": "F11 榜单 aria-live 由独立摘要区承担（榜单本体不再整体播报）",
+          "pass": true,
+          "detail": "bench-board aria-live"
+        },
+        {
+          "name": "F11 指标切换只播报一句摘要（aria-live 变化）",
+          "pass": true,
+          "detail": "{\"metricsBefore\":5,\"benchLiveText\":\"已切换指标：平均延迟，越小越好；数据来自离线评估（test，n=10000）。\"}"
+        }
+      ],
+      "elapsedMs": 1918
+    },
+    {
+      "id": "mobile-menu-taborder",
+      "name": "S4 移动菜单：打开后链接可 Tab、Esc 关闭并归还焦点",
+      "pass": true,
+      "checks": [
+        {
+          "name": "移动视口下菜单按钮可见",
+          "pass": true,
+          "detail": "{\"toggleVisible\":true,\"expanded\":\"false\",\"controls\":\"primary-nav\",\"navVisible\":false,\"navLinks\":[{\"href\":\"#lab\",\"visible\":false},{\"href\":\"#models\",\"visible\":false},{\"href\":\"#arena\",\"visible\":false},{\"href\":\"#bench\",\"visible\":false},{\"href\":\"#about\",\"visible\":false}]}"
+        },
+        {
+          "name": "移动视口下导航默认收起",
+          "pass": true,
+          "detail": "{\"toggleVisible\":true,\"expanded\":\"false\",\"controls\":\"primary-nav\",\"navVisible\":false,\"navLinks\":[{\"href\":\"#lab\",\"visible\":false},{\"href\":\"#models\",\"visible\":false},{\"href\":\"#arena\",\"visible\":false},{\"href\":\"#bench\",\"visible\":false},{\"href\":\"#about\",\"visible\":false}]}"
+        },
+        {
+          "name": "Tab 可到达移动菜单按钮",
+          "pass": true,
+          "detail": "{\"tag\":\"button\",\"id\":\"\",\"cls\":\"menu-toggle\",\"text\":\"\",\"href\":null,\"role\":null,\"ariaLabel\":\"切换导航\",\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":119.390625,\"y\":15.5,\"width\":46,\"height\":34}}"
+        },
+        {
+          "name": "Enter 打开移动菜单（aria-expanded=true）",
+          "pass": true,
+          "detail": "{\"toggleVisible\":true,\"expanded\":\"true\",\"controls\":\"primary-nav\",\"navVisible\":true,\"navLinks\":[{\"href\":\"#lab\",\"visible\":true},{\"href\":\"#models\",\"visible\":true},{\"href\":\"#arena\",\"visible\":true},{\"href\":\"#bench\",\"visible\":true},{\"href\":\"#about\",\"visible\":true}]}"
+        },
+        {
+          "name": "菜单连接 aria-controls=primary-nav 且导航可见",
+          "pass": true,
+          "detail": "{\"toggleVisible\":true,\"expanded\":\"true\",\"controls\":\"primary-nav\",\"navVisible\":true,\"navLinks\":[{\"href\":\"#lab\",\"visible\":true},{\"href\":\"#models\",\"visible\":true},{\"href\":\"#arena\",\"visible\":true},{\"href\":\"#bench\",\"visible\":true},{\"href\":\"#about\",\"visible\":true}]}"
+        },
+        {
+          "name": "打开后 Tab 进入第一个导航链接",
+          "pass": true,
+          "detail": "{\"tag\":\"a\",\"id\":\"\",\"cls\":\"nav-active\",\"text\":\"分类实验台\",\"href\":\"#lab\",\"role\":null,\"ariaLabel\":null,\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":28.59375,\"y\":71,\"width\":332.8125,\"height\":45}}"
+        },
+        {
+          "name": "移动菜单链接有可见焦点环",
+          "pass": true,
+          "detail": "{\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":28.59375,\"y\":71,\"width\":332.8125,\"height\":45}}"
+        },
+        {
+          "name": "Esc 关闭移动菜单",
+          "pass": true,
+          "detail": "{\"toggleVisible\":true,\"expanded\":\"false\",\"controls\":\"primary-nav\",\"navVisible\":false,\"navLinks\":[{\"href\":\"#lab\",\"visible\":false},{\"href\":\"#models\",\"visible\":false},{\"href\":\"#arena\",\"visible\":false},{\"href\":\"#bench\",\"visible\":false},{\"href\":\"#about\",\"visible\":false}]}"
+        },
+        {
+          "name": "关闭后焦点回到菜单按钮",
+          "pass": true,
+          "detail": "{\"tag\":\"button\",\"id\":\"\",\"cls\":\"menu-toggle\",\"text\":\"\",\"href\":null,\"role\":null,\"ariaLabel\":\"切换导航\",\"focusVisible\":true,\"outlineWidth\":2,\"outlineStyle\":\"solid\",\"outlineColor\":\"rgb(30, 99, 240)\",\"outlineOffset\":2,\"clipped\":false,\"clippingAncestors\":[],\"inViewport\":true,\"rect\":{\"x\":119.390625,\"y\":15.5,\"width\":46,\"height\":34}}"
+        }
+      ],
+      "elapsedMs": 343
+    },
+    {
+      "id": "cpu-throttle",
+      "name": "S5 6× CPU throttle（模拟）：输入延迟/滚动/按钮仍可用",
+      "pass": true,
+      "checks": [
+        {
+          "name": "6× 模拟下输入均成功写入并更新 DOM",
+          "pass": true,
+          "detail": "[\"8 / 200\",\"8 / 200\",\"8 / 200\",\"8 / 200\",\"8 / 200\"]"
+        },
+        {
+          "name": "6× 模拟下 input→DOM 更新中位延迟 < 250ms",
+          "pass": true,
+          "detail": "median=32.1ms samples=23.5,28.3,32.1,40.7,42.7"
+        },
+        {
+          "name": "字符计数与输入长度一致",
+          "pass": true,
+          "detail": "[\"8 / 200\",\"8 / 200\",\"8 / 200\",\"8 / 200\",\"8 / 200\"]"
+        },
+        {
+          "name": "6× 模拟下页面仍可滚动",
+          "pass": true,
+          "detail": "{\"scrollY\":1767,\"innerHeight\":900,\"docHeight\":2667,\"textareaStillPresent\":true}"
+        },
+        {
+          "name": "6× 模拟下按钮点击仍生效（主题切换）",
+          "pass": true,
+          "detail": "light → dark"
+        },
+        {
+          "name": "6× 模拟下真实键盘输入仍可用",
+          "pass": true,
+          "detail": "性能测试标题 5键盘输入"
+        }
+      ],
+      "elapsedMs": 2109
+    },
+    {
+      "id": "fifty-result-cards",
+      "name": "S6 50 张结果卡：可滚动、可聚焦、反馈面板可打开、更新不卡死",
+      "pass": true,
+      "checks": [
+        {
+          "name": "渲染 50 张真实结果卡",
+          "pass": true,
+          "detail": "{\"cards\":50,\"indexes\":50,\"feedbackControls\":[\"feedback-panel-v-0\",\"feedback-panel-v-1\",\"feedback-panel-v-2\",\"feedback-panel-v-3\",\"feedback-panel-v-4\",\"feedback-panel-v-5\",\"feedback-panel-v-6\",\"feedback-panel-v-7\",\"feedback-panel-v-8\",\"feedback-panel-v-9\",\"feedback-panel-v-10\",\"feedback-panel-v-11\",\"feedback-panel-v-12\",\"feedback-panel-v-13\",\"feedback-panel-v-14\",\"feedback-panel-v-15\",\"feedback-panel-v-16\",\"feedback-panel-v-17\",\"feedback-panel-v-18\",\"feedback-panel-v-19\",\"feedback-panel-v-20\",\"feedback-panel-v-21\",\"feedback-panel-v-22\",\"feedback-panel-v-23\",\"feedback-panel-v-24\",\"feedback-panel-v-25\",\"feedback-panel-v-26\",\"feedback-panel-v-27\",\"feedback-panel-v-28\",\"feedback-panel-v-29\",\"feedback-panel-v-30\",\"feedback-panel-v-31\",\"feedback-panel-v-32\",\"feedback-panel-v-33\",\"feedback-panel-v-34\",\"feedback-panel-v-35\",\"feedback-panel-v-36\",\"feedback-panel-v-37\",\"feedback-panel-v-38\",\"feedback-panel-v-39\",\"feedback-panel-v-40\",\"feedback-panel-v-41\",\"feedback-panel-v-42\",\"feedback-panel-v-43\",\"feedback-panel-v-44\",\"feedback-panel-v-45\",\"feedback-panel-v-46\",\"feedback-panel-v-47\",\"feedback-panel-v-48\",\"feedback-panel-v-49\"],\"uniqueControls\":50,\"panelsOpen\":0,\"scrollY\":0,\"docHeight\":26381}"
+        },
+        {
+          "name": "50 个反馈面板的控制 id 唯一（useId 无重复）",
+          "pass": true,
+          "detail": "{\"controls\":50,\"unique\":50}"
+        },
+        {
+          "name": "可滚动到第 50 张卡",
+          "pass": true,
+          "detail": "{\"ok\":true,\"scrollY\":25532,\"rect\":{\"top\":299.890625,\"bottom\":825.390625},\"innerHeight\":825}"
+        },
+        {
+          "name": "第 50 张卡在视口内且反馈按钮已聚焦",
+          "pass": true,
+          "detail": "{\"ok\":true,\"scrollY\":25532,\"rect\":{\"top\":299.890625,\"bottom\":825.390625},\"innerHeight\":825}"
+        },
+        {
+          "name": "第 50 张卡的反馈面板可键盘打开",
+          "pass": true,
+          "detail": "{\"cards\":50,\"indexes\":50,\"controls\":[\"feedback-panel-v-0\",\"feedback-panel-v-1\",\"feedback-panel-v-2\",\"feedback-panel-v-3\",\"feedback-panel-v-4\",\"feedback-panel-v-5\",\"feedback-panel-v-6\",\"feedback-panel-v-7\",\"feedback-panel-v-8\",\"feedback-panel-v-9\",\"feedback-panel-v-10\",\"feedback-panel-v-11\",\"feedback-panel-v-12\",\"feedback-panel-v-13\",\"feedback-panel-v-14\",\"feedback-panel-v-15\",\"feedback-panel-v-16\",\"feedback-panel-v-17\",\"feedback-panel-v-18\",\"feedback-panel-v-19\",\"feedback-panel-v-20\",\"feedback-panel-v-21\",\"feedback-panel-v-22\",\"feedback-panel-v-23\",\"feedback-panel-v-24\",\"feedback-panel-v-25\",\"feedback-panel-v-26\",\"feedback-panel-v-27\",\"feedback-panel-v-28\",\"feedback-panel-v-29\",\"feedback-panel-v-30\",\"feedback-panel-v-31\",\"feedback-panel-v-32\",\"feedback-panel-v-33\",\"feedback-panel-v-34\",\"feedback-panel-v-35\",\"feedback-panel-v-36\",\"feedback-panel-v-37\",\"feedback-panel-v-38\",\"feedback-panel-v-39\",\"feedback-panel-v-40\",\"feedback-panel-v-41\",\"feedback-panel-v-42\",\"feedback-panel-v-43\",\"feedback-panel-v-44\",\"feedback-panel-v-45\",\"feedback-panel-v-46\",\"feedback-panel-v-47\",\"feedback-panel-v-48\",\"feedback-panel-v-49\"],\"uniqueControls\":50,\"openPanels\":1,\"openPanelIds\":[\"feedback-panel-v-49\"],\"scrollY\":25679,\"docHeight\":26504}"
+        },
+        {
+          "name": "一次只打开一个面板且面板 id 唯一",
+          "pass": true,
+          "detail": "[\"feedback-panel-v-49\"]"
+        },
+        {
+          "name": "Esc 可关闭第 50 张卡的面板",
+          "pass": true,
+          "detail": "closed"
+        },
+        {
+          "name": "更新一张卡后 50 张仍在、文案已更新（更新延迟 < 250ms）",
+          "pass": true,
+          "detail": "{\"ms\":20.899999856948853,\"count\":50,\"lastText\":\"更新后的标题 1\",\"scrollY\":25556}"
+        }
+      ],
+      "elapsedMs": 3382
+    }
+  ],
+  "evidence": {
+    "skip-link-focus-ring": {
+      "summary": {
+        "skipLink": {
+          "href": "#main-content",
+          "text": "跳到主要内容",
+          "first": true
+        },
+        "main": {
+          "id": "main-content",
+          "tabindex": "-1",
+          "targetExists": true
+        },
+        "active": {
+          "tag": "body",
+          "id": "",
+          "cls": "",
+          "text": "",
+          "href": null,
+          "focusVisible": false
+        },
+        "firstFocusables": [
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "skip-link",
+            "text": "跳到主要内容",
+            "href": "#main-content",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": true
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "brand",
+            "text": "T·投满分 TMF",
+            "href": "#top",
+            "ariaLabel": "投满分首页",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "nav-active",
+            "text": "分类实验台",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "模型矩阵",
+            "href": "#models",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "竞技场",
+            "href": "#arena",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "PK 榜单",
+            "href": "#bench",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "关于 TMF",
+            "href": "#about",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "暗色",
+            "href": null,
+            "ariaLabel": "切换到暗色主题",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "大屏",
+            "href": null,
+            "ariaLabel": "进入大屏演示模式，并尝试全屏",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "top-cta",
+            "text": "开始体验 ↗",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "hero-link",
+            "text": "开始一次分类 ↓",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "active",
+            "text": "◉ 单模型分类 选择一个模型",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "",
+            "text": "↗ 模型对比 并行查看结果",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "textarea",
+            "id": "news-title",
+            "cls": "",
+            "text": "",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "北京二手房成交量创年内新高",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "新一代人工智能芯片发布，算力提升显著",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "中国女篮公布亚洲杯参赛名单",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "select",
+            "id": "model-select",
+            "cls": "",
+            "text": "随机森林fastTextBERT蒸馏模型LLM · 需手动启用",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          }
+        ],
+        "result": {
+          "exists": false,
+          "sectionAriaLive": null,
+          "heading": "",
+          "cards": 0,
+          "liveText": ""
+        },
+        "arena": null,
+        "bench": null,
+        "menu": {
+          "toggleVisible": false,
+          "expanded": "false",
+          "controls": "primary-nav",
+          "navVisible": true,
+          "navLinks": [
+            {
+              "href": "#lab",
+              "visible": true
+            },
+            {
+              "href": "#models",
+              "visible": true
+            },
+            {
+              "href": "#arena",
+              "visible": true
+            },
+            {
+              "href": "#bench",
+              "visible": true
+            },
+            {
+              "href": "#about",
+              "visible": true
+            }
+          ]
+        },
+        "theme": "light",
+        "reducedMotion": false,
+        "toasts": [],
+        "hash": "",
+        "liveRegions": [
+          {
+            "tag": "span",
+            "cls": "demo-badge demo-unknown",
+            "role": "status",
+            "live": "polite",
+            "atomic": null,
+            "text": "来源待确认",
+            "srOnly": false
+          },
+          {
+            "tag": "p",
+            "cls": "sr-only",
+            "role": "status",
+            "live": "polite",
+            "atomic": "true",
+            "text": "",
+            "srOnly": true
+          }
+        ],
+        "cardMode": null
+      },
+      "sequence": [
+        "#top",
+        "#lab",
+        "#models",
+        "#arena",
+        "#bench",
+        "#about",
+        null,
+        null
+      ],
+      "skipRing": {
+        "outlineWidth": 2,
+        "outlineStyle": "solid",
+        "outlineColor": "rgb(30, 99, 240)",
+        "outlineOffset": 2,
+        "clipped": false,
+        "clippingAncestors": [],
+        "inViewport": true,
+        "rect": {
+          "x": 12,
+          "y": 12,
+          "width": 112,
+          "height": 40
+        }
+      },
+      "darkRing": {
+        "outlineWidth": 2,
+        "outlineStyle": "solid",
+        "outlineColor": "rgb(156, 196, 255)",
+        "outlineOffset": 2,
+        "clipped": false,
+        "clippingAncestors": [],
+        "inViewport": true,
+        "rect": {
+          "x": 430,
+          "y": 27.5,
+          "width": 75,
+          "height": 21
+        }
+      },
+      "contrast": 10.299016083354692
+    },
+    "keyboard-only-flow": {
+      "title": "北京二手房成交量创年内新高",
+      "typed": "北京二手房成交量创年内新高",
+      "resultDom": {
+        "skipLink": {
+          "href": "#main-content",
+          "text": "跳到主要内容",
+          "first": true
+        },
+        "main": {
+          "id": "main-content",
+          "tabindex": "-1",
+          "targetExists": true
+        },
+        "active": {
+          "tag": "body",
+          "id": "",
+          "cls": "",
+          "text": "",
+          "href": null,
+          "focusVisible": false
+        },
+        "firstFocusables": [
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "skip-link",
+            "text": "跳到主要内容",
+            "href": "#main-content",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": true
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "brand",
+            "text": "T·投满分 TMF",
+            "href": "#top",
+            "ariaLabel": "投满分首页",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "nav-active",
+            "text": "分类实验台",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "模型矩阵",
+            "href": "#models",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "竞技场",
+            "href": "#arena",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "PK 榜单",
+            "href": "#bench",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "关于 TMF",
+            "href": "#about",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "暗色",
+            "href": null,
+            "ariaLabel": "切换到暗色主题",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "大屏",
+            "href": null,
+            "ariaLabel": "进入大屏演示模式，并尝试全屏",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "top-cta",
+            "text": "开始体验 ↗",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "hero-link",
+            "text": "开始一次分类 ↓",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "active",
+            "text": "◉ 单模型分类 选择一个模型",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "",
+            "text": "↗ 模型对比 并行查看结果",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "textarea",
+            "id": "news-title",
+            "cls": "",
+            "text": "",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "北京二手房成交量创年内新高",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "新一代人工智能芯片发布，算力提升显著",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "中国女篮公布亚洲杯参赛名单",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "select",
+            "id": "model-select",
+            "cls": "",
+            "text": "随机森林fastTextBERT蒸馏模型LLM · 需手动启用",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          }
+        ],
+        "result": {
+          "exists": true,
+          "sectionAriaLive": null,
+          "heading": "这条新闻，属于 财经",
+          "cards": 1,
+          "liveText": "分类完成：财经，由 随机森林 判断。"
+        },
+        "arena": null,
+        "bench": null,
+        "menu": {
+          "toggleVisible": false,
+          "expanded": "false",
+          "controls": "primary-nav",
+          "navVisible": true,
+          "navLinks": [
+            {
+              "href": "#lab",
+              "visible": true
+            },
+            {
+              "href": "#models",
+              "visible": true
+            },
+            {
+              "href": "#arena",
+              "visible": true
+            },
+            {
+              "href": "#bench",
+              "visible": true
+            },
+            {
+              "href": "#about",
+              "visible": true
+            }
+          ]
+        },
+        "theme": "light",
+        "reducedMotion": false,
+        "toasts": [],
+        "hash": "",
+        "liveRegions": [
+          {
+            "tag": "span",
+            "cls": "demo-badge demo-mock",
+            "role": "status",
+            "live": "polite",
+            "atomic": null,
+            "text": "演示数据（mock）",
+            "srOnly": false
+          },
+          {
+            "tag": "p",
+            "cls": "sr-only",
+            "role": "status",
+            "live": "polite",
+            "atomic": "true",
+            "text": "分类完成：财经，由 随机森林 判断。",
+            "srOnly": true
+          },
+          {
+            "tag": "span",
+            "cls": "demo-badge demo-mock",
+            "role": "status",
+            "live": "polite",
+            "atomic": null,
+            "text": "演示数据（mock）",
+            "srOnly": false
+          }
+        ],
+        "cardMode": null
+      },
+      "feedbackToasts": [
+        "i反馈已提交，待审核 ×"
+      ]
+    },
+    "reduced-motion": {
+      "scoreMotion": {
+        "animationName": "none",
+        "animationDurations": [
+          0.01
+        ],
+        "transitionDurations": [
+          0.01
+        ]
+      },
+      "spinner": {
+        "animationName": "none",
+        "animationDurations": [
+          0.01
+        ],
+        "transitionDurations": [
+          0.01
+        ]
+      },
+      "flipMotion": {
+        "animationName": "none",
+        "animationDurations": [
+          0.01
+        ],
+        "transitionDurations": [
+          0.01
+        ]
+      },
+      "toastMotion": {
+        "animationName": "none",
+        "animationDurations": [
+          0.01
+        ],
+        "transitionDurations": [
+          0.01
+        ]
+      },
+      "barMotion": {
+        "animationName": "none",
+        "animationDurations": [
+          0.01
+        ],
+        "transitionDurations": [
+          0.01
+        ]
+      }
+    },
+    "mobile-menu-taborder": {
+      "initial": {
+        "skipLink": {
+          "href": "#main-content",
+          "text": "跳到主要内容",
+          "first": true
+        },
+        "main": {
+          "id": "main-content",
+          "tabindex": "-1",
+          "targetExists": true
+        },
+        "active": {
+          "tag": "body",
+          "id": "",
+          "cls": "",
+          "text": "",
+          "href": null,
+          "focusVisible": false
+        },
+        "firstFocusables": [
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "skip-link",
+            "text": "跳到主要内容",
+            "href": "#main-content",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": true
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "brand",
+            "text": "T·投满分 TMF",
+            "href": "#top",
+            "ariaLabel": "投满分首页",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "menu-toggle",
+            "text": "",
+            "href": null,
+            "ariaLabel": "切换导航",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "暗色",
+            "href": null,
+            "ariaLabel": "切换到暗色主题",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "大屏",
+            "href": null,
+            "ariaLabel": "进入大屏演示模式，并尝试全屏",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "top-cta",
+            "text": "开始体验 ↗",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "hero-link",
+            "text": "开始一次分类 ↓",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "active",
+            "text": "◉ 单模型分类 选择一个模型",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "",
+            "text": "↗ 模型对比 并行查看结果",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "textarea",
+            "id": "news-title",
+            "cls": "",
+            "text": "",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "北京二手房成交量创年内新高",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "新一代人工智能芯片发布，算力提升显著",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "中国女篮公布亚洲杯参赛名单",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "select",
+            "id": "model-select",
+            "cls": "",
+            "text": "随机森林fastTextBERT蒸馏模型LLM · 需手动启用",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "input",
+            "id": "",
+            "cls": "",
+            "text": "",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "closing-button",
+            "text": "回到分类工作台 ↑",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "brand footer-brand",
+            "text": "T·投满分 TMF",
+            "href": "#top",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          }
+        ],
+        "result": {
+          "exists": false,
+          "sectionAriaLive": null,
+          "heading": "",
+          "cards": 0,
+          "liveText": ""
+        },
+        "arena": null,
+        "bench": null,
+        "menu": {
+          "toggleVisible": true,
+          "expanded": "false",
+          "controls": "primary-nav",
+          "navVisible": false,
+          "navLinks": [
+            {
+              "href": "#lab",
+              "visible": false
+            },
+            {
+              "href": "#models",
+              "visible": false
+            },
+            {
+              "href": "#arena",
+              "visible": false
+            },
+            {
+              "href": "#bench",
+              "visible": false
+            },
+            {
+              "href": "#about",
+              "visible": false
+            }
+          ]
+        },
+        "theme": "light",
+        "reducedMotion": false,
+        "toasts": [],
+        "hash": "",
+        "liveRegions": [
+          {
+            "tag": "span",
+            "cls": "demo-badge demo-unknown",
+            "role": "status",
+            "live": "polite",
+            "atomic": null,
+            "text": "来源待确认",
+            "srOnly": false
+          },
+          {
+            "tag": "p",
+            "cls": "sr-only",
+            "role": "status",
+            "live": "polite",
+            "atomic": "true",
+            "text": "",
+            "srOnly": true
+          }
+        ],
+        "cardMode": null
+      },
+      "opened": {
+        "skipLink": {
+          "href": "#main-content",
+          "text": "跳到主要内容",
+          "first": true
+        },
+        "main": {
+          "id": "main-content",
+          "tabindex": "-1",
+          "targetExists": true
+        },
+        "active": {
+          "tag": "button",
+          "id": "",
+          "cls": "menu-toggle",
+          "text": "",
+          "href": null,
+          "role": null,
+          "ariaLabel": "切换导航",
+          "focusVisible": true,
+          "outlineWidth": 2,
+          "outlineStyle": "solid",
+          "outlineColor": "rgb(30, 99, 240)",
+          "outlineOffset": 2,
+          "clipped": false,
+          "clippingAncestors": [],
+          "inViewport": true,
+          "rect": {
+            "x": 119.390625,
+            "y": 15.5,
+            "width": 46,
+            "height": 34
+          }
+        },
+        "firstFocusables": [
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "skip-link",
+            "text": "跳到主要内容",
+            "href": "#main-content",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": true
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "brand",
+            "text": "T·投满分 TMF",
+            "href": "#top",
+            "ariaLabel": "投满分首页",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "menu-toggle",
+            "text": "",
+            "href": null,
+            "ariaLabel": "切换导航",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "nav-active",
+            "text": "分类实验台",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "模型矩阵",
+            "href": "#models",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "竞技场",
+            "href": "#arena",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "PK 榜单",
+            "href": "#bench",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "",
+            "text": "关于 TMF",
+            "href": "#about",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "暗色",
+            "href": null,
+            "ariaLabel": "切换到暗色主题",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "大屏",
+            "href": null,
+            "ariaLabel": "进入大屏演示模式，并尝试全屏",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "top-cta",
+            "text": "开始体验 ↗",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "hero-link",
+            "text": "开始一次分类 ↓",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "active",
+            "text": "◉ 单模型分类 选择一个模型",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "",
+            "text": "↗ 模型对比 并行查看结果",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "textarea",
+            "id": "news-title",
+            "cls": "",
+            "text": "",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "北京二手房成交量创年内新高",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "新一代人工智能芯片发布，算力提升显著",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "中国女篮公布亚洲杯参赛名单",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          }
+        ],
+        "result": {
+          "exists": false,
+          "sectionAriaLive": null,
+          "heading": "",
+          "cards": 0,
+          "liveText": ""
+        },
+        "arena": null,
+        "bench": null,
+        "menu": {
+          "toggleVisible": true,
+          "expanded": "true",
+          "controls": "primary-nav",
+          "navVisible": true,
+          "navLinks": [
+            {
+              "href": "#lab",
+              "visible": true
+            },
+            {
+              "href": "#models",
+              "visible": true
+            },
+            {
+              "href": "#arena",
+              "visible": true
+            },
+            {
+              "href": "#bench",
+              "visible": true
+            },
+            {
+              "href": "#about",
+              "visible": true
+            }
+          ]
+        },
+        "theme": "light",
+        "reducedMotion": false,
+        "toasts": [],
+        "hash": "",
+        "liveRegions": [
+          {
+            "tag": "span",
+            "cls": "demo-badge demo-unknown",
+            "role": "status",
+            "live": "polite",
+            "atomic": null,
+            "text": "来源待确认",
+            "srOnly": false
+          },
+          {
+            "tag": "p",
+            "cls": "sr-only",
+            "role": "status",
+            "live": "polite",
+            "atomic": "true",
+            "text": "",
+            "srOnly": true
+          }
+        ],
+        "cardMode": null
+      },
+      "closed": {
+        "skipLink": {
+          "href": "#main-content",
+          "text": "跳到主要内容",
+          "first": true
+        },
+        "main": {
+          "id": "main-content",
+          "tabindex": "-1",
+          "targetExists": true
+        },
+        "active": {
+          "tag": "button",
+          "id": "",
+          "cls": "menu-toggle",
+          "text": "",
+          "href": null,
+          "role": null,
+          "ariaLabel": "切换导航",
+          "focusVisible": true,
+          "outlineWidth": 2,
+          "outlineStyle": "solid",
+          "outlineColor": "rgb(30, 99, 240)",
+          "outlineOffset": 2,
+          "clipped": false,
+          "clippingAncestors": [],
+          "inViewport": true,
+          "rect": {
+            "x": 119.390625,
+            "y": 15.5,
+            "width": 46,
+            "height": 34
+          }
+        },
+        "firstFocusables": [
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "skip-link",
+            "text": "跳到主要内容",
+            "href": "#main-content",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": true
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "brand",
+            "text": "T·投满分 TMF",
+            "href": "#top",
+            "ariaLabel": "投满分首页",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "menu-toggle",
+            "text": "",
+            "href": null,
+            "ariaLabel": "切换导航",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "暗色",
+            "href": null,
+            "ariaLabel": "切换到暗色主题",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "display-toggle",
+            "text": "大屏",
+            "href": null,
+            "ariaLabel": "进入大屏演示模式，并尝试全屏",
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "top-cta",
+            "text": "开始体验 ↗",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "hero-link",
+            "text": "开始一次分类 ↓",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "active",
+            "text": "◉ 单模型分类 选择一个模型",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "",
+            "text": "↗ 模型对比 并行查看结果",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "textarea",
+            "id": "news-title",
+            "cls": "",
+            "text": "",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "北京二手房成交量创年内新高",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "新一代人工智能芯片发布，算力提升显著",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "button",
+            "id": "",
+            "cls": "example-chip",
+            "text": "中国女篮公布亚洲杯参赛名单",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "select",
+            "id": "model-select",
+            "cls": "",
+            "text": "随机森林fastTextBERT蒸馏模型LLM · 需手动启用",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "input",
+            "id": "",
+            "cls": "",
+            "text": "",
+            "href": null,
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "closing-button",
+            "text": "回到分类工作台 ↑",
+            "href": "#lab",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          },
+          {
+            "tag": "a",
+            "id": "",
+            "cls": "brand footer-brand",
+            "text": "T·投满分 TMF",
+            "href": "#top",
+            "ariaLabel": null,
+            "tabindex": null,
+            "isSkipLink": false
+          }
+        ],
+        "result": {
+          "exists": false,
+          "sectionAriaLive": null,
+          "heading": "",
+          "cards": 0,
+          "liveText": ""
+        },
+        "arena": null,
+        "bench": null,
+        "menu": {
+          "toggleVisible": true,
+          "expanded": "false",
+          "controls": "primary-nav",
+          "navVisible": false,
+          "navLinks": [
+            {
+              "href": "#lab",
+              "visible": false
+            },
+            {
+              "href": "#models",
+              "visible": false
+            },
+            {
+              "href": "#arena",
+              "visible": false
+            },
+            {
+              "href": "#bench",
+              "visible": false
+            },
+            {
+              "href": "#about",
+              "visible": false
+            }
+          ]
+        },
+        "theme": "light",
+        "reducedMotion": false,
+        "toasts": [],
+        "hash": "",
+        "liveRegions": [
+          {
+            "tag": "span",
+            "cls": "demo-badge demo-unknown",
+            "role": "status",
+            "live": "polite",
+            "atomic": null,
+            "text": "来源待确认",
+            "srOnly": false
+          },
+          {
+            "tag": "p",
+            "cls": "sr-only",
+            "role": "status",
+            "live": "polite",
+            "atomic": "true",
+            "text": "",
+            "srOnly": true
+          }
+        ],
+        "cardMode": null
+      }
+    },
+    "cpu-throttle": {
+      "simulated": "CDP Emulation.setCPUThrottlingRate({rate:6})",
+      "viewport": {
+        "width": 1440,
+        "height": 900
+      },
+      "samples": [
+        {
+          "ok": true,
+          "ms": 42.700000047683716,
+          "value": "性能测试标题 1",
+          "counter": "8 / 200",
+          "titleTrimmedLength": 8,
+          "submitting": true
+        },
+        {
+          "ok": true,
+          "ms": 40.700000047683716,
+          "value": "性能测试标题 2",
+          "counter": "8 / 200",
+          "titleTrimmedLength": 8,
+          "submitting": true
+        },
+        {
+          "ok": true,
+          "ms": 32.09999990463257,
+          "value": "性能测试标题 3",
+          "counter": "8 / 200",
+          "titleTrimmedLength": 8,
+          "submitting": true
+        },
+        {
+          "ok": true,
+          "ms": 28.299999952316284,
+          "value": "性能测试标题 4",
+          "counter": "8 / 200",
+          "titleTrimmedLength": 8,
+          "submitting": true
+        },
+        {
+          "ok": true,
+          "ms": 23.5,
+          "value": "性能测试标题 5",
+          "counter": "8 / 200",
+          "titleTrimmedLength": 8,
+          "submitting": true
+        }
+      ],
+      "medianMs": 32.09999990463257,
+      "scroll": {
+        "scrollY": 1767,
+        "innerHeight": 900,
+        "docHeight": 2667,
+        "textareaStillPresent": true
+      },
+      "theme": "light → dark"
+    },
+    "fifty-result-cards": {
+      "initial": {
+        "cards": 50,
+        "indexes": 50,
+        "feedbackControls": [
+          "feedback-panel-v-0",
+          "feedback-panel-v-1",
+          "feedback-panel-v-2",
+          "feedback-panel-v-3",
+          "feedback-panel-v-4",
+          "feedback-panel-v-5",
+          "feedback-panel-v-6",
+          "feedback-panel-v-7",
+          "feedback-panel-v-8",
+          "feedback-panel-v-9",
+          "feedback-panel-v-10",
+          "feedback-panel-v-11",
+          "feedback-panel-v-12",
+          "feedback-panel-v-13",
+          "feedback-panel-v-14",
+          "feedback-panel-v-15",
+          "feedback-panel-v-16",
+          "feedback-panel-v-17",
+          "feedback-panel-v-18",
+          "feedback-panel-v-19",
+          "feedback-panel-v-20",
+          "feedback-panel-v-21",
+          "feedback-panel-v-22",
+          "feedback-panel-v-23",
+          "feedback-panel-v-24",
+          "feedback-panel-v-25",
+          "feedback-panel-v-26",
+          "feedback-panel-v-27",
+          "feedback-panel-v-28",
+          "feedback-panel-v-29",
+          "feedback-panel-v-30",
+          "feedback-panel-v-31",
+          "feedback-panel-v-32",
+          "feedback-panel-v-33",
+          "feedback-panel-v-34",
+          "feedback-panel-v-35",
+          "feedback-panel-v-36",
+          "feedback-panel-v-37",
+          "feedback-panel-v-38",
+          "feedback-panel-v-39",
+          "feedback-panel-v-40",
+          "feedback-panel-v-41",
+          "feedback-panel-v-42",
+          "feedback-panel-v-43",
+          "feedback-panel-v-44",
+          "feedback-panel-v-45",
+          "feedback-panel-v-46",
+          "feedback-panel-v-47",
+          "feedback-panel-v-48",
+          "feedback-panel-v-49"
+        ],
+        "uniqueControls": 50,
+        "panelsOpen": 0,
+        "scrollY": 0,
+        "docHeight": 26381
+      },
+      "scrollInfo": {
+        "ok": true,
+        "scrollY": 25532,
+        "rect": {
+          "top": 299.890625,
+          "bottom": 825.390625
+        },
+        "innerHeight": 825
+      },
+      "opened": {
+        "cards": 50,
+        "indexes": 50,
+        "controls": [
+          "feedback-panel-v-0",
+          "feedback-panel-v-1",
+          "feedback-panel-v-2",
+          "feedback-panel-v-3",
+          "feedback-panel-v-4",
+          "feedback-panel-v-5",
+          "feedback-panel-v-6",
+          "feedback-panel-v-7",
+          "feedback-panel-v-8",
+          "feedback-panel-v-9",
+          "feedback-panel-v-10",
+          "feedback-panel-v-11",
+          "feedback-panel-v-12",
+          "feedback-panel-v-13",
+          "feedback-panel-v-14",
+          "feedback-panel-v-15",
+          "feedback-panel-v-16",
+          "feedback-panel-v-17",
+          "feedback-panel-v-18",
+          "feedback-panel-v-19",
+          "feedback-panel-v-20",
+          "feedback-panel-v-21",
+          "feedback-panel-v-22",
+          "feedback-panel-v-23",
+          "feedback-panel-v-24",
+          "feedback-panel-v-25",
+          "feedback-panel-v-26",
+          "feedback-panel-v-27",
+          "feedback-panel-v-28",
+          "feedback-panel-v-29",
+          "feedback-panel-v-30",
+          "feedback-panel-v-31",
+          "feedback-panel-v-32",
+          "feedback-panel-v-33",
+          "feedback-panel-v-34",
+          "feedback-panel-v-35",
+          "feedback-panel-v-36",
+          "feedback-panel-v-37",
+          "feedback-panel-v-38",
+          "feedback-panel-v-39",
+          "feedback-panel-v-40",
+          "feedback-panel-v-41",
+          "feedback-panel-v-42",
+          "feedback-panel-v-43",
+          "feedback-panel-v-44",
+          "feedback-panel-v-45",
+          "feedback-panel-v-46",
+          "feedback-panel-v-47",
+          "feedback-panel-v-48",
+          "feedback-panel-v-49"
+        ],
+        "uniqueControls": 50,
+        "openPanels": 1,
+        "openPanelIds": [
+          "feedback-panel-v-49"
+        ],
+        "scrollY": 25679,
+        "docHeight": 26504
+      },
+      "update": {
+        "ms": 20.899999856948853,
+        "count": 50,
+        "lastText": "更新后的标题 1",
+        "scrollY": 25556
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "phase": "invalid",
+  "generated_at": "2026-10-22T08:33:00+08:00",
+  "method": "隔离后端停止，临时将 dist/snapshot.json 替换为非法 JSON；Edge 重载页面",
+  "current": {
+    "badge": "来源待确认",
+    "cached": false,
+    "cachedText": null,
+    "snapshotError": "离线快照不可用：Expected property name or '}' in JSON at position 2 (line 1 column 3)",
+    "lab": true
+  },
+  "ok": true,
+  "cleanup": "dist/snapshot.json 已恢复；未触碰 public/snapshot.json 源文件"
+}

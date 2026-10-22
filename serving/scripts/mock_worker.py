@@ -43,6 +43,8 @@ class MockHandler(BaseHTTPRequestHandler):
     display_name = "mock-llm"
     pred_class = "sports"
     special_titles = False
+    #: 仅供验收断言「默认请求是否真的没有调用 LLM」；不参与业务逻辑。
+    predict_requests = 0
 
     def log_message(self, fmt: str, *args) -> None:
         # 只记录 HTTP 方法与路径，不记录请求体/标题
@@ -86,6 +88,17 @@ class MockHandler(BaseHTTPRequestHandler):
                     "version": None,
                 },
             )
+        elif path == "/mock/stats":
+            # 验收辅助（只读）：统计 /predict_api 调用次数，用于断言默认 compare
+            # 不触发 LLM；不返回标题/请求体，也不影响真实 worker 契约。
+            self._send_json(
+                200,
+                {
+                    "model_id": self.model_id,
+                    "display_name": self.display_name,
+                    "predict_requests": type(self).predict_requests,
+                },
+            )
         else:
             self._send_json(404, {"error": "not found"})
 
@@ -94,6 +107,8 @@ class MockHandler(BaseHTTPRequestHandler):
         if path != "/predict_api":
             self._send_json(404, {"error": "not found"})
             return
+
+        type(self).predict_requests += 1
 
         try:
             length = int(self.headers.get("Content-Length", "0"))

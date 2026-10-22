@@ -9,6 +9,8 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
+from tmf_common.prediction import ScoreKind
+
 
 class ErrorInfo(BaseModel):
     code: str
@@ -84,12 +86,52 @@ class ClassifyRequest(BaseModel):
     model: str | None = None
 
 
+class TopKEntry(BaseModel):
+    """top-k 的一个类别/分数配对（分数降序，并列按类别名升序）。"""
+
+    class_id: str
+    score: float
+
+
+class HumanFeedbackHint(BaseModel):
+    """相似历史反馈的参考提示（B4，未审核）。
+
+    仅用于并列展示「人工反馈参考（未审核）」；不得据此改写 ``pred_class``，
+    不包含反馈原文、反馈 ID 或任何用户字段。
+    """
+
+    corrected_class: str
+    status: str = "pending"
+
+
 class ClassifyResponse(BaseModel):
     request_id: str
     model_id: str
     model_version: str | None = None
     pred_class: str
     latency_ms: int
+    #: 未校准原始分数（按类别 ID 配对）；不提供或校验失败时为 null。
+    scores: dict[str, float] | None = None
+    #: 分数来源（raw_proba / raw_fasttext / raw_softmax）；无分数时为 null。
+    score_kind: ScoreKind | None = None
+    #: 前 k 类（默认 3）；无分数时为 null。
+    top_k: list[TopKEntry] | None = None
+    #: B3 软拒识：true 表示“可能是非新闻内容”，但**仍保留** pred_class/分数。
+    rejected: bool = False
+    #: 拒识原因：low_max_score / high_entropy；未拒识或无分数时为 null。
+    reject_reason: str | None = None
+    #: B3 阈值来源元数据；无分数/未启用拒识时为 null（不伪造）。
+    #:
+    #: 固定键（F6 契约）：source、calibrated、method、max_score_threshold、
+    #: entropy_threshold、scope_note、sample_size；另有 dataset/seed/
+    #: derived_for_model/applied_model_id/rule/entropy_base/observed_* 等辅助键。
+    threshold_meta: dict[str, Any] | None = None
+    #: B4：相似 pending 反馈的纠正类别参考；无命中/未装配时为 null。
+    human_feedback_hint: HumanFeedbackHint | None = None
+    #: B11 演示真实性：live / mock / unknown；null = 适配器未判定（不得推断为 live）。
+    #: 约束：只有 worker ``/metadata.display_name`` 以 ``mock-`` 开头才是 mock；
+    #: 取不到 metadata 时为 unknown，不猜测。cached 仅出现在离线快照产物。
+    data_source: str | None = None
 
 
 class CompareRequest(BaseModel):
@@ -111,6 +153,8 @@ class CompareResult(BaseModel):
     pred_class: str | None = None
     latency_ms: int
     error: ErrorInfo | None = None
+    #: B11 演示真实性：live / mock / unknown；null = 适配器未判定。
+    data_source: str | None = None
 
 
 class CompareResponse(BaseModel):

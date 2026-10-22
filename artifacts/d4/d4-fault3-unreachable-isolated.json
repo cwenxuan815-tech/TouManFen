@@ -1,0 +1,22 @@
+{
+  "scenario": "target address unreachable",
+  "api_base": "http://127.0.0.1:18996 (closed)",
+  "static_base": "http://127.0.0.1:18085",
+  "state": {
+    "badge": "离线快照 生成于 2026-10-22T07:53:25+08:00",
+    "cls": "demo-badge demo-cached",
+    "cached": true,
+    "generated": "2026-10-22T07:53:25+08:00",
+    "snapshotError": null
+  },
+  "network": [
+    "http://127.0.0.1:18085/",
+    "http://127.0.0.1:18085/assets/index-B_HOA0OI.js",
+    "http://127.0.0.1:18085/assets/index-CdycQVqg.css",
+    "http://127.0.0.1:18996/api/v1/demo/state",
+    "http://127.0.0.1:18996/api/v1/models",
+    "http://127.0.0.1:18085/snapshot.json"
+  ],
+  "bad_network": [],
+  "ok": true
+}

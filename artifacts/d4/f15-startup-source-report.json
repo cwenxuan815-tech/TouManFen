@@ -1,0 +1,76 @@
+{
+  "generated_at": "2026-10-22T00:57:05.617Z",
+  "results": [
+    {
+      "scenario": "mock-startup",
+      "current": {
+        "badge": "演示数据（mock） 5/5 个模型已就绪",
+        "badgeClass": "demo-badge demo-mock",
+        "breakdown": null,
+        "cached": false
+      },
+      "expectedClass": "demo-mock",
+      "ok": true
+    },
+    {
+      "scenario": "mock-after-classify",
+      "after": {
+        "badgeClass": "demo-badge demo-mock",
+        "cardClass": "demo-badge demo-mock"
+      },
+      "ok": true
+    },
+    {
+      "scenario": "live-startup",
+      "current": {
+        "badge": "实时 5/5 个模型已就绪",
+        "badgeClass": "demo-badge demo-live",
+        "breakdown": null,
+        "cached": false
+      },
+      "expectedClass": "demo-live",
+      "ok": true
+    },
+    {
+      "scenario": "live-after-classify",
+      "after": {
+        "badgeClass": "demo-badge demo-live",
+        "cardClass": "demo-badge demo-live"
+      },
+      "ok": true
+    },
+    {
+      "scenario": "mixed-startup",
+      "current": {
+        "badge": "来源未确认 5/5 个模型已就绪 · 来源混合",
+        "badgeClass": "demo-badge demo-unknown",
+        "breakdown": "来源明细：rf=live · fasttext=mock · bert=mock · llm=mock · distill=mock",
+        "cached": false
+      },
+      "expectedClass": "demo-unknown",
+      "ok": true
+    },
+    {
+      "scenario": "unknown-startup",
+      "current": {
+        "badge": "来源未确认 5/5 个模型已就绪 · 来源未确认",
+        "badgeClass": "demo-badge demo-unknown",
+        "breakdown": "来源明细：rf=unknown · fasttext=unknown · bert=unknown · llm=unknown · distill=unknown",
+        "cached": false
+      },
+      "expectedClass": "demo-unknown",
+      "ok": true
+    },
+    {
+      "scenario": "url-demo-cached-with-mock",
+      "current": {
+        "badge": "演示数据（mock） 5/5 个模型已就绪 演示参数 demo=cached（仅提示文案，不改变数据来源）",
+        "badgeClass": "demo-badge demo-mock",
+        "breakdown": null,
+        "cached": false
+      },
+      "ok": true
+    }
+  ],
+  "failed": 0
+}

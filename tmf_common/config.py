@@ -1,10 +1,12 @@
-"""共享网络配置解析（网关 / 前端启动脚本 / 模型 worker）。
+"""共享环境配置解析（网关 / 前端启动脚本 / 模型 worker）。
 
 设计目标：
 - 不再把某台机器的局域网 IP 写死在源码里；
 - 默认值面向本地单机（``127.0.0.1``），局域网场景通过环境变量显式覆盖；
 - 监听地址（bind）与客户端访问地址（connect/probe）区分：``0.0.0.0`` 只可用于监听；
-- 所有错误消息只包含变量名与原因，不包含密钥或敏感值。
+- 所有错误消息只包含变量名与原因，不包含密钥或敏感值；
+- 数值型运行时参数（如 ``TMF_TORCH_THREADS``）复用本模块的 ``env_int``，
+  不另建一套配置框架。
 
 环境变量一览（详见 README「环境配置」）：
 
@@ -19,6 +21,7 @@ TMF_FRONTEND_PORT       前端 Vite 端口                    5173
 TMF_WORKER_HOST         网关调用 worker 时使用的主机      配置文件中的值
 TMF_WORKER_URL_<ID>     单个 worker 的完整 base URL 覆盖  未设置
 TMF_CORS_ORIGINS        追加允许的 CORS 来源（逗号分隔）  未设置
+TMF_TORCH_THREADS       BERT/蒸馏 worker 推理线程数       4（范围 1~64）
 VITE_API_BASE_URL       前端访问网关的 base URL           http://127.0.0.1:8000
 ======================  ==============================  ==================
 """
@@ -35,6 +38,13 @@ DEFAULT_HOST = "127.0.0.1"
 DEFAULT_GATEWAY_PORT = 8000
 DEFAULT_FRONTEND_PORT = 5173
 
+#: B12：BERT/蒸馏 worker 的推理线程数（``torch.set_num_threads``）。
+#: 默认 4，可按机器核数用 ``TMF_TORCH_THREADS`` 覆盖（1~64）；线程数在模型
+#: 加载前由各 worker 的预测服务应用，保证单机多模型并存时不互相抢满 CPU。
+DEFAULT_TORCH_THREADS = 4
+TORCH_THREADS_MIN = 1
+TORCH_THREADS_MAX = 64
+
 # 只能用于监听、不能作为客户端连接目标的地址
 WILDCARD_HOSTS = frozenset({"0.0.0.0"})
 
@@ -44,7 +54,11 @@ _HOSTNAME_RE = re.compile(
 )
 
 
-class NetworkConfigError(ValueError):
+class EnvConfigError(ValueError):
+    """环境变量解析失败。消息只包含变量名与原因。"""
+
+
+class NetworkConfigError(EnvConfigError):
     """网络配置非法。消息只包含变量名/字段与原因。"""
 
 
@@ -94,6 +108,35 @@ def env_host(name: str, default: str) -> str:
 def env_port(name: str, default: int) -> int:
     raw = _env(name)
     return validate_port(default if raw is None else raw, variable=name)
+
+
+def env_int(
+    name: str,
+    default: int,
+    minimum: int | None = None,
+    maximum: int | None = None,
+) -> int:
+    """解析整数环境变量（复用本模块统一的取值/校验约定）。
+
+    - 未设置或空串：返回 ``default``；
+    - 非整数（含 ``"3.5"``）：抛 :class:`EnvConfigError`；
+    - 超出 ``[minimum, maximum]``（未指定的边界不检查）：抛 :class:`EnvConfigError`。
+
+    用于 worker 运行时参数（如 ``TMF_TORCH_THREADS``），避免再建一套解析框架。
+    """
+    raw = _env(name)
+    if raw is None:
+        value = default
+    else:
+        try:
+            value = int(raw)
+        except ValueError as exc:
+            raise EnvConfigError(f"环境变量 {name} 必须是整数") from exc
+    if minimum is not None and value < minimum:
+        raise EnvConfigError(f"环境变量 {name} 必须不小于 {minimum}")
+    if maximum is not None and value > maximum:
+        raise EnvConfigError(f"环境变量 {name} 必须不大于 {maximum}")
+    return value
 
 
 def resolve_bind_host() -> str:

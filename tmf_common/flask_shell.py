@@ -7,6 +7,9 @@
 
     POST /predict_api  {"title": "..."}
       -> 200 {"title": "...", "pred_class": "..."}
+         # 本地模型分数有效时追加：
+         #   "scores": {"<class>": 0.0~1.0, ...}, "score_kind": "raw_*",
+         #   "top_k": [{"class_id": "<class>", "score": 0.0~1.0}, ...]
       -> 200 {"title": "...", "error": "..."}        # 缺 title / 预测失败
     GET /healthz    -> {"status": "alive", "service": "<model_id>"}
     GET /readyz     -> {"status": "ready", "model_id": "<model_id>"}

@@ -8,6 +8,27 @@ api:
   # 阶段 3 分类接口的标题上限（Python Unicode 字符数）。
   max_title_chars: 200
 
+# B3 软拒识：仅在模型返回**未校准分数**时生效；无分数（如 LLM）不拒识。
+# 规则：max_score < max_score_threshold OR entropy > entropy_threshold。
+# 阈值由 tools/eval_reject.py 在 dev 前 2000 条 + 1200 条合成负样本上按
+# 「召回优先」标定（产物：artifacts/b3/threshold_selection.json）。
+reject:
+  enabled: true
+  max_score_threshold: 0.518
+  entropy_threshold: 0.699
+  calibration:
+    source: "synthetic_negatives"
+    calibrated: false
+    method: "max_score+entropy"
+    dataset: "00-data/data/dev.txt(前2000条) + artifacts/b3/synthetic_negatives.jsonl(1200条)"
+    positive_sample_size: 2000
+    negative_sample_size: 1200
+    seed: 20261021
+    derived_for_model: "fasttext"
+    roc_artifact: "artifacts/b3/reject_roc.json"
+    threshold_selection_artifact: "artifacts/b3/threshold_selection.json"
+    scope_note: "仅基于合成负样本与 dev 抽样标定、fastText 分数未校准；仅适用于同类输入分布，其他模型/真实分布外输入的拒识结论不保证，禁止跨模型比较分数绝对值。"
+
 classes:
   file: "00-data/data/class.txt"
   expected_count: 10
@@ -36,7 +57,9 @@ models:
     display_name: "大模型"
     model_version: null
     enabled: true
-    compare_by_default: true
+    # B9：LLM 默认不参与 /compare（避免默认请求触发外部 Provider 计费）；
+    # 仍可通过显式 models 参数选择（如 models=rf,fasttext,bert,llm,distill）。
+    compare_by_default: false
   distill:
     worker: "distill"
     display_name: "蒸馏 BiLSTM"

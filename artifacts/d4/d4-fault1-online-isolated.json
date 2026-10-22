@@ -1,0 +1,17 @@
+{
+  "phase": "online",
+  "badge": "演示数据（mock） 5/5 个模型已就绪",
+  "pill": true,
+  "text": "MODEL COMPARISON · STREAMING 同一个标题，5 个模型完成判断。 REQUEST · 361dd281 ✓ 全部模型已完成 5 成功 · 0 失败 · 用时 156 ms · 总截止 18000 ms 流式实时（SSE） 首结果 225 ms 模型间存在分歧（1 个不同） test title 排序 按延迟 按一致度 一致度 = 与多数预测相同 REQUEST · 361dd281 大 大模型 演示数据（mock） 房产 realty 与多数一致 分类完成 6 ms 蒸 蒸馏 BiLSTM 演示数据（mock） 房产 realty 与多数一致 分类完成 10 ms B",
+  "network": [
+    "http://127.0.0.1:18084/",
+    "http://127.0.0.1:18084/assets/index-D1I5VsVd.js",
+    "http://127.0.0.1:18084/assets/index-CdycQVqg.css",
+    "http://127.0.0.1:14520/api/v1/demo/state",
+    "http://127.0.0.1:14520/api/v1/models",
+    "http://127.0.0.1:14520/api/v1/classify",
+    "http://127.0.0.1:14520/api/v1/feedback/stats",
+    "http://127.0.0.1:14520/api/v1/compare/stream?title=test%20title&models=rf,fasttext,bert,distill,llm"
+  ],
+  "ok": true
+}

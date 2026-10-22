@@ -11,11 +11,19 @@
     不访问真实 LLM provider，不请求真实 LLM worker 的 /predict_api。
 
 覆盖：
-- /classify 成功、默认/显式模型、标题边界、未知模型、request ID；
-- /compare 默认五模型、显式顺序、部分失败、全部失败、超时、非法列表；
+- /classify 成功、默认/显式模型、标题边界、未知模型、request ID、分数/拒识字段；
+- /compare 显式顺序、部分失败、全部失败、超时、非法列表；默认 compare 集合
+  **不含 LLM**（B9 opt-in），显式传 models 仍可请求 LLM；
 - LLM mock 的成功/错误/非法输出/超时映射；
 - 类别来自 class.txt；禁用模型（离线单元检查）；
-- 日志/统计之外的阶段边界（无 confidence、无批量接口）。
+- 日志/统计之外的阶段边界（无 confidence、无批量接口、mock 统计排除）。
+
+B10：新增 ``--isolate-mock``（必须配合 ``--llm-mode mock``）：本轮自行启动
+**临时端口**的 5 个 ``mock_worker.py`` + 临时端口网关，然后以子进程方式运行本
+脚本的 HTTP 断言；结束后停止全部进程、断言端口释放与临时 DB 删除。不启动/
+不占用用户 8000/810x，不访问真实 LLM Provider。
+
+    D:\\Miniconda3\\envs\\py3109\\python.exe serving/scripts/verify_stage3.py --llm-mode mock --isolate-mock
 """
 
 from __future__ import annotations
@@ -26,8 +34,12 @@ import copy
 import json
 import logging
 import os
+import shutil
+import socket
+import subprocess
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 import httpx
@@ -141,13 +153,307 @@ def unit_checks() -> None:
             check("disabled model rejected", False, type(exc).__name__)
 
 
+# ---------------------------------------------------------------------------
+# B10：隔离 mock 全链路（本轮自启临时端口 mock_worker + 临时端口网关）
+# ---------------------------------------------------------------------------
+MOCK_WORKER = PROJECT_ROOT / "serving" / "scripts" / "mock_worker.py"
+MOCK_MODEL_IDS = ("rf", "fasttext", "bert", "distill", "llm")
+#: 用户 stage2 服务端口：本轮不得启动/占用。
+USER_RESERVED_PORTS = {8000, 8101, 8102, 8103, 8104, 8105, 8106}
+
+
+def _free_port() -> int:
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        sock.bind(("127.0.0.1", 0))
+        return int(sock.getsockname()[1])
+    finally:
+        sock.close()
+
+
+def _port_closed(port: int, timeout: float = 0.5) -> bool:
+    try:
+        connection = socket.create_connection(("127.0.0.1", port), timeout=timeout)
+    except OSError:
+        return True
+    connection.close()
+    return False
+
+
+class IsolatedMockStack:
+    """5 个 mock worker + 网关（全部临时端口），供 verify_stage3 子进程使用。"""
+
+    def __init__(self) -> None:
+        self.temp_dir = tempfile.TemporaryDirectory(prefix="tmf_b10_stage3_")
+        self.root = Path(self.temp_dir.name)
+        self.db_path = self.root / "stage3_mock.db"
+        self.worker_ports: dict[str, int] = {}
+        self.workers: dict[str, subprocess.Popen] = {}
+        self.gateway_port = 0
+        self.gateway: subprocess.Popen | None = None
+        self._gateway_log_handle = None
+
+    @property
+    def base_url(self) -> str:
+        return f"http://127.0.0.1:{self.gateway_port}"
+
+    def ports(self) -> list[int]:
+        return [*self.worker_ports.values(), self.gateway_port]
+
+    def child_env(self) -> dict[str, str]:
+        env = os.environ.copy()
+        for model_id, port in self.worker_ports.items():
+            env[f"TMF_WORKER_URL_{model_id.upper()}"] = f"http://127.0.0.1:{port}"
+        env["TMF_DB_PATH"] = str(self.db_path)
+        env["TMF_GATEWAY_HOST"] = "127.0.0.1"
+        env["PYTHONIOENCODING"] = "utf-8"
+        return env
+
+    def _next_port(self) -> int:
+        while True:
+            port = _free_port()
+            if port in USER_RESERVED_PORTS or port in self.ports():
+                continue
+            return port
+
+    def _wait_http(
+        self,
+        url: str,
+        proc: subprocess.Popen,
+        label: str,
+        timeout: float = 90.0,
+    ) -> None:
+        deadline = time.monotonic() + timeout
+        with httpx.Client(timeout=2.0, trust_env=False) as client:
+            while time.monotonic() < deadline:
+                if proc.poll() is not None:
+                    raise RuntimeError(f"{label} 提前退出（rc={proc.returncode}）")
+                try:
+                    if client.get(url).status_code == 200:
+                        return
+                except httpx.HTTPError:
+                    pass
+                time.sleep(0.1)
+        raise RuntimeError(f"{label} 启动超时（{timeout}s）")
+
+    def start(self) -> "IsolatedMockStack":
+        print("B10 隔离 mock 全链路：本轮自启 5 个 mock worker + 临时端口网关")
+        for model_id in MOCK_MODEL_IDS:
+            port = self._next_port()
+            command = [
+                sys.executable,
+                str(MOCK_WORKER),
+                "--host",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--model-id",
+                model_id,
+                "--display-name",
+                f"mock-{model_id}",
+            ]
+            if model_id == "llm":
+                command.append("--special-titles")
+            proc = subprocess.Popen(
+                command,
+                cwd=str(PROJECT_ROOT),
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            self.worker_ports[model_id] = port
+            self.workers[model_id] = proc
+            self._wait_http(
+                f"http://127.0.0.1:{port}/metadata", proc, f"mock worker {model_id}"
+            )
+        self.gateway_port = self._next_port()
+        self._gateway_log_handle = (self.root / "gateway.log").open(
+            "w", encoding="utf-8"
+        )
+        self.gateway = subprocess.Popen(
+            [
+                sys.executable,
+                "-m",
+                "uvicorn",
+                "serving.gateway.main:app",
+                "--host",
+                "127.0.0.1",
+                "--port",
+                str(self.gateway_port),
+                "--log-level",
+                "warning",
+            ],
+            cwd=str(PROJECT_ROOT),
+            env=self.child_env(),
+            stdout=self._gateway_log_handle,
+            stderr=subprocess.STDOUT,
+        )
+        try:
+            self._wait_http(
+                f"{self.base_url}/api/v1/healthz", self.gateway, "临时网关"
+            )
+        except Exception:
+            self._dump_gateway_log()
+            raise
+        print(
+            f"临时网关 {self.base_url}；mock worker 端口 "
+            f"{sorted(self.worker_ports.values())}"
+        )
+        return self
+
+    def _dump_gateway_log(self) -> None:
+        try:
+            text = (self.root / "gateway.log").read_text(
+                encoding="utf-8", errors="replace"
+            )
+            print("---------- temporary gateway log (tail) ----------")
+            print(text[-3000:])
+        except OSError:
+            pass
+
+    def stop(self) -> None:
+        processes = [self.gateway, *self.workers.values()]
+        for proc in processes:
+            if proc is not None and proc.poll() is None:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                    proc.wait(timeout=10)
+        if self._gateway_log_handle is not None:
+            self._gateway_log_handle.close()
+            self._gateway_log_handle = None
+        try:
+            self.temp_dir.cleanup()
+        except OSError:
+            shutil.rmtree(self.root, ignore_errors=True)
+
+
+def run_isolated_mock_checks(args) -> int:  # noqa: ANN001
+    """B10：自启临时 mock 全链路并运行本脚本的 HTTP 断言子进程。"""
+    stack = IsolatedMockStack()
+    child_rc = 1
+    try:
+        stack.start()
+        ports = stack.ports()
+        check(
+            "isolated stack uses temporary ports (not user 8000/810x)",
+            len(set(ports)) == len(ports)
+            and all(port not in USER_RESERVED_PORTS for port in ports),
+            str(ports),
+        )
+        with httpx.Client(timeout=3.0, trust_env=False) as client:
+            for model_id in MOCK_MODEL_IDS:
+                metadata = client.get(
+                    f"http://127.0.0.1:{stack.worker_ports[model_id]}/metadata"
+                ).json()
+                check(
+                    f"isolated mock {model_id} display_name=mock-{model_id}",
+                    metadata.get("display_name") == f"mock-{model_id}",
+                    str(metadata),
+                )
+            health = client.get(f"{stack.base_url}/api/v1/healthz")
+            check(
+                "isolated gateway healthz ok",
+                health.status_code == 200
+                and health.json().get("status") == "ok",
+                f"{health.status_code} {health.text[:200]}",
+            )
+
+        command = [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            "--llm-mode",
+            "mock",
+            "--base-url",
+            stack.base_url,
+        ]
+        proc = subprocess.run(
+            command,
+            cwd=str(PROJECT_ROOT),
+            env=stack.child_env(),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=600,
+        )
+        print("---------- verify_stage3 child output ----------")
+        print(proc.stdout)
+        if proc.returncode != 0:
+            print("---------- child stderr ----------")
+            print(proc.stderr[-4000:])
+        child_pass = sum(
+            1 for line in proc.stdout.splitlines() if line.startswith("PASS ")
+        )
+        child_fail = sum(
+            1 for line in proc.stdout.splitlines() if line.startswith("FAIL ")
+        )
+        check(
+            "verify_stage3 --llm-mode mock (isolated child) exit 0",
+            proc.returncode == 0,
+            f"rc={proc.returncode}",
+        )
+        check(
+            "verify_stage3 child RESULT PASS and zero FAIL",
+            "RESULT PASS" in proc.stdout and child_fail == 0,
+            f"child PASS={child_pass} FAIL={child_fail}",
+        )
+        print(f"      child verify_stage3: PASS={child_pass} FAIL={child_fail}")
+        child_rc = proc.returncode
+    except Exception as exc:  # noqa: BLE001
+        import traceback
+
+        traceback.print_exc()
+        check(
+            "isolated mock full chain completed",
+            False,
+            f"{type(exc).__name__}: {exc}",
+        )
+    finally:
+        ports = stack.ports()
+        stack.stop()
+        time.sleep(0.3)
+        if ports:
+            closed = {port: _port_closed(port) for port in ports}
+            check(
+                "all isolated ports released after stop (workers + gateway)",
+                all(closed.values()),
+                str(closed),
+            )
+        check(
+            "isolated temp DB removed after cleanup",
+            not stack.db_path.exists(),
+            str(stack.db_path),
+        )
+
+    if FAILURES or child_rc != 0:
+        print(f"RESULT FAIL ({len(FAILURES)}): " + ", ".join(FAILURES))
+        return 1
+    print("RESULT PASS")
+    return 0
+
+
 def main() -> int:
     global CLIENT
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--llm-mode", choices=("skip", "mock"), default="skip")
     parser.add_argument("--base-url", default=None)
+    parser.add_argument(
+        "--isolate-mock",
+        action="store_true",
+        help=(
+            "B10：本轮自启临时端口 mock worker（5 个）+ 临时端口网关后运行断言；"
+            "必须配合 --llm-mode mock，不接触用户 8000/810x"
+        ),
+    )
     args = parser.parse_args()
+
+    if args.isolate_mock:
+        if args.llm_mode != "mock":
+            parser.error("--isolate-mock 必须与 --llm-mode mock 一起使用")
+        return run_isolated_mock_checks(args)
 
     processes = yaml.safe_load(PROCESSES_FILE.read_text(encoding="utf-8"))
     models_config = yaml.safe_load(MODELS_FILE.read_text(encoding="utf-8"))
@@ -165,6 +471,13 @@ def main() -> int:
     ]
 
     unit_checks()
+    # B9：LLM 是 opt-in——默认 compare 集合不含 llm（避免默认请求触发外部 Provider）；
+    # 位于配置层断言，与 gateway 是否启动无关。
+    check(
+        "default compare set excludes llm (B9 opt-in)",
+        "llm" not in default_compare_order and len(default_compare_order) >= 4,
+        str(default_compare_order),
+    )
 
     with httpx.Client(timeout=40.0, trust_env=False) as client:
         CLIENT = client
@@ -187,8 +500,23 @@ def main() -> int:
             and body.get("default_model") == "fasttext"
             and len(body.get("classes", [])) == 10,
         )
+        # B9：LLM 仅从默认 compare 移出，仍在 /models 中且 enabled → 可显式选择。
+        llm_registered = next(
+            (
+                model
+                for model in body.get("models", [])
+                if model.get("model_id") == "llm"
+            ),
+            {},
+        )
+        check(
+            "models: llm still registered and selectable (enabled)",
+            llm_registered.get("enabled") is True,
+            str(llm_registered),
+        )
 
         title = "北京二手房成交量创年内新高"
+        observed_sources: dict[str, str | None] = {}
         for model_id in ("rf", "fasttext", "bert", "distill"):
             response = request(
                 "POST",
@@ -196,6 +524,51 @@ def main() -> int:
                 json={"title": title, "model": model_id},
             )
             body = response.json() if response is not None and response.status_code == 200 else {}
+            observed_sources[model_id] = body.get("data_source")
+            scores = body.get("scores")
+            top_k = body.get("top_k")
+            threshold_meta = body.get("threshold_meta")
+            # B10：替换过期的「无 confidence」断言——校验 B1/B3 新字段契约：
+            # 无分数（如 mock worker）时 score/scores_kind/top_k/threshold_meta 均为 null；
+            # 有分数时 scores 完整、score_kind 合法、top_k 配对、threshold_meta 非空。
+            score_fields_ok = (
+                "confidence" not in body
+                and {"scores", "score_kind", "top_k"} <= set(body)
+                and isinstance(body.get("rejected"), bool)
+                and body.get("reject_reason")
+                in {None, "low_max_score", "high_entropy"}
+                and (
+                    (
+                        scores is None
+                        and body.get("score_kind") is None
+                        and top_k is None
+                        and threshold_meta is None
+                    )
+                    or (
+                        isinstance(scores, dict)
+                        and len(scores) == len(classes)
+                        and body.get("score_kind")
+                        in {"raw_proba", "raw_fasttext", "raw_softmax"}
+                        and isinstance(top_k, list)
+                        and 1 <= len(top_k) <= 3
+                        and all(
+                            set(entry) == {"class_id", "score"}
+                            for entry in top_k
+                        )
+                        and isinstance(threshold_meta, dict)
+                        and {
+                            "source",
+                            "calibrated",
+                            "method",
+                            "max_score_threshold",
+                            "entropy_threshold",
+                            "scope_note",
+                            "sample_size",
+                        }
+                        <= set(threshold_meta)
+                    )
+                )
+            )
             check(
                 f"classify {model_id}",
                 response is not None
@@ -203,8 +576,11 @@ def main() -> int:
                 and body.get("model_id") == model_id
                 and body.get("pred_class") in classes
                 and isinstance(body.get("latency_ms"), int)
-                and "confidence" not in body,
-                f"status={getattr(response, 'status_code', 'none')}",
+                # B11：真实/演示来源必须由服务端给出，不得缺失或伪造 live。
+                and body.get("data_source") in {"live", "mock", "unknown"}
+                and score_fields_ok,
+                f"status={getattr(response, 'status_code', 'none')} "
+                f"scores={type(scores).__name__} rejected={body.get('rejected')}",
             )
 
         response = request(
@@ -317,11 +693,16 @@ def main() -> int:
             and body.get("summary", {}).get("total") == 2
             and body.get("summary", {}).get("ok") == 2
             and body.get("summary", {}).get("status") == "ok"
+            # B10：compare 结果不返回分数/拒识字段（避免跨模型比分数），但必须有来源。
             and all(
                 item.get("pred_class") in classes
                 and "confidence" not in item
+                and "scores" not in item
+                and "rejected" not in item
+                and item.get("data_source") in {"live", "mock", "unknown"}
                 for item in body.get("results", [])
             ),
+            str(body.get("results"))[:300],
         )
 
         expect_error(
@@ -357,12 +738,20 @@ def main() -> int:
 
         response = request("GET", f"{base_url}/api/v1/stats")
         body = response.json() if response is not None and response.status_code == 200 else {}
+        live_models = {
+            model_id
+            for model_id, source in observed_sources.items()
+            if source == "live"
+        }
+        # B11：model_calls 只统计 live 调用；mock/unknown 不计入（mock 全链路下应为空）。
         check(
-            "stats model_calls",
+            "stats model_calls follows data_source (B11: only live counted)",
             response is not None
             and response.status_code == 200
             and isinstance(body.get("model_calls"), dict)
-            and "rf" in body.get("model_calls", {}),
+            and set(body.get("model_calls", {})) <= live_models
+            and (("rf" in body.get("model_calls", {})) == ("rf" in live_models)),
+            f"live={sorted(live_models)} model_calls={body.get('model_calls')}",
         )
 
         response = request(
@@ -407,7 +796,11 @@ def main() -> int:
                             "llm mock success",
                             response is not None
                             and response.status_code == 200
-                            and response.json().get("pred_class") == "sports",
+                            and response.json().get("pred_class") == "sports"
+                            # B11：mock worker 的 display_name=mock-llm → data_source=mock。
+                            and response.json().get("data_source") == "mock",
+                            f"{getattr(response, 'status_code', 'none')} "
+                            f"{response.text[:200] if response is not None else ''}",
                         )
                         continue
                     expect_error(f"llm {mock_title}", response, status, code)
@@ -427,21 +820,34 @@ def main() -> int:
                 body = response.json() if response is not None and response.status_code == 200 else {}
                 results = body.get("results", [])
                 check(
-                    "compare default five ok",
+                    "compare default excludes llm (B9 opt-in) and 4 local ok",
                     response is not None
                     and response.status_code == 200
                     and [item.get("model_id") for item in results]
                     == default_compare_order
+                    and "llm" not in [item.get("model_id") for item in results]
                     and body.get("summary", {}).get("status") == "ok"
-                    and body.get("summary", {}).get("ok") == 5
+                    and body.get("summary", {}).get("ok") == len(default_compare_order)
                     and all(item.get("pred_class") in classes for item in results)
-                    and all("confidence" not in item for item in results),
+                    # B10：compare 结果不返回分数/拒识字段，但必须带来源。
+                    and all(
+                        "confidence" not in item
+                        and "scores" not in item
+                        and item.get("data_source") in {"live", "mock", "unknown"}
+                        for item in results
+                    ),
+                    f"{[item.get('model_id') for item in results]} "
+                    f"summary={body.get('summary')}",
                 )
 
                 response = request(
                     "POST",
                     f"{base_url}/api/v1/compare",
-                    json={"title": "MOCK_ERROR"},
+                    json={
+                        "title": "MOCK_ERROR",
+                        # B9：LLM 默认缺席，显式列出才能验证 partial 降级。
+                        "models": [*default_compare_order, "llm"],
+                    },
                 )
                 body = response.json() if response is not None and response.status_code == 200 else {}
                 results = body.get("results", [])

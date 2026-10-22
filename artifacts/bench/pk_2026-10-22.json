@@ -1,0 +1,1375 @@
+{
+  "schema_version": 1,
+  "generated_by": "tools/bench_signature.py",
+  "meta": {
+    "dataset": "00-data/data/test.txt",
+    "split": "test",
+    "sample_size": 10000,
+    "generated_at": "2026-10-22T01:37:55+08:00",
+    "code_version": "uncommitted",
+    "model_versions": {
+      "rf": "rf.pkl+tfidf.pkl",
+      "fasttext": "word_auto_train.pkl",
+      "bert": "bert.pkl",
+      "distill": "student_v2b.pkl",
+      "llm": "external_provider_not_authorized(missing)"
+    },
+    "metric_def": {
+      "macro_f1": "sklearn f1_score(labels=class.txt 0..9, average='macro', zero_division=0)：10 类等权算术平均，不按 support 加权",
+      "accuracy": "top-1 命中率 = 预测正确样本数 / test 样本数（10,000）",
+      "confusion_matrix": "10x10 整数矩阵：行=true label 0..9，列=pred label 0..9，类别顺序=00-data/data/class.txt；行和=该类 support",
+      "latency": "平均单条延迟（ms）：test 前 200 条逐条调用 SERVICE.predict，含 jieba/tokenizer 预处理，不含 HTTP/网络/JSON；同时记录 p50/p95。指标预测走批量推理，且批量与逐条前 200 条预测一致性校验=0 才发布",
+      "size_bytes": "模型权重文件磁盘字节数之和（1 B = 1 字节；MiB=bytes/1048576 仅展示）。RF=rf.pkl+tfidf.pkl；BERT 不含外部 tokenizer 目录",
+      "weight": "集成权重 = dev 抽样（seed=20261022，每类 200 条，共 2000 条）macro-F1 归一化；四舍五入 6 位后校正最大项使总和=1；仅 dev、未使用 test；LLM missing 不参与",
+      "vote": "加权投票：每模型 1 票，票重=weight；取加权和最大类；平票先比非加权票数，再按 class.txt 类别顺序（索引小者胜）",
+      "oracle": "参考上界：4 个可用本地模型中任一预测正确即算正确；非独立模型、不可部署，不得当作对外性能宣称"
+    },
+    "data_kind": "offline"
+  },
+  "build": {
+    "git_head_short_sha": "ca78ea7",
+    "git_dirty": true,
+    "code_version_note": "工作树包含未提交改动（含本脚本），meta.code_version 如实写 uncommitted"
+  },
+  "environment": {
+    "platform": "Windows-10-10.0.26200-SP0",
+    "machine": "AMD64",
+    "processor": "AMD64 Family 25 Model 117 Stepping 2, AuthenticAMD",
+    "cpu_count": 16,
+    "total_memory_gb": 31.31,
+    "python_version": "3.10.9",
+    "python_executable": "D:\\Miniconda3\\envs\\py3109\\python.exe",
+    "packages": {
+      "numpy": "2.2.6",
+      "scikit-learn": "1.7.2"
+    },
+    "os_timezone": "中国标准时间"
+  },
+  "dataset": {
+    "path": "00-data/data/test.txt",
+    "split": "test",
+    "sample_size": 10000,
+    "class_count": 10,
+    "classes": [
+      "finance",
+      "realty",
+      "stocks",
+      "education",
+      "science",
+      "society",
+      "politics",
+      "sports",
+      "game",
+      "entertainment"
+    ],
+    "label_format": "title<TAB>label(0..9 索引，按 class.txt 行序映射为类别名)",
+    "dev_weight_sample": {
+      "source": "00-data/data/dev.txt",
+      "method": "stratified_by_true_label_per_class",
+      "per_class": 200,
+      "per_class_actual": {
+        "finance": 200,
+        "realty": 200,
+        "stocks": 200,
+        "education": 200,
+        "science": 200,
+        "society": 200,
+        "politics": 200,
+        "sports": 200,
+        "game": 200,
+        "entertainment": 200
+      },
+      "sample_size": 2000,
+      "seed": 20261022,
+      "file": "artifacts/bench/_dev_sample_seed20261022_per_class200.txt",
+      "purpose": "仅用于加权投票的集成权重（各本地模型 dev macro-F1）",
+      "test_usage": "未使用 test 做权重/阈值/调参；test 仅用于最终评测"
+    }
+  },
+  "models": [
+    {
+      "model_id": "rf",
+      "display_name": "随机森林",
+      "status": "ok",
+      "model_version": "rf.pkl+tfidf.pkl",
+      "model_files": [
+        {
+          "path": "01-rf/save_model/rf.pkl",
+          "bytes": 1583395426
+        },
+        {
+          "path": "01-rf/save_model/tfidf.pkl",
+          "bytes": 2492522
+        }
+      ],
+      "metrics": {
+        "macro_f1": 0.830205,
+        "accuracy": 0.8293,
+        "avg_latency_ms": 123.844,
+        "p50_latency_ms": 62.585,
+        "p95_latency_ms": 375.264,
+        "latency_sample_size": 200,
+        "size_bytes": 1585887948,
+        "size_mib": 1512.42
+      },
+      "confusion_matrix": [
+        [
+          831,
+          15,
+          80,
+          2,
+          10,
+          10,
+          12,
+          7,
+          6,
+          27
+        ],
+        [
+          10,
+          867,
+          32,
+          8,
+          10,
+          9,
+          10,
+          4,
+          9,
+          41
+        ],
+        [
+          69,
+          26,
+          788,
+          6,
+          27,
+          5,
+          44,
+          4,
+          10,
+          21
+        ],
+        [
+          5,
+          6,
+          12,
+          906,
+          2,
+          23,
+          20,
+          2,
+          10,
+          14
+        ],
+        [
+          9,
+          10,
+          68,
+          16,
+          776,
+          24,
+          26,
+          2,
+          36,
+          33
+        ],
+        [
+          4,
+          14,
+          12,
+          29,
+          17,
+          800,
+          42,
+          3,
+          9,
+          70
+        ],
+        [
+          8,
+          14,
+          31,
+          22,
+          25,
+          46,
+          805,
+          6,
+          6,
+          37
+        ],
+        [
+          1,
+          13,
+          10,
+          9,
+          7,
+          12,
+          27,
+          849,
+          14,
+          58
+        ],
+        [
+          5,
+          6,
+          13,
+          15,
+          51,
+          12,
+          11,
+          13,
+          844,
+          30
+        ],
+        [
+          8,
+          10,
+          7,
+          13,
+          20,
+          39,
+          23,
+          18,
+          35,
+          827
+        ]
+      ],
+      "per_class": [
+        {
+          "class_id": "finance",
+          "precision": 0.874737,
+          "recall": 0.831,
+          "f1": 0.852308,
+          "support": 1000
+        },
+        {
+          "class_id": "realty",
+          "precision": 0.883792,
+          "recall": 0.867,
+          "f1": 0.875315,
+          "support": 1000
+        },
+        {
+          "class_id": "stocks",
+          "precision": 0.748338,
+          "recall": 0.788,
+          "f1": 0.767657,
+          "support": 1000
+        },
+        {
+          "class_id": "education",
+          "precision": 0.883041,
+          "recall": 0.906,
+          "f1": 0.894373,
+          "support": 1000
+        },
+        {
+          "class_id": "science",
+          "precision": 0.821164,
+          "recall": 0.776,
+          "f1": 0.797943,
+          "support": 1000
+        },
+        {
+          "class_id": "society",
+          "precision": 0.816327,
+          "recall": 0.8,
+          "f1": 0.808081,
+          "support": 1000
+        },
+        {
+          "class_id": "politics",
+          "precision": 0.789216,
+          "recall": 0.805,
+          "f1": 0.79703,
+          "support": 1000
+        },
+        {
+          "class_id": "sports",
+          "precision": 0.935022,
+          "recall": 0.849,
+          "f1": 0.889937,
+          "support": 1000
+        },
+        {
+          "class_id": "game",
+          "precision": 0.862104,
+          "recall": 0.844,
+          "f1": 0.852956,
+          "support": 1000
+        },
+        {
+          "class_id": "entertainment",
+          "precision": 0.714162,
+          "recall": 0.827,
+          "f1": 0.76645,
+          "support": 1000
+        }
+      ],
+      "dev_metrics": {
+        "sample_size": 2000,
+        "macro_f1": 0.818857,
+        "accuracy": 0.818,
+        "source": "00-data/data/dev.txt 固定种子分层抽样（仅用于集成权重）"
+      },
+      "prediction_digest": {
+        "test": "34abf04c1e16d22bf81f98b0924d884df7e60c29e09b50da0605acc92db0c0d7",
+        "dev": "cdca03862ac4c5b8905459e496388efcfd868365337de6155f124ab60a4873be"
+      },
+      "load_s": 4.751,
+      "test_batch_predict_s": 3.579,
+      "device": "cpu",
+      "weight": 0.229685,
+      "weight_source": "dev_sample_macro_f1"
+    },
+    {
+      "model_id": "fasttext",
+      "display_name": "fastText",
+      "status": "ok",
+      "model_version": "word_auto_train.pkl",
+      "model_files": [
+        {
+          "path": "02-fasttext/save_model/word_auto_train.pkl",
+          "bytes": 451244070
+        }
+      ],
+      "metrics": {
+        "macro_f1": 0.917395,
+        "accuracy": 0.9173,
+        "avg_latency_ms": 0.104,
+        "p50_latency_ms": 0.1,
+        "p95_latency_ms": 0.14,
+        "latency_sample_size": 200,
+        "size_bytes": 451244070,
+        "size_mib": 430.34
+      },
+      "confusion_matrix": [
+        [
+          903,
+          6,
+          55,
+          3,
+          8,
+          8,
+          9,
+          1,
+          5,
+          2
+        ],
+        [
+          11,
+          936,
+          18,
+          1,
+          3,
+          10,
+          6,
+          1,
+          0,
+          14
+        ],
+        [
+          47,
+          26,
+          878,
+          1,
+          21,
+          3,
+          21,
+          3,
+          0,
+          0
+        ],
+        [
+          1,
+          3,
+          5,
+          954,
+          3,
+          11,
+          10,
+          3,
+          1,
+          9
+        ],
+        [
+          5,
+          6,
+          30,
+          5,
+          878,
+          14,
+          16,
+          4,
+          29,
+          13
+        ],
+        [
+          4,
+          11,
+          2,
+          9,
+          11,
+          917,
+          22,
+          1,
+          4,
+          19
+        ],
+        [
+          9,
+          9,
+          31,
+          11,
+          15,
+          34,
+          884,
+          1,
+          0,
+          6
+        ],
+        [
+          0,
+          3,
+          4,
+          3,
+          3,
+          10,
+          6,
+          956,
+          4,
+          11
+        ],
+        [
+          1,
+          1,
+          7,
+          3,
+          41,
+          5,
+          2,
+          6,
+          926,
+          8
+        ],
+        [
+          0,
+          5,
+          3,
+          3,
+          8,
+          15,
+          2,
+          14,
+          9,
+          941
+        ]
+      ],
+      "per_class": [
+        {
+          "class_id": "finance",
+          "precision": 0.920489,
+          "recall": 0.903,
+          "f1": 0.911661,
+          "support": 1000
+        },
+        {
+          "class_id": "realty",
+          "precision": 0.930417,
+          "recall": 0.936,
+          "f1": 0.9332,
+          "support": 1000
+        },
+        {
+          "class_id": "stocks",
+          "precision": 0.849952,
+          "recall": 0.878,
+          "f1": 0.863748,
+          "support": 1000
+        },
+        {
+          "class_id": "education",
+          "precision": 0.960725,
+          "recall": 0.954,
+          "f1": 0.957351,
+          "support": 1000
+        },
+        {
+          "class_id": "science",
+          "precision": 0.885974,
+          "recall": 0.878,
+          "f1": 0.881969,
+          "support": 1000
+        },
+        {
+          "class_id": "society",
+          "precision": 0.892892,
+          "recall": 0.917,
+          "f1": 0.904785,
+          "support": 1000
+        },
+        {
+          "class_id": "politics",
+          "precision": 0.903885,
+          "recall": 0.884,
+          "f1": 0.893832,
+          "support": 1000
+        },
+        {
+          "class_id": "sports",
+          "precision": 0.965657,
+          "recall": 0.956,
+          "f1": 0.960804,
+          "support": 1000
+        },
+        {
+          "class_id": "game",
+          "precision": 0.94683,
+          "recall": 0.926,
+          "f1": 0.936299,
+          "support": 1000
+        },
+        {
+          "class_id": "entertainment",
+          "precision": 0.919844,
+          "recall": 0.941,
+          "f1": 0.930302,
+          "support": 1000
+        }
+      ],
+      "dev_metrics": {
+        "sample_size": 2000,
+        "macro_f1": 0.909529,
+        "accuracy": 0.9095,
+        "source": "00-data/data/dev.txt 固定种子分层抽样（仅用于集成权重）"
+      },
+      "prediction_digest": {
+        "test": "fa88a6ac32e3e680f5ef0193ded3076e77c05e72e79e816ff26aa0d46f11a6ec",
+        "dev": "4d31bca5e4b280c022b89734e9a4b493df3e9ef4e3c7f8bb7bd40cfbfbcdba13"
+      },
+      "load_s": 1.984,
+      "test_batch_predict_s": 5.408,
+      "device": "cpu",
+      "weight": 0.255118,
+      "weight_source": "dev_sample_macro_f1"
+    },
+    {
+      "model_id": "bert",
+      "display_name": "BERT",
+      "status": "ok",
+      "model_version": "bert.pkl",
+      "model_files": [
+        {
+          "path": "03-bert/save_model/bert.pkl",
+          "bytes": 409169600
+        }
+      ],
+      "metrics": {
+        "macro_f1": 0.930724,
+        "accuracy": 0.9305,
+        "avg_latency_ms": 76.537,
+        "p50_latency_ms": 38.05,
+        "p95_latency_ms": 288.345,
+        "latency_sample_size": 200,
+        "size_bytes": 409169600,
+        "size_mib": 390.21
+      },
+      "confusion_matrix": [
+        [
+          932,
+          12,
+          36,
+          1,
+          6,
+          5,
+          6,
+          1,
+          0,
+          1
+        ],
+        [
+          12,
+          949,
+          5,
+          2,
+          2,
+          16,
+          7,
+          1,
+          0,
+          6
+        ],
+        [
+          40,
+          22,
+          884,
+          0,
+          37,
+          5,
+          11,
+          0,
+          0,
+          1
+        ],
+        [
+          2,
+          0,
+          3,
+          960,
+          8,
+          15,
+          6,
+          0,
+          0,
+          6
+        ],
+        [
+          5,
+          4,
+          13,
+          5,
+          933,
+          14,
+          11,
+          1,
+          8,
+          6
+        ],
+        [
+          0,
+          6,
+          1,
+          11,
+          5,
+          954,
+          11,
+          0,
+          2,
+          10
+        ],
+        [
+          6,
+          2,
+          35,
+          12,
+          15,
+          29,
+          897,
+          1,
+          0,
+          3
+        ],
+        [
+          1,
+          3,
+          3,
+          0,
+          5,
+          5,
+          0,
+          981,
+          0,
+          2
+        ],
+        [
+          2,
+          6,
+          3,
+          4,
+          93,
+          6,
+          1,
+          2,
+          871,
+          12
+        ],
+        [
+          1,
+          3,
+          0,
+          6,
+          18,
+          7,
+          5,
+          12,
+          4,
+          944
+        ]
+      ],
+      "per_class": [
+        {
+          "class_id": "finance",
+          "precision": 0.931069,
+          "recall": 0.932,
+          "f1": 0.931534,
+          "support": 1000
+        },
+        {
+          "class_id": "realty",
+          "precision": 0.942403,
+          "recall": 0.949,
+          "f1": 0.94569,
+          "support": 1000
+        },
+        {
+          "class_id": "stocks",
+          "precision": 0.899288,
+          "recall": 0.884,
+          "f1": 0.891578,
+          "support": 1000
+        },
+        {
+          "class_id": "education",
+          "precision": 0.959041,
+          "recall": 0.96,
+          "f1": 0.95952,
+          "support": 1000
+        },
+        {
+          "class_id": "science",
+          "precision": 0.831551,
+          "recall": 0.933,
+          "f1": 0.879359,
+          "support": 1000
+        },
+        {
+          "class_id": "society",
+          "precision": 0.903409,
+          "recall": 0.954,
+          "f1": 0.928016,
+          "support": 1000
+        },
+        {
+          "class_id": "politics",
+          "precision": 0.939267,
+          "recall": 0.897,
+          "f1": 0.917647,
+          "support": 1000
+        },
+        {
+          "class_id": "sports",
+          "precision": 0.981982,
+          "recall": 0.981,
+          "f1": 0.981491,
+          "support": 1000
+        },
+        {
+          "class_id": "game",
+          "precision": 0.984181,
+          "recall": 0.871,
+          "f1": 0.924138,
+          "support": 1000
+        },
+        {
+          "class_id": "entertainment",
+          "precision": 0.952573,
+          "recall": 0.944,
+          "f1": 0.948267,
+          "support": 1000
+        }
+      ],
+      "dev_metrics": {
+        "sample_size": 2000,
+        "macro_f1": 0.929856,
+        "accuracy": 0.9295,
+        "source": "00-data/data/dev.txt 固定种子分层抽样（仅用于集成权重）"
+      },
+      "prediction_digest": {
+        "test": "239fc1a2a81a757a380018a1b3157b251f7b2703c7953a1b454cf39dc36b3964",
+        "dev": "6ec1a258bbda1283710b38a2c0788cc3264a5c68558c6bf808937a39bf3d82c5"
+      },
+      "load_s": 37.689,
+      "test_batch_predict_s": 445.423,
+      "device": "cpu",
+      "weight": 0.260819,
+      "weight_source": "dev_sample_macro_f1"
+    },
+    {
+      "model_id": "distill",
+      "display_name": "蒸馏 BiLSTM",
+      "status": "ok",
+      "model_version": "student_v2b.pkl",
+      "model_files": [
+        {
+          "path": "05-distill/save_model/student_v2b.pkl",
+          "bytes": 38490838
+        }
+      ],
+      "metrics": {
+        "macro_f1": 0.907386,
+        "accuracy": 0.9075,
+        "avg_latency_ms": 3.426,
+        "p50_latency_ms": 3.22,
+        "p95_latency_ms": 5.035,
+        "latency_sample_size": 200,
+        "size_bytes": 38490838,
+        "size_mib": 36.71
+      },
+      "confusion_matrix": [
+        [
+          894,
+          15,
+          48,
+          6,
+          9,
+          16,
+          4,
+          2,
+          3,
+          3
+        ],
+        [
+          11,
+          938,
+          15,
+          1,
+          4,
+          12,
+          3,
+          2,
+          3,
+          11
+        ],
+        [
+          45,
+          23,
+          854,
+          4,
+          28,
+          13,
+          26,
+          0,
+          5,
+          2
+        ],
+        [
+          2,
+          2,
+          3,
+          953,
+          4,
+          19,
+          4,
+          1,
+          1,
+          11
+        ],
+        [
+          3,
+          9,
+          46,
+          10,
+          838,
+          29,
+          13,
+          3,
+          29,
+          20
+        ],
+        [
+          1,
+          16,
+          0,
+          18,
+          9,
+          921,
+          19,
+          0,
+          2,
+          14
+        ],
+        [
+          13,
+          11,
+          23,
+          14,
+          25,
+          30,
+          864,
+          3,
+          7,
+          10
+        ],
+        [
+          0,
+          1,
+          1,
+          3,
+          2,
+          6,
+          7,
+          970,
+          0,
+          10
+        ],
+        [
+          1,
+          1,
+          8,
+          4,
+          42,
+          11,
+          5,
+          3,
+          915,
+          10
+        ],
+        [
+          0,
+          10,
+          3,
+          6,
+          9,
+          12,
+          9,
+          14,
+          9,
+          928
+        ]
+      ],
+      "per_class": [
+        {
+          "class_id": "finance",
+          "precision": 0.921649,
+          "recall": 0.894,
+          "f1": 0.907614,
+          "support": 1000
+        },
+        {
+          "class_id": "realty",
+          "precision": 0.91423,
+          "recall": 0.938,
+          "f1": 0.925962,
+          "support": 1000
+        },
+        {
+          "class_id": "stocks",
+          "precision": 0.853147,
+          "recall": 0.854,
+          "f1": 0.853573,
+          "support": 1000
+        },
+        {
+          "class_id": "education",
+          "precision": 0.935231,
+          "recall": 0.953,
+          "f1": 0.944032,
+          "support": 1000
+        },
+        {
+          "class_id": "science",
+          "precision": 0.863918,
+          "recall": 0.838,
+          "f1": 0.850761,
+          "support": 1000
+        },
+        {
+          "class_id": "society",
+          "precision": 0.861553,
+          "recall": 0.921,
+          "f1": 0.890285,
+          "support": 1000
+        },
+        {
+          "class_id": "politics",
+          "precision": 0.90566,
+          "recall": 0.864,
+          "f1": 0.88434,
+          "support": 1000
+        },
+        {
+          "class_id": "sports",
+          "precision": 0.971944,
+          "recall": 0.97,
+          "f1": 0.970971,
+          "support": 1000
+        },
+        {
+          "class_id": "game",
+          "precision": 0.939425,
+          "recall": 0.915,
+          "f1": 0.927052,
+          "support": 1000
+        },
+        {
+          "class_id": "entertainment",
+          "precision": 0.910697,
+          "recall": 0.928,
+          "f1": 0.919267,
+          "support": 1000
+        }
+      ],
+      "dev_metrics": {
+        "sample_size": 2000,
+        "macro_f1": 0.906892,
+        "accuracy": 0.907,
+        "source": "00-data/data/dev.txt 固定种子分层抽样（仅用于集成权重）"
+      },
+      "prediction_digest": {
+        "test": "ba91314fd3e25b21ed548f21f01f053d734d66c49089ece343bd4bd79d90d806",
+        "dev": "f3e113d751b378f188f38458f08afebce461685591cd9fd259c384254536e9b2"
+      },
+      "load_s": 8.261,
+      "test_batch_predict_s": 16.975,
+      "device": "cpu",
+      "weight": 0.254378,
+      "weight_source": "dev_sample_macro_f1"
+    },
+    {
+      "model_id": "llm",
+      "display_name": "大模型",
+      "status": "missing",
+      "reason": "external_provider_not_authorized",
+      "detail": "04-LLM 走外部 Provider（OpenAI 兼容接口），本轮任务禁止调用/计费；未产生任何预测，也未用 mock 或估算值填充。"
+    }
+  ],
+  "derived": [
+    {
+      "kind": "weighted_vote",
+      "display_name": "dev 加权投票集成",
+      "status": "ok",
+      "metrics": {
+        "macro_f1": 0.939,
+        "accuracy": 0.9389,
+        "avg_latency_ms": null,
+        "latency_sample_size": 0,
+        "note": "集成延迟未测量（派生指标，不参与延迟比较）"
+      },
+      "confusion_matrix": [
+        [
+          935,
+          8,
+          35,
+          2,
+          2,
+          8,
+          5,
+          1,
+          1,
+          3
+        ],
+        [
+          10,
+          954,
+          9,
+          0,
+          1,
+          13,
+          3,
+          0,
+          0,
+          10
+        ],
+        [
+          30,
+          18,
+          900,
+          0,
+          25,
+          5,
+          20,
+          1,
+          0,
+          1
+        ],
+        [
+          2,
+          1,
+          5,
+          963,
+          5,
+          12,
+          4,
+          1,
+          0,
+          7
+        ],
+        [
+          1,
+          5,
+          25,
+          3,
+          916,
+          16,
+          9,
+          2,
+          11,
+          12
+        ],
+        [
+          0,
+          8,
+          0,
+          10,
+          4,
+          950,
+          14,
+          0,
+          2,
+          12
+        ],
+        [
+          7,
+          5,
+          26,
+          7,
+          18,
+          25,
+          908,
+          0,
+          0,
+          4
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          3,
+          6,
+          2,
+          983,
+          0,
+          4
+        ],
+        [
+          0,
+          2,
+          5,
+          5,
+          54,
+          5,
+          3,
+          1,
+          919,
+          6
+        ],
+        [
+          0,
+          4,
+          0,
+          3,
+          7,
+          7,
+          2,
+          10,
+          6,
+          961
+        ]
+      ],
+      "weights": {
+        "rf": 0.229685,
+        "fasttext": 0.255118,
+        "bert": 0.260819,
+        "distill": 0.254378
+      },
+      "participating_models": [
+        "rf",
+        "fasttext",
+        "bert",
+        "distill"
+      ],
+      "note": "派生指标，非独立模型：每个模型 1 票，票重=dev 抽样 macro-F1 归一化；平票先比非加权票数、再按 class.txt 类别顺序。权重未使用 test。"
+    },
+    {
+      "kind": "oracle",
+      "display_name": "Oracle 上界（任一模型正确即正确）",
+      "status": "ok",
+      "metrics": {
+        "macro_f1": 0.975493,
+        "accuracy": 0.9755,
+        "avg_latency_ms": null,
+        "latency_sample_size": 0
+      },
+      "confusion_matrix": [
+        [
+          975,
+          3,
+          6,
+          1,
+          2,
+          1,
+          5,
+          1,
+          1,
+          5
+        ],
+        [
+          8,
+          977,
+          6,
+          0,
+          0,
+          2,
+          2,
+          0,
+          0,
+          5
+        ],
+        [
+          16,
+          6,
+          963,
+          0,
+          6,
+          2,
+          4,
+          1,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          0,
+          987,
+          1,
+          4,
+          3,
+          0,
+          1,
+          4
+        ],
+        [
+          3,
+          3,
+          10,
+          2,
+          957,
+          7,
+          8,
+          0,
+          5,
+          5
+        ],
+        [
+          0,
+          0,
+          1,
+          5,
+          2,
+          975,
+          3,
+          1,
+          3,
+          10
+        ],
+        [
+          3,
+          2,
+          5,
+          6,
+          7,
+          8,
+          963,
+          1,
+          0,
+          5
+        ],
+        [
+          0,
+          0,
+          0,
+          0,
+          3,
+          1,
+          1,
+          993,
+          0,
+          2
+        ],
+        [
+          2,
+          0,
+          4,
+          1,
+          12,
+          2,
+          1,
+          1,
+          975,
+          2
+        ],
+        [
+          2,
+          0,
+          0,
+          1,
+          2,
+          0,
+          0,
+          3,
+          2,
+          990
+        ]
+      ],
+      "participating_models": [
+        "rf",
+        "fasttext",
+        "bert",
+        "distill"
+      ],
+      "note": "参考上界，非独立模型，不可部署：仅表示 4 个可用本地模型并集的覆盖上限；不得当作某模型性能或对外宣称。"
+    }
+  ],
+  "missing_models": [
+    "llm"
+  ],
+  "reproduction": {
+    "command": "\"D:\\Miniconda3\\envs\\py3109\\python.exe\" tools/bench_signature.py --seed 20261022 --dev-per-class 200 --latency-subset 200",
+    "cwd": ".",
+    "seed": 20261022,
+    "dev_sample": {
+      "source": "00-data/data/dev.txt",
+      "method": "stratified_by_true_label_per_class",
+      "per_class": 200,
+      "per_class_actual": {
+        "finance": 200,
+        "realty": 200,
+        "stocks": 200,
+        "education": 200,
+        "science": 200,
+        "society": 200,
+        "politics": 200,
+        "sports": 200,
+        "game": 200,
+        "entertainment": 200
+      },
+      "sample_size": 2000,
+      "seed": 20261022,
+      "file": "artifacts/bench/_dev_sample_seed20261022_per_class200.txt",
+      "purpose": "仅用于加权投票的集成权重（各本地模型 dev macro-F1）",
+      "test_usage": "未使用 test 做权重/阈值/调参；test 仅用于最终评测"
+    },
+    "latency_subset": 200,
+    "models": [
+      "rf",
+      "fasttext",
+      "bert",
+      "distill"
+    ],
+    "source": "test.txt",
+    "intermediate_dir": "artifacts/bench",
+    "artifact_path": "artifacts/bench/pk_2026-10-22.json",
+    "notes": [
+      "LLM 是外部 Provider，本轮禁止调用；产物中 status=missing，无指标",
+      "每个模型单独子进程加载/推理，避免 RF+BERT 同时驻留造成内存峰值",
+      "只运行一次全量推理；中间预测产物用于 verify_bench 确定性复核",
+      "未训练、未校准、未在 test 上调阈值/权重"
+    ]
+  },
+  "run": {
+    "started_at": "2026-10-22T01:26:45+08:00",
+    "finished_at": "2026-10-22T01:37:55+08:00",
+    "total_elapsed_s": 669.731,
+    "per_model_elapsed_s": {
+      "rf": 35.763,
+      "fasttext": 8.532,
+      "bert": 588.622,
+      "distill": 34.105
+    },
+    "artifact_path": "artifacts/bench/pk_2026-10-22.json",
+    "python_executable": "D:\\Miniconda3\\envs\\py3109\\python.exe",
+    "cpu_count": 16
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-10-22T00:29:01.799Z",
+  "llmChecked": true,
+  "llmPill": true,
+  "onlineBadge": "",
+  "online": {
+    "ms": 512,
+    "text": "MODEL COMPARISON · STREAMING 同一个标题，5 个模型完成判断。 REQUEST · d4-strea ✓ 全部模型已完成 5 成功 · 0 失败 · 用时 120 ms · 总截止 25000 ms 流式实时（SSE） 首结果 8 ms 北京二手房成交量创年内新高 排序 按延迟 按一致度 一致度 = 与多数预测相同 REQUEST · d4-strea 随 随机森林 房产 realty 与多数一致 分类完成 42 ms f fastText 房产 realty 与多数一致 分类完成 42 ms 蒸 蒸馏 BiLSTM 房产 realty 与多数一致 分类完成 42 ",
+    "ok": true
+  },
+  "offline": {
+    "ms": 517,
+    "text": "MODEL COMPARISON · STREAMING 同一个标题，4 个模型完成判断。 REQUEST · d4-strea ◐ 部分结果已返回 4 成功 · 1 失败 · 用时 120 ms · 总截止 25000 ms 流式实时（SSE） 首结果 4 ms 北京二手房成交量创年内新高 排序 按延迟 按一致度 一致度 = 与多数预测相同 REQUEST · d4-strea 大 大模型（mock） 演示 mock LLM 离线 错误码 WORKER_UNAVAILABLE WORKER_UNAVAILABLE 15 ms 随 随机森林 房产 realty 与多数一致 分类完成 42 ms f fastText 房产 realty 与多数一致 分类完成 42 ms 蒸 蒸馏 BiLSTM 房产 realty 与多数一致 分类完成 42 ms B BERT 房产 realty 与多数一致 分类完成 75 ms",
+    "partial": true,
+    "localsRetained": true
+  },
+  "recover": {
+    "ms": 542,
+    "text": "MODEL COMPARISON · STREAMING 同一个标题，5 个模型完成判断。 REQUEST · d4-strea ✓ 全部模型已完成 5 成功 · 0 失败 · 用时 120 ms · 总截止 25000 ms 流式实时（SSE） 首结果 46 ms 北京二手房成交量创年内新高 排序 按延迟 按一致度 一致度 = 与多数预测相同 REQUEST · d4-strea 随 随机森林 房产 realty 与多数一致 分类完成 42 ms f fastText 房产 realty 与多数一致 分类完成 42 ms 蒸 蒸馏 BiLSTM 房产 realty 与多数一致 分类完成 42",
+    "ok": true
+  },
+  "ok": true
+}

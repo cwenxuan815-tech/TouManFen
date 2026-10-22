@@ -10,11 +10,12 @@
 
 from __future__ import annotations
 
+import math
 import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from urllib.parse import urlparse
 
 import yaml
@@ -38,6 +39,17 @@ DEFAULT_CLASSES_FILE = PROJECT_ROOT / "00-data" / "data" / "class.txt"
 
 REQUIRED_MODEL_IDS = frozenset({"rf", "fasttext", "bert", "llm", "distill"})
 _FORBIDDEN_KEY_TOKENS = ("password", "secret", "apikey", "token", "authorization")
+
+#: B6：/compare 与 /compare/stream 共用的总截止默认值（工作清单 §6.6）。
+#: 环境变量 ``TMF_COMPARE_TOTAL_TIMEOUT_MS`` 可覆盖。
+DEFAULT_COMPARE_TOTAL_TIMEOUT_MS = 18000
+
+#: B12：/compare 与 /compare/stream 的并发上限默认值（工作清单 §6.6：由 5 降为 3）。
+#: 环境变量 ``TMF_COMPARE_CONCURRENCY`` 可覆盖；范围 1~10（当前最多 5 个模型，
+#: 上限留出余量但拒绝 0/负数/超大值，避免把进程打爆）。
+DEFAULT_COMPARE_CONCURRENCY = 3
+COMPARE_CONCURRENCY_MIN = 1
+COMPARE_CONCURRENCY_MAX = 10
 
 
 class UniqueKeyLoader(yaml.SafeLoader):
@@ -123,6 +135,56 @@ class ApiConfig(BaseModel):
     max_title_chars: int = Field(default=200, ge=1, le=1000)
 
 
+class RejectCalibrationConfig(BaseModel):
+    """B3 软拒识阈值的来源元数据（必须如实描述“合成负样本 + 未校准”）。
+
+    ``method`` 固定为 ``max_score+entropy``；``calibrated`` 本期必须为 ``false``
+    （L2 校准已移出本期，见工作清单 §4.1）。
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    source: Literal["synthetic_negatives"]
+    calibrated: bool = False
+    method: Literal["max_score+entropy"]
+    dataset: str
+    positive_sample_size: int = Field(ge=1)
+    negative_sample_size: int = Field(ge=1)
+    seed: int
+    derived_for_model: str
+    roc_artifact: str
+    threshold_selection_artifact: str
+    scope_note: str
+
+    @field_validator("dataset", "roc_artifact", "threshold_selection_artifact", "scope_note")
+    @classmethod
+    def _validate_non_empty(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("不能为空")
+        return value
+
+    @field_validator("calibrated")
+    @classmethod
+    def _validate_calibrated(cls, value: bool) -> bool:
+        # 本期不做 L2 校准（B2 移出本期）；若配置声称已校准，必须同步文档与流程。
+        if value:
+            raise ValueError("本期分数未校准，calibrated 必须为 false")
+        return value
+
+
+class RejectConfig(BaseModel):
+    """B3 软拒识配置：有分数时按 max_score + entropy 做软拒识（不丢 pred_class）。"""
+
+    model_config = ConfigDict(extra="forbid")
+
+    enabled: bool = True
+    max_score_threshold: float = Field(gt=0.0, le=1.0)
+    # 归一化 10 类分数的 Shannon entropy（base=e）上界约为 ln(10)；上界放宽到
+    # ln(100) 以支持最多 100 类，加载时再按实际类别数校验有效性。
+    entropy_threshold: float = Field(ge=0.0, le=math.log(100.0))
+    calibration: RejectCalibrationConfig
+
+
 class ModelConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -146,6 +208,8 @@ class ModelsFile(BaseModel):
     version: int = Field(ge=1)
     default_model: str
     api: ApiConfig = Field(default_factory=ApiConfig)
+    #: B3 软拒识配置；缺失即配置非法（避免“静默关闭拒识”）。
+    reject: RejectConfig
     classes: ClassesConfig
     models: dict[str, ModelConfig]
 
@@ -159,6 +223,11 @@ class Settings:
     max_title_chars: int
     probe_timeout_ms: int
     status_cache_ms: int
+    #: B6 SSE 渐进式对比的总截止（毫秒，默认 18000，§6.6）。
+    compare_total_timeout_ms: int
+    #: B12 /compare 与 /compare/stream 的并发上限（默认 3，§6.6）。
+    compare_concurrency: int
+    reject: RejectConfig
     workers_file: Path
     models_file: Path
     classes_file: Path
@@ -259,6 +328,93 @@ def _env_int(name: str, default: int, minimum: int, maximum: int) -> int:
     return value
 
 
+def _env_float(
+    name: str,
+    default: float,
+    minimum: float,
+    maximum: float,
+    *,
+    exclusive_min: bool = False,
+) -> float:
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    try:
+        value = float(raw)
+    except ValueError as exc:
+        raise ConfigError(f"环境变量 {name} 必须是数字") from exc
+    if not math.isfinite(value):
+        raise ConfigError(f"环境变量 {name} 必须是有限数字")
+    low_ok = value > minimum if exclusive_min else value >= minimum
+    if not low_ok or value > maximum:
+        compare = "大于" if exclusive_min else "不小于"
+        raise ConfigError(
+            f"环境变量 {name} 必须{compare} {minimum} 且不大于 {maximum}"
+        )
+    return value
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.environ.get(name)
+    if raw is None or raw.strip() == "":
+        return default
+    normalized = raw.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ConfigError(f"环境变量 {name} 必须是 true/false（或 1/0）")
+
+
+def _resolve_reject_config(
+    models_path: Path,
+    reject: RejectConfig,
+    classes: tuple[str, ...],
+    model_ids: set[str],
+) -> RejectConfig:
+    """校验 reject 配置与模型/类别数的一致性，并应用环境变量覆盖。
+
+    环境变量（全部可选，未设置时用 models.yaml 的值）：
+    - ``TMF_REJECT_ENABLED``：true/false
+    - ``TMF_REJECT_MAX_SCORE_THRESHOLD``：(0, 1]
+    - ``TMF_REJECT_ENTROPY_THRESHOLD``：[0, ln(类别数))
+    """
+    if reject.calibration.derived_for_model not in model_ids:
+        raise ConfigError(
+            f"{models_path}:reject.calibration.derived_for_model: "
+            f"'{reject.calibration.derived_for_model}' 不在 models 中"
+        )
+
+    enabled = _env_bool("TMF_REJECT_ENABLED", reject.enabled)
+    max_score_threshold = _env_float(
+        "TMF_REJECT_MAX_SCORE_THRESHOLD",
+        reject.max_score_threshold,
+        0.0,
+        1.0,
+        exclusive_min=True,
+    )
+    entropy_limit = math.log(len(classes))
+    entropy_threshold = _env_float(
+        "TMF_REJECT_ENTROPY_THRESHOLD",
+        reject.entropy_threshold,
+        0.0,
+        entropy_limit,
+    )
+    if entropy_threshold >= entropy_limit:
+        raise ConfigError(
+            f"{models_path}:reject.entropy_threshold 必须小于 ln(类别数)"
+            f"={entropy_limit:.4f}，否则该条件永不触发"
+        )
+
+    return reject.model_copy(
+        update={
+            "enabled": enabled,
+            "max_score_threshold": max_score_threshold,
+            "entropy_threshold": entropy_threshold,
+        }
+    )
+
+
 def load_settings(
     workers_file: str | Path | None = None,
     models_file: str | Path | None = None,
@@ -333,6 +489,28 @@ def load_settings(
     max_title_chars = _env_int(
         "TMF_MAX_TITLE_CHARS", models_doc.api.max_title_chars, 1, 1000
     )
+    # B6：/compare 渐进式 SSE 的总截止（只影响网关编排，不中止已开始的 worker）。
+    compare_total_timeout_ms = _env_int(
+        "TMF_COMPARE_TOTAL_TIMEOUT_MS",
+        DEFAULT_COMPARE_TOTAL_TIMEOUT_MS,
+        100,
+        300000,
+    )
+    # B12：/compare 与 /compare/stream 的并发上限（默认 3，范围 1~10）。
+    compare_concurrency = _env_int(
+        "TMF_COMPARE_CONCURRENCY",
+        DEFAULT_COMPARE_CONCURRENCY,
+        COMPARE_CONCURRENCY_MIN,
+        COMPARE_CONCURRENCY_MAX,
+    )
+
+    # B3 软拒识：严格校验来源元数据（derived_for_model/类别数），并支持环境变量覆盖。
+    reject = _resolve_reject_config(
+        models_path,
+        models_doc.reject,
+        classes,
+        set(models_doc.models),
+    )
 
     try:
         network = load_network_settings()
@@ -347,6 +525,9 @@ def load_settings(
         max_title_chars=max_title_chars,
         probe_timeout_ms=probe_timeout_ms,
         status_cache_ms=status_cache_ms,
+        compare_total_timeout_ms=compare_total_timeout_ms,
+        compare_concurrency=compare_concurrency,
+        reject=reject,
         workers_file=workers_path,
         models_file=models_path,
         classes_file=classes_path,

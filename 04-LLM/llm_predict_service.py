@@ -7,6 +7,10 @@
 - SDK 自动重试关闭；输出做 10 类白名单校验，非法输出最多重试一次；
 - 错误响应只返回稳定错误码/通用说明，不包含供应商原文或密钥。
 
+分数契约：LLM 没有本地概率输出，``infer`` 返回 ``ModelOutput`` 时
+``scores`` / ``score_kind`` 均为 ``None``；worker 响应不附加分数字段，
+不得用其他方式伪造分数。
+
 ``predict(dict)`` 保留为向后兼容入口；新代码使用 ``SERVICE.predict(title)``。
 """
 
@@ -24,7 +28,11 @@ if str(_PROJECT_ROOT) not in sys.path:
 from dotenv import load_dotenv  # noqa: E402
 from openai import APIError, APITimeoutError, OpenAI  # noqa: E402
 
-from tmf_common.prediction import PredictionError, PredictService  # noqa: E402
+from tmf_common.prediction import (  # noqa: E402
+    ModelOutput,
+    PredictionError,
+    PredictService,
+)
 
 load_dotenv(os.path.join(str(_MODULE_DIR), ".env"))
 
@@ -194,7 +202,7 @@ class LlmPredictService(PredictService):
     def format_error(self, exc: PredictionError) -> str:
         return f"{exc.code}: {exc.message}"
 
-    def infer(self, title: str) -> str:
+    def infer(self, title: str) -> ModelOutput:
         started = time.monotonic()
         deadline = started + TOTAL_TIMEOUT_S
         attempt = 0
@@ -233,7 +241,7 @@ class LlmPredictService(PredictService):
                 PROVIDER,
                 MODEL,
             )
-            return pred
+            return ModelOutput(pred_class=pred)
         except _LLMTimeout as exc:
             _log_failure("LLM_TIMEOUT", attempt or 1, started, str(exc))
             raise PredictionError("上游调用超过总时间预算", code="LLM_TIMEOUT") from exc

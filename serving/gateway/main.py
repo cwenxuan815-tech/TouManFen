@@ -39,11 +39,18 @@ from ..adapters.llm import LlmAdapter
 from ..adapters.protocol import ModelAdapter
 from ..models.registry import ModelRegistry
 from .probes import WorkerProber
+from .routers import arena as arena_router
+from .routers import bench as bench_router
+from .routers import demo as demo_router
 from .routers import classify as classify_router
+from .routers import feedback as feedback_router
 from .routers import health as health_router
 from .routers import models as models_router
 from .routers import stats as stats_router
+from .routers import stream as stream_router
+from ..services.arena import ArenaService
 from ..services.classification import ClassificationService
+from ..services.feedback import FeedbackService
 from .settings import SERVING_DIR, load_settings
 from .stats import StatsCollector
 
@@ -102,11 +109,58 @@ def create_app() -> FastAPI:
             max_title_chars=settings.max_title_chars,
             stats=app.state.stats,
             logger=logger,
+            # B3 软拒识：阈值/来源元数据来自 models.yaml 的 reject 段（严格校验）。
+            reject=settings.reject,
+            # B6：SSE 渐进式对比总截止（TMF_COMPARE_TOTAL_TIMEOUT_MS，默认 18000）。
+            compare_total_timeout_ms=settings.compare_total_timeout_ms,
+            # B12：/compare 与 /compare/stream 并发上限（TMF_COMPARE_CONCURRENCY，默认 3）。
+            compare_concurrency=settings.compare_concurrency,
         )
+        # B7 竞技场：复用同一注册表与适配器，不重复加载模型；DB 默认
+        # serving/run/tmf.db，可由 TMF_DB_PATH 覆盖（表用 CREATE TABLE IF NOT
+        # EXISTS，与后续 B4 feedback 共用同一文件）。
+        app.state.arena = ArenaService(
+            registry=registry,
+            adapters=adapters,
+            classes=settings.classes,
+            logger=logger,
+        )
+        # B4 反馈：与 B7 共用同一 SQLite 文件（TMF_DB_PATH 可覆盖），只追加
+        # feedback 表，不 DROP/重建 arena 表；装配失败时降级为未装配（503），
+        # 不影响分类与竞技场主流程。
+        try:
+            app.state.feedback = FeedbackService(
+                registry=registry,
+                classes=settings.classes,
+                max_title_chars=settings.max_title_chars,
+                logger=logger,
+            )
+        except Exception:
+            app.state.feedback = None
+            logger.exception(
+                "feedback_service_unavailable", extra={"event": "error"}
+            )
+        if app.state.feedback is not None:
+            try:
+                # 启动时惰性清理 30 天前的反馈（只删 feedback，不触碰 vote/arena）。
+                removed = await app.state.feedback.cleanup_expired()
+                if removed:
+                    logger.info(
+                        "feedback_cleanup",
+                        extra={"event": "feedback_cleanup", "removed": removed},
+                    )
+            except Exception:
+                logger.exception(
+                    "feedback_cleanup_failed", extra={"event": "error"}
+                )
         logger.info("gateway_started", extra={"event": "startup"})
         try:
             yield
         finally:
+            feedback_service = getattr(app.state, "feedback", None)
+            if feedback_service is not None:
+                feedback_service.close()
+            app.state.arena.close()
             await app.state.prober.close()
             await app.state.http_client.aclose()
             logger.info("gateway_stopped", extra={"event": "shutdown"})
@@ -248,6 +302,16 @@ def create_app() -> FastAPI:
     app.include_router(models_router.router)
     app.include_router(stats_router.router)
     app.include_router(classify_router.router)
+    # B8：离线 PK 基准最新产物（只读，不推理）/api/v1/bench/pk。
+    app.include_router(bench_router.router)
+    # F15：启动数据来源状态（只读 metadata，不推理）。
+    app.include_router(demo_router.router)
+    # B6：SSE 渐进式对比 /api/v1/compare/stream（旧 POST /compare 保持不变）。
+    app.include_router(stream_router.router)
+    # B7 竞技场路由：/api/v1/arena/next|vote|leaderboard。
+    app.include_router(arena_router.router)
+    # B4 反馈路由：/api/v1/feedback、/api/v1/feedback/stats。
+    app.include_router(feedback_router.router)
 
     # 开发环境 CORS：只允许本地前端来源，只开放所需方法与请求头。
     app.add_middleware(
