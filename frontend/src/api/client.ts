@@ -10,9 +10,20 @@ export const TIMEOUT_MS: Record<TimeoutProfile, number> = {
   arena: 25_000,
 }
 
-export const API_BASE = (
-  import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000'
-).replace(/\/$/, '')
+function resolveApiBase(): string {
+  const configured = import.meta.env.VITE_API_BASE_URL?.trim()
+  if (configured) return configured.replace(/\/$/, '')
+
+  // In LAN mode, use the host that served this page so multiple NICs/subnets
+  // each reach the gateway through the matching local address.
+  if (typeof window !== 'undefined' && window.location.hostname) {
+    const port = import.meta.env.VITE_API_PORT?.trim() || '8000'
+    return `${window.location.protocol}//${window.location.hostname}:${port}`
+  }
+  return 'http://127.0.0.1:8000'
+}
+
+export const API_BASE = resolveApiBase()
 export const API_PREFIX = '/api/v1'
 
 export class ApiClientError extends Error {

@@ -368,9 +368,9 @@ pnpm dev
 
 ### 3. 局域网访问
 
-`启动TMF.bat` 会自动发现本机默认路由的 IPv4 地址，将前端和网关绑定到所有网卡、将 worker 保持在本机回环地址，并配置 CORS 和前端 API 地址。脚本会打印手机访问 URL。若自动发现失败，可在启动前设置 `TMF_LAN_IP` 为电脑当前 Wi-Fi IPv4 地址。
+`启动TMF.bat` 会发现本机活动 Wi-Fi/以太网接口上的私有 IPv4 地址，将前端和网关绑定到所有网卡、将 worker 保持在本机回环地址，并为各地址配置 CORS。前端 API 按当前浏览器访问页面的 hostname 选择同地址网关，因此多网卡/多网段可分别使用各自 URL。脚本会打印所有检测到的 URL。若需手动指定，可在启动前设置 `TMF_LAN_IPS` 为逗号分隔的本机 IPv4 地址列表；`TMF_LAN_IP` 仍可指定单个地址。
 
-脚本会等待 Vite 就绪，并在已有前端时核对其 LAN 绑定和 API 基址后复用。`04-LLM/.env` 未配置非空 Key 时，stage2 会按设计跳过 LLM worker，其余已配置服务仍可启动。`停止TMF.bat` 停止状态文件记录的进程，并按 worker 专属启动标记回收状态文件缺失或遗漏的 TMF worker；网关和 Vite 还须同时匹配 TMF 命令行与对应监听端口。脚本最后检查 5173/8000/worker 端口，仍有监听时会报告端口和 PID，不会仅凭端口强杀进程。
+脚本会等待 Vite 就绪，并在已有前端时核对各 LAN 地址上的页面、动态 API 地址解析和网关健康状态后复用。两个网段的设备能否访问，还取决于电脑确实拥有对应 IP，或路由器允许两个子网互相路由；不同 Wi-Fi/VLAN 可能启用设备隔离。`04-LLM/.env` 未配置非空 Key 时，stage2 会按设计跳过 LLM worker，其余已配置服务仍可启动。`停止TMF.bat` 停止状态文件记录的进程，并按 worker 专属启动标记回收状态文件缺失或遗漏的 TMF worker；网关和 Vite 还须同时匹配 TMF 命令行与对应监听端口。脚本最后检查 5173/8000/worker 端口，仍有监听时会报告端口和 PID，不会仅凭端口强杀进程。
 
 手动启动时，配置如下（将 `<LAN_IP>` 换成电脑当前 Wi-Fi IPv4 地址）：
 
@@ -378,11 +378,11 @@ pnpm dev
 $env:TMF_FRONTEND_HOST='0.0.0.0'
 $env:TMF_GATEWAY_HOST='0.0.0.0'
 $env:TMF_WORKER_HOST='127.0.0.1'
-$env:VITE_API_BASE_URL='http://<LAN_IP>:8000'
-$env:TMF_CORS_ORIGINS='http://<LAN_IP>:5173'
+$env:VITE_API_PORT='8000' # API hostname follows the page hostname
+$env:TMF_CORS_ORIGINS='http://<LAN_IP_1>:5173,http://<LAN_IP_2>:5173'
 ```
 
-前端用 `pnpm dev` 启动后，在手机浏览器访问 `http://<LAN_IP>:5173`。Windows 防火墙只需在可信专用网络放行 TCP 5173（前端）和 8000（网关）；worker 端口保留本机访问，不要向局域网开放。`0.0.0.0` 仅是监听地址，不能作为浏览器连接目标。同一 Wi-Fi 通常处于同一局域网，但访客网络、AP/客户端隔离或 VLAN 可能阻止设备互访。
+前端用 `pnpm dev` 启动后，各网段客户端访问对应网卡地址的 `http://<LAN_IP>:5173`；页面会访问同 hostname 的 `:8000` 网关。Windows 防火墙只需在相关网络配置文件放行 TCP 5173（前端）和 8000（网关）；worker 端口保留本机访问，不要向局域网开放。`0.0.0.0` 仅是监听地址，不能作为浏览器连接目标。同一 Wi-Fi 通常处于同一局域网，但访客网络、AP/客户端隔离或 VLAN 可能阻止设备互访。
 
 ### 4. 训练（可选）
 
@@ -435,6 +435,7 @@ pnpm build
 | `TMF_LLM_PROVIDER` | `deepseek` / `qwen` / `zhipu` | `deepseek` |
 | `TMF_LLM_TOTAL_TIMEOUT_S` | LLM 上游总预算 | 12 s |
 | `VITE_API_BASE_URL` | 前端 API 基址 | `http://127.0.0.1:8000` |
+| `VITE_API_PORT` | 页面 hostname 动态 API 模式使用的网关端口 | `8000` |
 | `TMF_BERT_PATH` | 预训练 BERT 目录 | `../PretrainedModel/bert-base-chinese` |
 
 ## 评估口径

@@ -23,8 +23,9 @@ if ($listeners.Count -eq 0) {
     exit 0
 }
 
+$lanAddresses = @($LanIPv4 -split ',' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
 $lanBound = @($listeners | Where-Object {
-    $_ -eq '0.0.0.0' -or $_ -eq '::' -or $_ -eq $LanIPv4
+    $_ -eq '0.0.0.0' -or $_ -eq '::' -or $lanAddresses -contains $_
 }).Count -gt 0
 if (-not $lanBound) {
     Write-Output 'OTHER'
@@ -32,14 +33,18 @@ if (-not $lanBound) {
 }
 
 try {
-    $page = Invoke-WebRequest -Uri "http://${LanIPv4}:$Port/" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
-    $apiModule = Invoke-WebRequest -Uri "http://${LanIPv4}:$Port/src/api/client.ts" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
-    $expectedApi = "http://${LanIPv4}:$GatewayPort"
-    if ($page.StatusCode -eq 200 -and $apiModule.Content.Contains($expectedApi)) {
-        Write-Output 'TMF'
-    } else {
-        Write-Output 'OTHER'
+    foreach ($address in $lanAddresses) {
+        $page = Invoke-WebRequest -Uri "http://${address}:$Port/" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
+        $apiModule = Invoke-WebRequest -Uri "http://${address}:$Port/src/api/client.ts" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
+        $health = Invoke-WebRequest -Uri "http://${address}:$GatewayPort/api/v1/healthz" -UseBasicParsing -TimeoutSec 3 -ErrorAction Stop
+        if ($page.StatusCode -ne 200 -or
+            $health.StatusCode -ne 200 -or
+            $apiModule.Content -notmatch 'window\.location\.hostname') {
+            Write-Output 'OTHER'
+            exit 0
+        }
     }
+    Write-Output 'TMF'
 } catch {
     Write-Output 'OTHER'
 }

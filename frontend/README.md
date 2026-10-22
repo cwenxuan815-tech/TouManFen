@@ -4,7 +4,7 @@ TMF 新闻标题分类验证页面，使用 Vue 3、TypeScript 和 Vite。当前
 
 > **最终状态（2026-10-22）**：已完成 F1–F16 中与本阶段相关的前端能力（分类/对比/SSE/反馈/竞技场/PK/主题/大屏/可访问性/F15 来源）；`vue-tsc`/`pnpm build` 通过；F14/F15/F10/F11/F9 浏览器 harness 有记录。F13/D4 设备为 Edge headless 模拟，**未做真实投影/手机人工视觉验收**。
 >
-> **运行方式**：本地开发默认 `127.0.0.1:5173`。从仓库根目录运行 `启动TMF.bat` 可自动探测电脑 LAN IPv4、启动后端与前端并等待前端就绪；手机访问脚本显示的 URL。停止时运行根目录 `停止TMF.bat`。真实手机视觉验收仍需在目标设备上完成。
+> **运行方式**：本地开发默认 `127.0.0.1:5173`。从仓库根目录运行 `启动TMF.bat` 可检测活动 Wi-Fi/以太网接口上的多个私有 IPv4，启动后端与前端并等待各地址就绪；电脑和手机分别访问所在网段对应的脚本输出 URL。前端 API hostname 跟随当前页面访问地址。停止时运行根目录 `停止TMF.bat`。真实手机视觉验收仍需在目标设备上完成。
 
 ## 环境
 
@@ -26,9 +26,10 @@ pnpm dev
 | `TMF_FRONTEND_HOST` | Vite 监听地址 | `127.0.0.1` |
 | `TMF_FRONTEND_PORT` | Vite 端口 | `5173` |
 | `VITE_API_BASE_URL` | 前端访问网关的基址 | `http://127.0.0.1:8000` |
+| `VITE_API_PORT` | 页面 hostname 动态 API 模式使用的网关端口 | `8000` |
 
 可在 shell 环境变量或 `frontend/.env.local`（不入库）中设置；示例见 `.env.example`。
-**一键局域网启动（推荐）**：从仓库根目录运行 `启动TMF.bat`。它会发现当前默认路由的 Wi-Fi IPv4（无 Wi-Fi 时回退到有线网卡），设置 `TMF_FRONTEND_HOST=0.0.0.0`、`TMF_GATEWAY_HOST=0.0.0.0`、`TMF_BIND_HOST=127.0.0.1`、`TMF_WORKER_HOST=127.0.0.1`，并按当前 IP 配置 CORS 与 `VITE_API_BASE_URL`。前端和网关对手机开放，模型 worker 仅在电脑本机监听。
+**一键局域网启动（推荐）**：从仓库根目录运行 `启动TMF.bat`。它会发现活动 Wi-Fi/以太网接口上的私有 IPv4 地址，设置 `TMF_FRONTEND_HOST=0.0.0.0`、`TMF_GATEWAY_HOST=0.0.0.0`、`TMF_BIND_HOST=127.0.0.1`、`TMF_WORKER_HOST=127.0.0.1`，并为每个前端 IP 配置 CORS。前端 API 会根据浏览器访问页面的 hostname 连接同地址网关，因此支持多网卡/多网段入口。也可以设置 `TMF_LAN_IPS` 为逗号分隔的本机 IPv4 列表。前端和网关对局域网开放，模型 worker 仅在电脑本机监听。
 
 手动启动时，将 `<LAN_IP>` 换成电脑当前 Wi-Fi IPv4 地址：
 
@@ -38,13 +39,13 @@ $env:TMF_GATEWAY_HOST='0.0.0.0'
 $env:TMF_BIND_HOST='127.0.0.1'
 $env:TMF_WORKER_HOST='127.0.0.1'
 $env:TMF_FRONTEND_PORT='5173'
-$env:TMF_CORS_ORIGINS='http://<LAN_IP>:5173'
-$env:VITE_API_BASE_URL='http://<LAN_IP>:8000'
+$env:TMF_CORS_ORIGINS='http://<LAN_IP_1>:5173,http://<LAN_IP_2>:5173'
+$env:VITE_API_PORT='8000'
 powershell -NoProfile -ExecutionPolicy Bypass -File ..\serving\scripts\stage2.ps1 -Action start
 pnpm dev
 ```
 
-手机访问 `http://<LAN_IP>:5173`。Windows Defender 防火墙需在可信的“专用网络”放行 TCP **5173 和 8000**；启动脚本会提示此要求，但不会自行添加防火墙规则。worker 端口留在本机，不要向局域网开放。若仍无法连接，检查电脑与手机是否在同一可互访的子网、路由器是否开启 AP/客户端隔离，以及电脑当前 IPv4 地址是否变化。连接同一个 Wi-Fi 通常意味着在同一局域网，但访客 Wi-Fi、VLAN 或客户端隔离会阻止设备互访。
+各客户端访问其网段对应的 `http://<LAN_IP>:5173`；API 会使用同一 hostname 的 `:8000`。Windows Defender 防火墙需在相关网络配置文件放行 TCP **5173 和 8000**；启动脚本会提示此要求，但不会自行添加防火墙规则。worker 端口留在本机，不要向局域网开放。跨网段访问要求电脑持有对应网卡 IP 或路由器提供子网间路由，并且网络未启用 AP/客户端隔离；访客 Wi-Fi、VLAN 或客户端隔离会阻止设备互访。
 
 停止时运行仓库根目录 `停止TMF.bat`。后端脚本优先按状态文件停止进程；状态文件缺失时会按专属启动标记识别遗留 worker，并核对网关/Vite 命令行及监听端口。脚本最后检查相关端口并报告仍在监听的进程，不会仅凭端口号结束进程。
 

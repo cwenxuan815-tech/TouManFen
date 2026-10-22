@@ -36,7 +36,7 @@
 
 ## 配置（网络）
 
-后端单机默认全部为 `127.0.0.1`。Windows 根目录 `启动TMF.bat` 会为手机局域网模式自动配置：网关绑定 `0.0.0.0`，worker 仍绑定 `127.0.0.1`，网关也只通过 loopback 调用 worker；停止使用根目录 `停止TMF.bat`。手动设置项如下（完整操作见根 [README](../README.md)）：
+后端单机默认全部为 `127.0.0.1`。Windows 根目录 `启动TMF.bat` 会为多网卡/手机局域网模式自动配置：网关绑定 `0.0.0.0`，worker 仍绑定 `127.0.0.1`，网关也只通过 loopback 调用 worker；为检测到的各前端地址添加 CORS 来源。跨网段设备需能路由到运行电脑对应地址；停止使用根目录 `停止TMF.bat`。手动设置项如下（完整操作见根 [README](../README.md)）：
 
 | 变量 | 作用 |
 |---|---|
@@ -46,6 +46,7 @@
 | `TMF_WORKER_URL_<ID>` | 单个 worker 完整 URL 覆盖（如 `TMF_WORKER_URL_RF`） |
 | `TMF_FRONTEND_HOST` / `TMF_FRONTEND_PORT` | 默认 CORS 来源推导（`http://<host>:<port>`） |
 | `TMF_CORS_ORIGINS` | 追加 CORS 来源（逗号分隔，禁止 `*`） |
+| `TMF_LAN_IPS` | Windows 启动脚本手动指定多个本机 IPv4（逗号分隔） |
 
 手机访问时只需在可信专用网络放行 TCP 8000（网关）和 5173（前端）；worker 的 8101/8103/8104/8105/8106 端口不要暴露到局域网。启动脚本不会自行创建 Windows 防火墙规则。
 
