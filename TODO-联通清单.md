@@ -1,6 +1,6 @@
 # TODO · 联通清单
 
-> **状态回填（2026-10-22 最终）**：本清单写于工程骨架阶段（2026-10-19 前后），其中绝大多数阻塞项已完成。2026-10-21 完成适配层/worker 契约/网络配置重构；2026-10-22 完成 D5 SSE、D6 B8/B12/F10/F11 与 B9/B10/B11/D1/D2/F14/D3/D4、F15 启动来源/cached 回退。当前能力、验证边界与启动方式以 [README.md](README.md)、[v6 学习档案](docs/PROJECT_LEARNING_GUIDE_v6_全链路交付与隔离验收.md) 与专项文档为准；**B8 LLM 仍 missing、D7 未执行**，本清单保留历史/待办记录。
+> **状态回填（2026-10-25 最终）**：本清单写于工程骨架阶段（2026-10-19 前后），其中绝大多数阻塞项已完成。2026-10-21 完成适配层/worker 契约/网络配置重构；2026-10-22 完成 D5 SSE、D6 B8/B12/F10/F11 与 B9/B10/B11/D1/D2/F14/D3/D4、F15 启动来源/cached 回退；2026-10-23～25 完成阶段 2A/2B/3A/3B（批量后端 + 前端多条输入/文件导入）、4A/4B/4C（LLM 每 IP 配额）、5A/5B/5C/5D（访问名额控制），并已提交 HEAD `afd3ff2`。当前能力、验证边界与启动方式以 [README.md](README.md)、[v7 学习档案](docs/PROJECT_LEARNING_GUIDE_v7_访问控制与阶段4-5D工程复盘.md) 与专项文档为准；**B8 LLM 仍 missing、D7 未执行、真实 LAN/手机/真实 LLM 未验收**，本清单保留历史/待办记录。
 > 状态标记：☐ 未开始 / ◐ 部分完成 / ☑ 已完成
 > 证据口径：☑ 表示"存在可追溯记录"；"已实现"与"本次重新验证"是两件事，正文中分别注明。
 
@@ -30,7 +30,7 @@
 
 - ☑ **数据清洗**：已完成并归档 `train.clean.txt`（178,692 条，删除 0.73%：重复标题 809 / 标签冲突 96 / 防泄漏 403），报告见 [00-data/data/clean_report.md](00-data/data/clean_report.md)；**主口径仍是未清洗的 180,000 条**，清洗集仅用于蒸馏 v2b 与附加实验。
 - ☑ **接口/前端联调（2026-10-19，Streamlit 5/5）**：用 Streamlit `AppTest` 真实交互测试，RF / fastText / BERT / LLM(DeepSeek) / 蒸馏五个模块的「前端输入 → HTTP 调后端 → 页面显示预测」全部打通；同时修掉 fastText×numpy2、3 个服务缺参兜底、Flask `debug=True` 孤儿进程、LLM 平台切换与输出校验。详见 [docs/联调记录.md](docs/联调记录.md)。**这是历史记录**：2026-10-20 起主前端为 Vue 3，联调对象改为网关。
-- ☐ **Gitee 提交**：`.gitignore` 已就位（排除 `.env`、`save_model/`、`PretrainedModel/`、`process_*`、模块数据副本）；**截至 2026-10-20 工作区仍无 `.git`**，需 `git init` → 首次提交 → 远端推送，提交前用 `git status` 确认没有大文件/密钥。
+- ☑ **Gitee 提交**：`.gitignore` 已就位（排除 `.env`、`save_model/`、`PretrainedModel/`、`process_*`、模块数据副本）；已改用 GitHub 仓库 `cwenxuan815-tech/TouManFen`：2026-10-21 初始化并推送；截至 2026-10-25 HEAD `afd3ff2` 与 `origin/main` 同步，工作区干净（仅 2 个非项目的爬虫快捷方式未跟踪）。
 - ☐ **`PretrainedModel` 瘦身**：该目录 9.27 GB，`distilbart-cnn-12-6`（4.08 GB）与各模型的 `tf_model.h5` / `flax_model.msgpack` 对本项目无用，可删除或移到备份盘（未执行）。
 
 ## 四、已完成（2026-10-20：服务层 / 前端 / 启停）
@@ -90,7 +90,7 @@
 - ☑ **最终口径决策**：主口径 = 未清洗数据（服务端模型不变），清洗集作为实验章节呈现；
   详见 docs/实测指标.md 第九、十章，README「口径说明」
 
-## 七、当前待办汇总（2026-10-22 最终）
+## 七、当前待办汇总（2026-10-25）
 
 ### 已完成（本阶段）
 - ☑ **D5**：SSE 渐进对比、总截止、取消、前端降级（B6/F9）。
@@ -104,9 +104,23 @@
 - ☐ **B8 真实 LLM 基准**：当前 LLM=missing；需要真实 Provider 授权、费用/稳定性评估后才能补 5 模型 PK，不能用 mock 代替。
 - ☐ **真实设备验收**：投影/手机/笔记本人工视觉、键盘/触摸、真实局域网外部机器；F13/D4 目前是 Edge headless 模拟。
 - ☐ **真实 LAN/外部 Provider**：用户 stage2 运行状态不在本项目测试范围；外部 LAN、真实网络断开、真实 Provider 均未验收。
-- ☐ **D7**：未执行。
+- ☐ **D7**：未执行。此处 D7 指《工程实施工作清单_75工时》第 7 天的收尾节点（两次彩排、真实设备/真实网络收口），与 v7 第 8 章的技术决策编号 D7（CORS 精确允许 `X-Access-Ticket`）无关；D7 计划内的 B9/B10/B11/F14/D3/D4 已单独执行（2026-10-22），但 D7 整日收口未执行。
 - ◐ **历史工程脚本**：`run_all.py` 完整端到端流水线、`tools/evaluate_all.py` 统一评估脚本仍未固化；`PretrainedModel` 瘦身未做（历史待办，非本轮范围）。
 - ◐ **旧 D4 非隔离证据**：`artifacts/d4/` 中旧文件仍保留，文档已标注由 `*-isolated` 取代；是否归档/清理待决定。
 - ☐ **生产化**：鉴权、HTTPS、生产级数据库/迁移、队列、Docker/CI 未实现。
-- 明确未实现、不要记为已具备：calibrated confidence、批量前端输入/文件导入（阶段 2A 仅后端批量 API 已实现）、API 缓存/single-flight/级联、热搜、鉴权、生产级数据库/队列、Docker/CI。
+- 已实现（2026-10-23～25，见第八节）：批量后端 API、前端多条输入、TXT/CSV 文件导入、LLM 每 IP 配额、访问名额控制（默认关闭）。
+- 明确未实现、不要记为已具备：多标题 × 多模型、calibrated confidence、API 缓存/single-flight/级联、热搜采集（仅保留 OCR/微博热搜外部导航链接）、鉴权、生产队列、Docker/CI。
 - 已实现但不要误读：B4/B7 使用本地 SQLite 存反馈/投票；cached/mock 不进入 live 统计；B8 集成/oracle 是派生指标。
+
+## 八、已完成（2026-10-23～25：批量、文件导入、LLM 配额、访问控制）
+
+- ☑ **阶段 2A 批量后端**：`POST /api/v1/classify/batch`，1–100 条 × 单模型、每条 ≤200 code point、总计 ≤20,000、30s 总时限、进程级并发默认 2；worker 调用前拒绝 LLM；逐条保序，支持 partial/all_failed。
+- ☑ **阶段 2B 前端多条输入（F17）**：多条标题串行/分片提交，mock harness 验证。
+- ☑ **阶段 3A/3B 前端文件导入（F18/F19）**：TXT/CSV 浏览器本地解码、解析、预览、表头列选择与坏行确认；文件不上传、不写日志，只接单模型批量。
+- ☑ **阶段 5C access UI（F20）**：`useAccess`、access API client、ticket 存储、排队/冷却/倒计时界面与恢复。
+- ☑ **阶段 4A/4B/4C LLM 配额**：每 IP 3 次、HMAC-SHA256(IP) + SQLite、第 4 次 403 `LLM_QUOTA_EXHAUSTED`、store 不可用 503 fail-closed、离线管理员 CLI `manage_llm_quota.py`。
+- ☑ **阶段 5A/5B/5C 访问名额控制**：`verify_access_state.py` 90 checks、`verify_access_gateway.py` 80 checks、F20 58 checks；10 active/50 queued、180/15/120/60 秒规则、`X-Access-Ticket` 门禁，默认关闭且不是认证。
+- ☑ **竞技场四候选**：排除 LLM 的 4 个本地模型、A–D 四列等宽（F10 10/10 场景，S1 36/36）。
+- ☑ **OCR/微博热搜外部导航**：`OCR 识别` → `http://192.168.12.82:8000/#image`，`微博热搜` → `http://192.168.12.54:8080/`，位于“关于 TMF”前。
+- ☑ **2026-10-25 本轮复跑**：`verify_batch.py`、`verify_access_state.py`、`verify_access_gateway.py`、`verify_llm_quota_infra.py`、`verify_llm_quota_gateway.py`、`verify_llm_quota_cli.py` 均 PASS（隔离环境，未启动真实服务、未调用真实 Provider；4B 需先清除进程 `TMF_ACCESS_CONTROL_ENABLED`）。
+- ☑ **提交**：HEAD `afd3ff2 feat: complete access control and delivery integration`（2026-10-25 11:47 +0800，与 `origin/main` 同步）。

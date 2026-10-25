@@ -31,7 +31,7 @@ node tests/f14/run-scenarios.mjs
 
 | 场景 | 断言重点 |
 |---|---|
-| S1 skip link / 焦点环 / Tab 顺序 | skip link 是首个可聚焦元素且未聚焦时移出视口；Enter 激活后焦点落到 `<main id="main-content" tabindex="-1">`；品牌 → 5 个导航链接的 Tab 顺序；亮/暗主题下焦点环 ≥2px 实线、未被 `overflow` 裁切、暗色对比度 ≥3:1 |
+| S1 skip link / 焦点环 / Tab 顺序 | skip link 是首个可聚焦元素且未聚焦时移出视口；Enter 激活后焦点落到 `<main id="main-content" tabindex="-1">`；品牌 → 7 个导航链接（含 OCR 识别、微博热搜两个外部入口）的 Tab 顺序；亮/暗主题下焦点环 ≥2px 实线、未被 `overflow` 裁切、暗色对比度 ≥3:1 |
 | S2 键盘-only 全流程 | 真实按键 Tab 到标题框并输入 → Tab 到提交并 Enter → 结果卡出现且只播报一条 `aria-live` 摘要（结果区不再整体 live）；反馈面板打开焦点进第一项、Tab 循环（首尾回绕）、Esc 关闭并归还焦点；键盘选中纠正类别并提交（「待审核」单条播报）；输出焦点回到触发按钮；键盘导航到 `#arena` 投票、翻牌后焦点落到揭晓状态区；「再抽一题」可继续 |
 | S3 reduced-motion | `prefers-reduced-motion: reduce` 下：F6 分数条、结果区、loading spinner、F10 翻牌、Toaster、F11 条形动画/过渡均 ≤1ms；F11 指标切换由独立摘要 `aria-live` 播报 |
 | S4 移动菜单 | 390×844 模拟视口：菜单按钮可见、导航默认收起；Enter 打开（`aria-expanded`/`aria-controls`）、Tab 进入第一项且焦点环可见；Esc 关闭并归还焦点 |
@@ -40,3 +40,9 @@ node tests/f14/run-scenarios.mjs
 
 > 说明：`reduced-motion`、移动视口、6× CPU 均为 **CDP 模拟**，非真实低端设备；报告
 > `f14-report.json` 的 `environment` 字段记录模拟参数。真实 B7/B8/B4 链路由各自验收脚本负责。
+
+## 最近结果（2026-10-25）
+
+- 2026-10-25 记录：外部导航（`OCR 识别`、`微博热搜`）的 Tab 顺序与移动菜单子项断言通过。
+- 整体仍有 **7 条失败**，根因是 access overlay 覆盖（F14 的 mock 未集成 access），因此**不能**写「F14 全部通过」。
+- 上述均为 mock/headless 结果；access 开启后的完整业务页面回归仍未验收。

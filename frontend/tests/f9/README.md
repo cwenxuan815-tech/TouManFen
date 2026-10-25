@@ -25,6 +25,13 @@ node tests/f9/run-scenarios.mjs
 - 需要 `127.0.0.1:18080`（mock server）与 `9334`（Edge CDP）空闲；Edge user-data-dir 使用系统临时目录，运行结束清理。
 - `tests/f9/env/.env.local` 由运行器自动写入，用于把 harness 的 `VITE_API_BASE_URL` 指向 mock server。
 
+## 最近结果（2026-10-25）
+
+- 2026-10-25 记录：本 harness 共 **68 checks PASS**（退出码 `0`）。
+- 运行时显式提供 `VITE_API_BASE_URL=http://127.0.0.1:18080`（指向 mock server），不继承开发 shell 的地址。
+- 历史问题：F9 曾因环境变量被覆盖出现过 26 条失败，已修复；上述 68 checks 为修复后的记录。
+- 结果仍为 mock/headless，不代表真实网关链路已验收。
+
 ## 场景（`title` 即 mock 控制通道，前端只按真实契约发 title/models）
 
 | title | 场景 | 断言重点 |

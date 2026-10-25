@@ -1,11 +1,11 @@
 # 项目工程实践与技术学习档案（v5：模型适配层、worker 契约与网络配置重构）
 
-> **状态更新（2026-10-22）**：本文为历史/前期归档，不代表最终实现；最终能力与验收状态以 [README](../README.md) 和 [v6 学习档案](PROJECT_LEARNING_GUIDE_v6_全链路交付与隔离验收.md) 为准。B8 LLM 仍 missing，D7 未执行，真实设备/真实 LLM 未验收。
+> **状态更新（2026-10-25）**：本文为历史归档，不代表最终实现；最新能力、验收边界与启动方式以 [README](../README.md) 与 [v7 学习档案](PROJECT_LEARNING_GUIDE_v7_访问控制与阶段4-5D工程复盘.md) 为准。截至 2026-10-25，`main` 已提交 `afd3ff2`（批量分类/前端文件导入/LLM 每 IP 配额/访问名额控制等已交付并隔离验证）；B8 LLM 仍 missing，D7 未执行，真实 LAN/手机/真实 LLM 未验收。
 
 
 > 版本：`v5-refactor-1.1`　｜　生成时间：2026-10-21（Asia/Shanghai）
 > 对应工程：`E:\AIModels\test\TouManFen\TouManFenClassifier`
-> 基准提交：`9f81e05`（`main`，2026-10-21 初始化提交）；**本次重构改动尚未提交**。
+> 基准提交：`9f81e05`（`main`，2026-10-21 初始化提交）；**本次重构改动尚未提交**（2026-10-25 已随 afd3ff2 提交）。
 > 文档定位：不是开发日志，而是一份可追溯、可复核、可迁移的工程实践档案。
 > 证据标记：**【已验证事实】**（本次会话工具输出/文件/日志/测试可直接核验）、**【历史记录】**（来自既有文档或更早会话，当前不可重新核验）、**【技术分析】**（基于证据的解释/推断）、**【待确认】**（证据不足）。
 
@@ -20,7 +20,7 @@
 | 文档版本 | v5-refactor-1.1 |
 | 生成时间 | 2026-10-21 |
 | 覆盖阶段 | 2026-10-21 的架构讨论 → 重构实施 → 自动化/真实服务验证 → 局域网部署 |
-| 对应代码状态 | 基准提交 `9f81e05`；工作区存在未提交改动（本次重构 + 文档重命名/新增等），**未 commit** |
+| 对应代码状态 | 基准提交 `9f81e05`；工作区存在未提交改动（本次重构 + 文档重命名/新增等），**未 commit**（2026-10-25 已随 afd3ff2 提交） |
 | 与既有档案关系 | 不覆盖 `PROJECT_LEARNING_GUIDE.md`（v1，2026-10-19）、`PROJECT_LEARNING_GUIDE_v2_工程化改造与集成验证.md`（v2）、`PROJECT_LEARNING_GUIDE_v3_前端开发全过程技术归档.md`（v3）、`PROJECT_LEARNING_GUIDE_v4_Git与GitHub工程归档.md`（v4）；本文是 v5 续篇 |
 | 证据限制 | 无法读取 DSH 原始 Trajectory/事件流；只依据当前会话可见消息、工具输出、文件、日志和测试结果。早期会话（10-12～10-20）只能引用既有文档 |
 | 项目最终状态 | 服务正在本机运行，监听 `192.168.12.54:5173/8000/8101/8103~8106`；重建后的适配层/worker 契约/网络配置已通过自动化与真实服务验证；局域网**外部机器**访问尚未实测 |
@@ -1362,7 +1362,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File serving\scripts\stage2.ps1 -
 | `python serving/scripts/verify_stage3.py --llm-mode skip` | 真实分类/compare | 26 PASS + SKIP |
 | `python serving/scripts/verify_stage3.py --llm-mode mock` | mock LLM | 46 PASS |
 | `pnpm type-check` / `pnpm build` | 前端验证 | exit 0 |
-| `git status/log` | 版本状态 | HEAD 9f81e05；工作区有未提交改动（含既有文档） |
+| `git status/log` | 版本状态 | 当时（2026-10-21）：HEAD 9f81e05、工作区有未提交改动（含既有文档）；2026-10-25 已随 afd3ff2 提交 |
 | `setx`/`[Environment]::SetEnvironmentVariable` | 持久化 LAN 配置 | 已设置 5 个变量 |
 | Python httpx LAN smoke | 真实链路 | 全部通过 |
 
@@ -1438,7 +1438,7 @@ http://192.168.12.54:5173
 | 网关日志 | `serving/logs/gateway.jsonl` | 请求/错误（历史与本次） |
 | 配置 | `serving/config/*.yaml`、`tmf_common/config.py` | 默认 127.0.0.1 |
 | 验收脚本输出 | 本次会话工具输出 | V1–V13 |
-| Git | `HEAD 9f81e05`；工作区有未提交改动（含既有未提交文档） | 未提交 |
+| Git | 当时（2026-10-21）：`HEAD 9f81e05`、工作区有未提交改动（含既有未提交文档）；2026-10-25 已随 afd3ff2 提交 | 未提交（历史） |
 | 运行状态 | `Get-NetTCPConnection` | LAN 监听 |
 
 ## 附录 B：需求→实现→验证对照

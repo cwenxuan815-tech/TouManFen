@@ -1,8 +1,8 @@
 # TMF 前端
 
-TMF 新闻标题分类验证页面，使用 Vue 3、TypeScript 和 Vite。当前包含单模型/多模型对比、SSE 流式、**多条标题分类（阶段 2B，每 10 条串行提交）**、**TXT/CSV 本地文件导入（阶段 3B，浏览器本地解析、预览、CSV 表头/列选择）**、反馈、竞技场、PK 榜、主题/大屏与演示来源/离线快照；热搜仍暂缓。
+TMF 新闻标题分类验证页面，使用 Vue 3、TypeScript 和 Vite。当前包含单模型/多模型对比、SSE 流式、**多条标题分类（阶段 2B，每 10 条串行提交）**、**TXT/CSV 本地文件导入（阶段 3B，浏览器本地解析、预览、CSV 表头/列选择）**、反馈、竞技场、PK 榜、主题/大屏、演示来源/离线快照与**访问名额 UI（阶段 5C）**；热搜采集仍暂缓（主导航仅有 OCR/微博热搜外部链接）。
 
-> **最终状态（2026-10-22，阶段 3B 更新）**：已完成 F1–F16 中与本阶段相关的前端能力（分类/对比/SSE/反馈/竞技场/PK/主题/大屏/可访问性/F15 来源）；阶段 3B 增加 TXT/CSV 文件导入，F17/F18/F19 浏览器 harness 有记录；`vue-tsc` 通过。F13/D4 设备为 Edge headless 模拟，**未做真实投影/手机人工视觉验收**。
+> **最终状态（2026-10-25，提交 afd3ff2）**：F1–F20 相关前端能力完成，含批量（F17）、TXT/CSV 文件导入（F18/F19）、访问名额 UI（F20，58/58）；`vue-tsc --noEmit` 通过。F14 外部导航子项（Tab 顺序/移动菜单）通过，但整体仍受 access overlay 影响（7 条失败）。F13/D4 设备为 Edge headless 模拟，**真实设备/LAN 未验收**。
 >
 > **运行方式**：本地开发默认 `127.0.0.1:5173`。从仓库根目录运行 `启动TMF.bat` 可检测活动 Wi-Fi/以太网接口上的多个私有 IPv4，启动后端与前端并等待各地址就绪；电脑和手机分别访问所在网段对应的脚本输出 URL。前端 API hostname 跟随当前页面访问地址。停止时运行根目录 `停止TMF.bat`。真实手机视觉验收仍需在目标设备上完成。
 
@@ -73,12 +73,12 @@ pnpm dev
 
 ## 最终收尾补充（2026-10-22）
 
-- 页面：默认 `#lab`；`#arena`/`#bench` 懒挂载（默认首页不会触发竞技场 5 模型抽题）；导航含分类实验台/模型矩阵/竞技场/PK 榜/关于。
+- 页面：默认 `#lab`；`#arena`/`#bench` 懒挂载（默认首页不会触发竞技场 4 模型抽题）；导航含分类实验台/模型矩阵/竞技场/PK 榜/OCR 识别/微博热搜/关于，两个外部链接在“关于 TMF”前，且 access overlay 未 active 时不可点击。
 - 主题：`tokens.css` 双主题 + `useTheme`（系统默认、手动切换、localStorage）；大屏模式 `useLargeScreen`（×1.25、隐藏调试、全屏失败降级）；三档断点。
 - 结果/反馈：F6 未校准分数/Top-3/拒识/threshold_meta/人工反馈参考；F8 pending 反馈；F10 匿名竞技场 + 翻牌 + Wilson 预热榜；F11 真实 `GET /bench/pk` 离线榜（LLM missing 显示未纳入）。
 - 质量：F14 skip link、`:focus-visible`、反馈面板焦点循环/Escape、移动菜单 Escape、aria-live 单次播报、reduced-motion、50 卡与 6× CPU 模拟验收；F16 安全上下文复制降级。
 - 数据真实性：页面启动即请求 `GET /api/v1/demo/state`（服务端 metadata 判定 mock/live；混合/缺失=unknown+来源明细）；结果 `data_source` 来自后端 worker metadata；不根据 URL/可达性猜 live；`public/snapshot.json` 为 cached 演示数据，页面级自动 cached 回退已接线（显示离线快照+生成时间，恢复后退出）。
-- 限制：F13 设备验收为 Edge headless 模拟；无真实浏览器人工视觉验收；未调用真实 LLM/用户服务。详细命令见 D1 文档与 `frontend/tests/f9-f14`。
+- 限制：F13 设备验收为 Edge headless 模拟；无真实浏览器人工视觉验收；未调用真实 LLM/用户服务。详细命令见 D1 文档与 `frontend/tests/f9–f20`。
 
 ## 阶段 5C：访问名额交互（2026-10-23）
 
@@ -95,3 +95,4 @@ node tests/f20/run-scenarios.mjs
 ```
 
 - `TMF_ACCESS_CONTROL_ENABLED` 仍默认 false；本阶段未启用。详见 `docs/前端对接说明.md` 10.11。
+- `frontend/tests/f20/run-scenarios.mjs` 在 2026-10-25 记录 **58/58 PASS**；OCR/微博热搜导航已纳入断言；access overlay 遮挡导航是已知限制；默认 flag=false，未用真实网关验证。

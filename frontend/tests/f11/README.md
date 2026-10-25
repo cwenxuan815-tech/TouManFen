@@ -3,9 +3,9 @@
 只服务于 **F11「PK 榜单页」前端验收**：不启动真实后端、不调用真实 LLM、不访问真实 worker。
 `BenchPage.vue` 请求的 `GET /api/v1/bench/pk` 由本目录 `mock-server.mjs` 按场景返回。
 
-> ⚠️ 当前 `artifacts/bench/pk_*.json` 尚未生成（B8 后端进行中），fixture
-> `fixtures/bench_pk.mock.json` 是**结构一致的显式 mock**（部分数值取自 `docs/实测指标.md`）。
-> B8 产物落地后，只需把 `fixtures/bench_pk.mock.json` 换成真实产物（或让 mock server 指向它），
+> ⚠️（2026-10-25 更新）`artifacts/bench/pk_2026-10-22.json` 已生成（4 个本地模型 ok、LLM missing、派生集成/oracle），并由 `GET /api/v1/bench/pk` 提供；本目录的 fixture
+> `fixtures/bench_pk.mock.json` 仍是**结构一致的显式 mock**（部分数值取自 `docs/实测指标.md`），用于前端 harness 的固定场景。
+> 如需以真实产物驱动页面，让 mock server 指向 `artifacts/bench/pk_2026-10-22.json` 即可；
 > 页面代码无需改动（`api/bench.ts` 同时兼容 raw artifact 与 `{request_id, artifact_path, artifact}` 包装层）。
 
 ## 组成
@@ -30,6 +30,11 @@ node tests/f11/run-scenarios.mjs
 - 退出码 `0` = 全部断言 PASS；`1` = 有失败断言或运行异常。
 - 需 `127.0.0.1:18090`（mock server）与 `9335`（Edge CDP）空闲。
 - `tests/f11/env/.env.local` 由运行器自动写入。
+
+## 最近结果（2026-10-25）
+
+- 2026-10-22 历史记录：本 harness 场景通过（沿用当时的历史记录，未记录固定断言数，结果以运行退出码为准）。
+- 2026-10-25 未复跑，状态以协议与产物为准：接口契约以 `fixtures/bench_pk.mock.json` 与 `artifacts/bench/*.json`（B8 产物）为准；页面只读消费产物，不伪造缺失指标。
 
 ## 场景
 

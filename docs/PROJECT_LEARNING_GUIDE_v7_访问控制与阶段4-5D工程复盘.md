@@ -1,10 +1,10 @@
 # 项目工程实践与技术学习档案（v7：阶段 4B–5D、访问控制与最终工程复盘）
 
-> 文档版本：`v7-2026-10-25-r2`
+> 文档版本：`v7-2026-10-25-r3`
 > 生成/更新时间：2026-10-25（Asia/Shanghai）
-> 最近更新：在 OCR 导航之外补充微博热搜外部导航入口，并更新 F20/F14 回归结果与访问覆盖层限制。
+> 最近更新：在 OCR 导航之外补充微博热搜外部导航入口，并更新 F20/F14 回归结果与访问覆盖层限制；提交后状态回填（HEAD `afd3ff2`、工作区干净），并补充 2026-10-25 隔离复跑证据。
 > 对应工程：`E:\AIModels\test\TouManFen\TouManFenClassifier`
-> 对应代码状态：`main` 分支，HEAD `cdc6d2e fix: resolve API base on private LAN host`；工作区有大量历史未提交改动和未跟踪文件，**本文档不代表某个已提交 commit 的完整快照**。
+> 对应代码状态：`main` 分支 HEAD `afd3ff2 feat: complete access control and delivery integration`（2026-10-25 11:47 +0800，与 origin/main 同步）；本文记录的工作已随该提交入库；v7 初稿生成时（11:37）工作区尚未提交，差异见附录 A/D。
 > 文档定位：不是日报、周报或聊天记录整理，而是一份**过程可追溯、决策可区分、失败可学习、实现可复现**的工程学习档案。
 > 文件关系：仓库已存在 `PROJECT_LEARNING_GUIDE.md`（v1）以及 v2–v6。本文是新的 **v7**，不覆盖 v1–v6。v1–v6 主要覆盖 2026-10-22 之前的训练、Gateway、前端、交付与隔离验收；v7 补齐阶段 4B–5D 的配额、访问控制、前端接入、部署就绪检查以及后续 UI 修复。
 
@@ -49,8 +49,15 @@
 - Node：`v24.21.0`，前端使用 Vue 3、TypeScript、Vite；依赖清单见 `frontend/package.json`。
 - Gateway 依赖：FastAPI `0.150.0`、Uvicorn `0.54.0`、Pydantic `2.14.1`、httpx `0.28.1` 等，见 `serving/requirements-gateway.txt`。
 - 操作系统：Windows；开发/演示包含 LAN、手机、本地 worker 和浏览器。
-- 当前 Git 工作树：本文初次生成前为 94 个状态条目；生成 v7 后为 95；完成 OCR/微博热搜导航与 F14/F20 回归后为 100 个状态条目（包含测试产物更新），无暂存内容。
-- 运行环境曾通过用户级环境变量持久化 `TMF_ACCESS_CONTROL_ENABLED=true`；用户级 HMAC key 状态为 `PRESENT/VALID`（不记录值）。这只说明配置文件已提供，**不代表真实网关/手机/LAN 已验收**。
+- v7 初稿生成时（11:37）Git 工作树：本文初次生成前为 94 个状态条目；生成 v7 后为 95；完成 OCR/微博热搜导航与 F14/F20 回归后为 100 个状态条目（包含测试产物更新），无暂存内容。
+- v7 初稿记录：运行环境曾通过用户级环境变量持久化 `TMF_ACCESS_CONTROL_ENABLED=true`；用户级 HMAC key 状态为 `PRESENT/VALID`（不记录值）。这只说明配置文件已提供，**不代表真实网关/手机/LAN 已验收**；2026-10-25 提交后复核的用户级/进程环境差异见下段。
+
+**提交后复核（2026-10-25；变量作用域以本段为准）**：
+
+- `git status` 仅 2 个未跟踪 `.lnk`（指向 `E:\AIModels\test\爬虫\start.bat` / `stop.bat` 的快捷方式，非项目内容）；
+- 用户级 `TMF_ACCESS_CONTROL_ENABLED=false`，当前父进程环境为 `true`（两者作用域不同，生成时快照未区分，以本段为准，详见附录 D）；
+- 用户级 `TMF_LLM_QUOTA_HMAC_KEY` 存在（44 字节，不记录值）；
+- 真实网关未启动、access 真实验收仍未完成。
 
 ---
 
@@ -285,9 +292,9 @@ sequenceDiagram
 | 11 | 后续定向修复 | 文档精确性/模型对比/竞技场 | 修正“不读取 .env”为精确表述；对比输入框；四模型等宽 | 前端条件与后端契约不一致 | 文档、F20/F10 回归通过 | UI/文档与当前代码一致 |
 | 12 | 2026-10-25 OCR 导航 | 在现有导航中直达外部 OCR 服务 | 在 `NavBar.vue` 的“关于 TMF”前增加 `OCR 识别`，链接 `http://192.168.12.82:8000/#image`；同步 F14 Tab 顺序与 F20 OCR 断言 | access overlay 会遮挡导航；未连接外部 OCR 验证 | 不修改框架，仅加导航项 | F20 57/57；F14 nav-specific pass，整体因 access overlay 仍失败 |
 | 13 | 2026-10-25 微博热搜导航 | 在现有导航中直达外部微博热搜服务 | 在 OCR 之后、“关于 TMF”之前增加 `微博热搜`，链接 `http://192.168.12.54:8080/`；同步 F14 Tab 顺序与 F20 断言 | 同上，access overlay 遮挡；未连接外部服务验证 | 只加导航项 | F20 58/58；F14 nav/mobile 子项通过，整体仍受 access overlay 影响 |
-| 14 | 最终状态 | 准备真实启用 | 用户级 access flag 被设为 true，key 状态有效；未启动真实服务 | 真实 LAN/手机/180s 尚未验收 | 功能条件具备，运行验收未完成 | 下一步真实 E2E/部署 |
+| 14 | 最终状态（2026-10-25 11:47 提交） | 准备真实启用 | 11:47 提交 `afd3ff2`；复核用户级 flag 为 `false`（父进程环境 `true`），key `PRESENT/VALID`；真实服务未启动 | 真实 LAN/手机/180s 尚未验收 | 功能条件具备，运行验收未完成 | 下一步真实 E2E/部署 |
 
-时间线说明：2026-10-25 的用户级配置属于运行环境快照，不是 Git 源码提交；真实服务状态没有被本档案重新启用或验证。
+时间线说明：2026-10-25 的 access 配置属于运行环境快照（变量作用域见 0.4 提交后复核与附录 D），不是 Git 源码提交；11:47 已提交 `afd3ff2`，但真实服务状态没有被本档案重新启用或验证。
 
 ---
 
@@ -889,6 +896,19 @@ sequenceDiagram
 - 真实手机视觉验收；
 - 真实生产安全边界。
 
+### 12.5 2026-10-25 提交后复跑（隔离）
+
+| 脚本 | 结果 | 说明 |
+|---|---|---|
+| `serving/scripts/verify_batch.py` | `RESULT PASS`（exit 0） | TestClient + fake adapter；覆盖批量 API/预检/LLM 拒绝/回归 |
+| `serving/scripts/verify_access_state.py` | **90 PASS**（exit 0） | fake clock/ticket；不启动服务 |
+| `serving/scripts/verify_access_gateway.py` | **80 PASS**（exit 0） | TestClient/临时环境/CORS |
+| `serving/scripts/verify_llm_quota_infra.py` | `RESULT PASS`（exit 0） | 临时 DB；不启动服务 |
+| `serving/scripts/verify_llm_quota_gateway.py` | **59 PASS**（exit 0） | fake adapter/临时 SQLite；需先清除进程 `TMF_ACCESS_CONTROL_ENABLED`，否则 lifespan 因 access 缺 key 启动失败 |
+| `serving/scripts/verify_llm_quota_cli.py` | **59 PASS**（exit 0） | 离线 CLI；临时 SQLite |
+
+本轮只做隔离复跑：**未启动真实网关/真实 worker，未调用真实 Provider**；access 开启、真实 LAN/手机仍属未验收。
+
 ---
 
 ## 13. 从本项目中学习到的核心技术原理
@@ -1096,10 +1116,11 @@ POST /api/v1/access/cancel
 
 | 命令/操作 | 目的 | 结果 |
 |---|---|---|
-| `git status --short` / `git branch` / `git log -1` | 状态/HEAD 取证 | 记录 94 条目、HEAD `cdc6d2e` |
+| `git status --short` / `git branch` / `git log -1` | 状态/HEAD 取证 | v7 初稿生成时记录 94 条目、HEAD `cdc6d2e`；2026-10-25 11:47 提交后 HEAD `afd3ff2`、工作区干净（仅 2 个非项目 `.lnk`） |
+| `python serving/scripts/verify_batch.py` | 批量 API | `RESULT PASS` |
 | `python serving/scripts/verify_access_state.py` | 5A | 90 PASS |
 | `python serving/scripts/verify_access_gateway.py` | 5B/CORS | 80 PASS |
-| `python ...verify_llm_quota_*.py` | 4A/4B/4C | PASS/59/59 |
+| `python serving/scripts/verify_llm_quota_infra.py` / `verify_llm_quota_gateway.py` / `verify_llm_quota_cli.py` | 4A/4B/4C 具名脚本 | PASS / 59 / 59 |
 | `node frontend/tests/f20/run-scenarios.mjs` | 5C UI + OCR/微博热搜导航 | 55→56→57→58 PASS |
 | `node frontend/tests/f19/...` | 分类/文件 | 158 PASS |
 | `node frontend/tests/f10/...` | 竞技场 | 10/10 场景 PASS；S1 36/36 |
@@ -1200,8 +1221,8 @@ POST /api/v1/access/cancel
 1. 本文未能逐条回放 DeepSeek Harness 原始事件流和全部工具 ID；历史测试结果来自会话中可见输出。
 2. 文档未记录真实 key 值；当前环境标签只用于说明配置状态。
 3. 真实服务/LAN/手机未在本档案生成时重新执行验收。
-4. 工作区状态有大量未提交改动，本文不对未提交代码的最终提交内容作保证。
-5. 2026-10-25 用户级 access flag 的启用是运行环境配置，不是源码事实，也不代表真实服务已启动。
+4. v7 初稿生成时（11:37）工作区有大量未提交改动；2026-10-25 11:47 已提交 `afd3ff2`，提交后工作区干净；本文正文保留生成时视角，提交后状态见附录 D。
+5. 2026-10-25 access flag 的启用是运行环境配置（用户级/进程作用域见 0.4 提交后复核与附录 D），不是源码事实，也不代表真实服务已启动。
 
 ## 附录 B：历史与最终方案对照
 
@@ -1223,6 +1244,14 @@ POST /api/v1/access/cancel
 - [x] 未修改业务代码/配置/启动脚本；
 - [x] 明确真实 LAN/手机/Provider 未验收；
 - [x] 会写入后重新读取并检查章节/截断。
+
+## 附录 D：提交后状态回填（2026-10-25）
+
+- **提交**：`afd3ff2 feat: complete access control and delivery integration`，2026-10-25 11:47:04 +0800，`main` 分支，与 `origin/main` 同步（`https://github.com/cwenxuan815-tech/TouManFen.git`，无 ahead/behind）。
+- **工作区**：`git diff --stat` 为空；仅 2 个非项目未跟踪 `.lnk`（`爬虫start.bat.lnk`、`爬虫stop.bat.lnk`，指向 `E:\AIModels\test\爬虫\` 的快捷方式，不提交、不属于项目交付内容）。
+- **本轮隔离复跑**：`verify_batch.py` PASS、`verify_access_state.py` 90 checks、`verify_access_gateway.py` 80 checks、`verify_llm_quota_infra.py` PASS、`verify_llm_quota_gateway.py` 59 checks、`verify_llm_quota_cli.py` 59 checks；明细见 12.5。
+- **环境变量作用域**：Windows 用户级 `TMF_ACCESS_CONTROL_ENABLED=false`；当前父进程环境为 `true`；用户级 `TMF_LLM_QUOTA_HMAC_KEY` 存在（44 字节，不记录值），进程环境没有。4B 脚本若在保留 `true` 的进程里运行，会在 lifespan 因 access 缺少 key 启动失败；清除该变量后 59 PASS。这是环境作用域问题，不是 4B 断言失败或产品缺陷。
+- **仍成立的边界**：真实网关未启动；access 开启验收、真实 LAN/手机/CORS 预检、真实 180s/60s/120s 等待与多标签并发 claim/leave 均未完成；真实 Provider 未系统评估（B8 LLM 仍 `missing`）；D7 未执行；F14 整体仍受 access overlay 影响；OCR/微博热搜外部服务的实际可达性与页面内容未验证。
 
 ---
 

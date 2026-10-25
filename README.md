@@ -10,7 +10,7 @@
 
 > 项目采用代码、数据与模型资产分离的交付方式。完整数据集、预训练模型和训练权重由部署环境独立管理，不随 Git 提交；仓库内仅保留可复现的代码、配置、文档和小体积证据产物。
 
-更完整的工程复盘与决策记录见 [v6 全链路交付与隔离验收](docs/PROJECT_LEARNING_GUIDE_v6_全链路交付与隔离验收.md)，指标口径见 [实测指标](docs/实测指标.md)，接口变更见 [接口变更记录](docs/接口变更记录_2026-10-21.md)。
+更完整的工程复盘与决策记录见 [v7 访问控制与阶段 4-5D 工程复盘](docs/PROJECT_LEARNING_GUIDE_v7_访问控制与阶段4-5D工程复盘.md)，指标口径见 [实测指标](docs/实测指标.md)，接口变更见 [接口变更记录](docs/接口变更记录_2026-10-21.md)。
 
 ## 导航
 
@@ -86,7 +86,8 @@ serving/adapters/
   └── LlmAdapter ────────HTTP──> Flask worker :8105 LLM → 外部 Provider
 
 旁路/支撑
-  ├── SQLite：反馈、竞技场投票（serving/run/tmf.db，本地）
+  ├── SQLite：反馈、竞技场投票、LLM 配额（serving/run/tmf.db，本地）
+  ├── access：网关进程内访问名额状态（默认关闭）
   ├── artifacts/bench：离线 PK 基准（只读 API）
   ├── artifacts/demo：演示快照（前端 cached 回退）
   └── artifacts/d4 等：验收证据
@@ -106,9 +107,12 @@ serving/adapters/
 | 蒸馏 BiLSTM v1/v2/v2b | 已实现并实测 | v2b test 0.9074，36.7 MB |
 | 动态量化 / 剪枝 | 已实现并实测 | 量化在线集合未启用；剪枝体积不变 |
 | FastAPI 网关 + 适配层 | 已实现并验证 | 单模型、对比、SSE、反馈、竞技场、基准、演示状态 |
-| Vue 3 前端 | 已实现并 headless 验证 | 分类/对比/SSE/反馈/竞技场/PK/主题/大屏/离线快照 |
-| 自动化验收 | 已实现并执行 | 本轮验证项数见“测试与工程质量” |
-| 真实设备/真实 LLM | **未验证** | 仅隔离 mock/headless 环境；D7 未执行 |
+| Vue 3 前端 | 已实现并 headless 验证 | 分类/对比/SSE/多条批量/文件导入/反馈/竞技场/PK/主题/大屏/离线快照/访问名额 UI |
+| 批量分类与文件导入 | 已实现并隔离验证 | 1–100 条 × 单模型；TXT/CSV 浏览器本地解析；批量不含 LLM |
+| LLM 每 IP 配额 | 已实现并隔离验证 | 每 IP 3 次；403/503 fail-closed；离线管理员 CLI |
+| 访问名额控制 | 已实现并隔离验证；默认关闭 | 10 active/50 queued；按 IP 名额，不是认证 |
+| 自动化验收 | 已实现并执行 | 本轮及历史验证项数见“测试与工程质量” |
+| 真实设备/真实 LLM | **未验证** | 仅隔离 mock/headless 环境；D7（75 工时计划第 7 天收尾节点）未单独执行 |
 
 ### 当前状态与边界
 
@@ -117,6 +121,7 @@ serving/adapters/
 - 离线基准中 **LLM 为 missing**（外部 Provider 未授权），不得用 mock/估算分数补齐；
 - 竞技场榜单是**人类偏好**（Elo + Wilson），不是模型准确率；
 - mock/cached 数据不得标记为 live；真实设备、真实 LAN 断开、真实 LLM 未验收。
+- 2026-10-25 已完成并提交 `afd3ff2`：批量分类与文件导入、LLM 每 IP 配额、访问名额控制（默认关闭）、竞技场四候选与 OCR/微博热搜入口；真实 LAN/手机/真实 LLM 仍未验收。
 
 ## 数据处理链路
 
@@ -226,8 +231,15 @@ python run_all.py --stage rf
 | `GET` | `/api/v1/arena/next` | 匿名抽题 |
 | `POST` | `/api/v1/arena/vote` | 匿名投票 |
 | `GET` | `/api/v1/arena/leaderboard` | Elo + Wilson 排行榜 |
+| `POST` | `/api/v1/access/enter` | 申请/恢复访问名额（可选 ticket；返回 active/ready/queued/cooling） |
+| `GET` | `/api/v1/access/status` | 查询访问状态（需要 ticket，不续期） |
+| `POST` | `/api/v1/access/claim` | ready 15 秒内领取 active 名额（需要 ticket） |
+| `POST` | `/api/v1/access/leave` | 提前离开（需要 ticket，不进入 cooling） |
+| `POST` | `/api/v1/access/cancel` | 取消排队（需要 ticket） |
 | `GET` | `/api/v1/bench/pk` | 离线基准最新产物（只读） |
 | `GET` | `/api/v1/demo/state` | 启动数据来源（live/mock/unknown） |
+
+> 上表 5 个 `/api/v1/access/*` 接口只在 `TMF_ACCESS_CONTROL_ENABLED=true` 时可用（默认关闭）；ticket 只通过 `X-Access-Ticket` 请求头传递，不进入 URL/query/日志。
 
 单模型请求：
 
@@ -285,13 +297,13 @@ python run_all.py --stage rf
 ├── serving/
 │   ├── adapters/            ModelAdapter / HttpWorkerAdapter / LlmAdapter
 │   ├── gateway/             FastAPI 应用、routers、schemas、errors、stats
-│   ├── services/            分类编排、反馈、竞技场
+│   ├── services/            分类编排、反馈、竞技场、访问状态机、LLM 配额
 │   ├── config/              workers/models/processes YAML
 │   └── scripts/             启停、mock、验收与测量脚本
 ├── frontend/
-│   ├── src/                 Vue 组件、composables、API 客户端、样式
+│   ├── src/                 Vue 组件、composables、API 客户端、文件解析工具、样式
 │   ├── public/snapshot.json cached 演示快照
-│   └── tests/               F9/F10/F11/F14/F15 headless 测试
+│   └── tests/               F9–F20 headless 测试（含批量、文件导入、access）
 ├── tools/                   数据、基准、负样本、反馈清理等工具
 ├── artifacts/               基准/并发/D4 隔离/演示证据（小体积）
 ├── docs/                    学习档案、指标、接口、彩排、验收清单
@@ -307,13 +319,16 @@ python run_all.py --stage rf
 | `serving/gateway/main.py` | 应用装配、CORS、request ID、适配器 composition root |
 | `serving/adapters/protocol.py` | `ModelAdapter` 协议与结果类型 |
 | `serving/services/classification.py` | 单模型/对比编排、超时与失败隔离 |
+| `serving/services/access.py` | 访问名额状态机（active/ready/queued/cooling） |
+| `serving/gateway/routers/access.py` | access API 与业务 API 门禁 |
 | `tmf_common/prediction.py` | 统一预测模板与兼容 JSON |
 | `tmf_common/config.py` | host/port/URL/CORS 环境变量解析与校验 |
 | `serving/config/workers.yaml` | worker URL、路径、超时、启用状态 |
 | `frontend/src/App.vue` | 单页应用入口与页面编排 |
 | `frontend/src/api/` | 分类、对比、SSE、反馈、竞技场、基准 API 客户端 |
+| `frontend/src/utils/titleFiles.ts` | TXT/CSV 本地解析（浏览器内解码、预览、列选择） |
 | `serving/scripts/verify_*.py` | 契约、接口、功能与隔离验收 |
-| `docs/PROJECT_LEARNING_GUIDE_v6_全链路交付与隔离验收.md` | 最新工程复盘与决策记录 |
+| `docs/PROJECT_LEARNING_GUIDE_v7_访问控制与阶段4-5D工程复盘.md` | 最新工程复盘与决策记录 |
 
 ## 环境准备与运行方式
 
@@ -504,6 +519,29 @@ pnpm type-check
 pnpm build
 ```
 
+隔离验收（不启动真实服务、不调用真实 LLM）：
+
+```powershell
+$env:PYTHONPATH='E:\AIModels\test\TouManFen\venv-gateway\Lib\site-packages'
+python serving/scripts/verify_batch.py
+python serving/scripts/verify_access_state.py
+python serving/scripts/verify_access_gateway.py
+python serving/scripts/verify_llm_quota_infra.py
+python serving/scripts/verify_llm_quota_gateway.py
+python serving/scripts/verify_llm_quota_cli.py
+```
+
+> 若当前进程环境里带有 `TMF_ACCESS_CONTROL_ENABLED=true`，跑 `verify_llm_quota_gateway.py` 前先清除该变量（例如 `Remove-Item Env:TMF_ACCESS_CONTROL_ENABLED`），否则网关 lifespan 会因 access 缺少 key 而启动失败；这是环境作用域问题，不是断言失败。
+
+```powershell
+# 前端 headless（真实 App + 本地 mock API，不连真实网关/worker/LLM）
+cd frontend
+node tests/f17/run-scenarios.mjs
+node tests/f18/run-scenarios.mjs
+node tests/f19/run-scenarios.mjs
+node tests/f20/run-scenarios.mjs
+```
+
 ## 配置说明
 
 ### 配置文件
@@ -552,24 +590,37 @@ pnpm build
 
 ## 测试与工程质量
 
-### 验证快照（2026-10-22，隔离/本地环境）
+### 验证快照（2026-10-25 复跑 + 2026-10-22 历史）
 
 | 检查项 | 结果 | 证据边界 |
 |---|---|---|
-| 网关适配层 | `verify_refactor_gateway.py` **101 PASS** | 配置/协议/API/CORS/错误路径 |
-| worker 契约 | `verify_refactor_workers.py` **93 PASS** | 5 个服务兼容与静态检查 |
-| stage3 mock | `verify_stage3.py --llm-mode mock --isolate-mock` **59 PASS** | 隔离端口/DB，未访问真实 LLM |
-| B9 LLM opt-in | **16 PASS** | 默认 compare 不含 LLM |
-| B11 数据来源 | **39 PASS** | mock/live/unknown、统计只计 live |
-| F14 前端 | 6 场景 / **66 断言** | headless，含 reduced-motion/CPU 节流 |
-| D4 隔离彩排 | 10/10 + 5 个故障场景 | mock/headless，非真实设备 |
+| 5A 访问状态机 | `verify_access_state.py` **90 PASS** | 2026-10-25 本轮复跑；fake clock/ticket，不启动服务 |
+| 5B access API/门禁/CORS | `verify_access_gateway.py` **80 PASS** | 2026-10-25 本轮复跑；TestClient/临时环境 |
+| 4A LLM 配额基础设施 | `verify_llm_quota_infra.py` **PASS** | 2026-10-25 本轮复跑；临时 DB，不启动服务 |
+| 4B LLM 配额接入 | `verify_llm_quota_gateway.py` **59 PASS** | 2026-10-25 本轮复跑；需先清除进程 `TMF_ACCESS_CONTROL_ENABLED`，否则会因 access 缺 key 启动失败 |
+| 4C 配额离线 CLI | `verify_llm_quota_cli.py` **59 PASS** | 2026-10-25 本轮复跑；临时 SQLite |
+| 批量分类 API | `verify_batch.py` **RESULT PASS** | 2026-10-25 本轮复跑；TestClient + fake adapter |
+| 网关适配层 | `verify_refactor_gateway.py` **101 PASS** | 2026-10-22 历史；配置/协议/API/CORS/错误路径 |
+| worker 契约 | `verify_refactor_workers.py` **93 PASS** | 2026-10-22 历史；5 个服务兼容与静态检查 |
+| stage3 mock | `verify_stage3.py --llm-mode mock --isolate-mock` **59 PASS** | 2026-10-22 历史；隔离端口/DB，未访问真实 LLM |
+| B9 LLM opt-in | **16 PASS** | 2026-10-22 历史；默认 compare 不含 LLM |
+| B11 数据来源 | **39 PASS** | 2026-10-22 历史；mock/live/unknown、统计只计 live |
+| F19 分类/文件导入 | **158 checks PASS** | 2026-10-23～25 记录；headless |
+| F20 access UI | **58 checks PASS** | 2026-10-23～25 记录；含 OCR/微博热搜导航断言 |
+| F10 竞技场（四候选） | **10/10 场景 PASS**（S1 36/36） | 2026-10-23～25 记录；headless |
+| F9 SSE | **68 checks PASS** | 2026-10-23～25 记录；显式 API base |
+| F14 前端 | 外部导航 Tab 顺序/移动菜单子项通过；整体仍有 **7 条失败** | access overlay 覆盖，未修 F14 mock 的 access 集成 |
+| D4 隔离彩排 | 10/10 + 5 个故障场景 | 2026-10-22，mock/headless，非真实设备 |
 | 前端构建 | `pnpm type-check` + `pnpm build` 通过 | 当前依赖版本 |
 
 ### 当前工程约束
 
 - 本仓库**没有配置 GitHub Actions CI**；上述为本地隔离验证结果；
-- 真实 LLM、真实投影/手机/笔记本、真实 LAN 断开未验收；
+- F14 整体仍受 access overlay 影响，尚未修复 F14 mock 的 access 集成；
+- 真实设备、真实 LAN、真实 LLM 未验收；
+- D7 指《工程实施工作清单_75工时》第 7 天收尾节点（两次彩排/真实设备收口），与 v7 第 8 章技术决策编号 D7（CORS）无关；其计划内 B9/B10/B11/F14/D3/D4 已单独执行，但 D7 整日收口未执行；
 - 未对用户 stage2 服务做压测/启停操作；
+- 上述结果均为隔离/mock/headless 证据，**不是生产部署验证**；
 - 测试产物保存在 `artifacts/` 与 `frontend/tests/**/artifacts`，作为小体积证据随仓库提交。
 
 ## 部署与资产管理
@@ -589,16 +640,16 @@ pnpm build
 - 完成 RF、fastText、BERT、LLM、蒸馏、量化、剪枝的全链路训练与评估；
 - 建立 `ModelAdapter` 协议与 5 个独立 worker 的统一 `PredictService` 契约；
 - 建立 FastAPI 网关、Vue 3 前端、单条/对比/SSE/反馈/竞技场/PK/演示能力；
+- 完成批量分类（1–100 条 × 单模型）与 TXT/CSV 浏览器本地文件导入，文件不上传、不写日志；
+- 完成 LLM 每 IP 配额与 fail-closed（第 4 次 403、store 不可用 503）及离线管理员 CLI；
+- 完成访问名额控制（10 active/50 queued、排队/冷却、`X-Access-Ticket` 门禁），默认关闭，按 IP 名额而非认证；
+- 交付 OCR 识别与微博热搜两个外部导航入口；
 - 建立 `data_source`、`/demo/state`、cached 快照的演示真实性机制；
 - 建立 SQLite 反馈/投票、30 天清理、匿名榜单与离线基准；
 - 建立本地/局域网可配置网络、超时/错误归一化、request ID 与统计；
 - 建立自动化验收脚本、headless 前端测试与隔离彩排；
 - 代码、数据、模型权重、密钥与证据产物边界清晰，可公开维护。
 
-面试介绍时可以概括为：
-
-> 围绕中文新闻标题十分类需求，我完成了从数据准备、传统模型与 BERT/LLM/蒸馏/量化/剪枝，到统一适配层、FastAPI 网关、Vue 前端和离线评估的完整链路；并通过独立进程隔离、统一 worker 契约、可配置网络、数据来源标识、反馈/竞技场和隔离验收，解决了多模型服务编排、模型结果口径不一致、演示真实性与资产边界等工程问题。
-
 ## 许可证
 
-仓库暂未添加开源许可证。公开发布前需要确认代码、数据、课程资料和衍生模型的权属与授权范围；当前仓库为 public，如仅用于内部验证建议改为 private。
+仓库暂未添加开源许可证。公开发布前需要确认代码、数据、和衍生模型的权属与授权范围。

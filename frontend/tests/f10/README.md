@@ -25,6 +25,12 @@ node tests/f10/run-scenarios.mjs
 - Edge user-data-dir 使用系统临时目录，运行结束清理。
 - `tests/f10/env/.env.local` 由运行器自动写入（`VITE_API_BASE_URL` 指向 mock server）；运行器同时覆盖进程环境中的同名变量，避免继承开发 shell 的局域网 API 地址。
 
+## 最近结果（2026-10-25）
+
+- 2026-10-25 记录：**10/10 场景 PASS**（退出码 `0`）。
+- 四模型改造后 S1 场景 **36/36** 断言通过，A–D 四列等宽断言通过。
+- 结果以 `artifacts/f10-report.json` 与运行退出码为准；仍为 mock/headless，不代表真实网关/B7 链路已验收。
+
 ## 场景与断言重点
 
 | 场景 | title（mock 控制） | 断言重点 |

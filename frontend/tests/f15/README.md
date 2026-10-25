@@ -34,3 +34,8 @@ D:\Miniconda3\envs\py3109\python.exe serving/scripts/verify_f15_startup.py
 - 以上均为**浏览器/网络模拟**，不是真实断网、真实设备或真实 Provider 验收。
 - 不调用真实 LLM，不修改用户 stage2/网络/数据库。
 - 完整 D4 证据见 `artifacts/d4/` 和 `docs/彩排记录_2026-10-22.md`。
+
+## 最近结果（2026-10-25）
+
+- 2026-10-22 历史记录：cached 回退与启动来源场景作为 D4 隔离彩排（mock/headless）的一部分通过，证据见 `artifacts/d4/f15-startup-source-report.json` 与 [彩排记录_2026-10-22](../../../docs/彩排记录_2026-10-22.md)；此处沿用历史记录，不新增断言数。
+- 2026-10-25 未复跑，状态以上述历史记录与现有产物为准；仍属浏览器/网络模拟，不是真实断网或真实设备验收。

@@ -17,6 +17,7 @@
 - 模拟同源标签 `storage` 失效恢复。
 - 390px 无横向溢出、取消按钮可见。
 - access 启用时 compare 不建立 EventSource SSE，使用受门禁的 POST fallback 并带 ticket。
+- OCR/微博热搜外部导航：两个链接存在、可见，href 精确为 `http://192.168.12.82:8000/#image` 与 `http://192.168.12.54:8080/`（access 未 active 时被 overlay 遮挡，属已知限制）。
 
 ## 运行
 
@@ -34,3 +35,9 @@ node tests/f20/run-scenarios.mjs
 - ticket 日志只记录“是否携带”，不保存 raw ticket。
 - 未验证真实手机/真实浏览器人工视觉、真实多标签竞态和真实后端网络；同源标签用 `StorageEvent` 模拟。
 - SSE 仍受浏览器 `EventSource` 无自定义 header 限制；本阶段不绕过门禁。
+
+## 最近结果（2026-10-25）
+
+- 2026-10-25 记录：**58 checks PASS**（退出码 `0`，含 OCR/微博热搜导航断言）。
+- 2026-10-25 状态：阶段 5C 访问名额 UI 已交付，并随提交 `afd3ff2` 纳入版本库。
+- access overlay 遮挡导航是已知限制；未做真实 LAN/手机验收，上述为 mock/headless 结果。
