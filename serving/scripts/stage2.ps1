@@ -363,6 +363,7 @@ function Start-Gateway {
         '--host', $hostName,
         '--port', [string]$port,
         '--no-access-log',
+        '--no-proxy-headers',
         '--log-level', 'info'
     )
     $previousPythonPath = $env:PYTHONPATH

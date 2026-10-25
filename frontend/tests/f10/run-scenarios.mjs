@@ -8,7 +8,7 @@
  * 1) 用独立 Vite 配置构建 tests/f10/harness.html（产物在 tests/f10/dist，不碰 frontend/dist）；
  * 2) 启动本地 mock 竞技场 API server（127.0.0.1:18181，显式 mock）；
  * 3) 启动 Edge headless，通过 CDP 驱动真实浏览器并采集 Network 日志；
- * 4) 跑 9 组场景，输出 PASS/FAIL、证据 JSON、截图，并以 0/1 退出。
+ * 4) 跑 10 组场景，输出 PASS/FAIL、证据 JSON、截图，并以 0/1 退出。
  *
  * 全部请求都指向本地 mock（不访问真实网关 / worker / 真实 LLM）。
  */
@@ -187,6 +187,85 @@ function durationMs(value) {
   return Number.parseFloat(value)
 }
 
+function parseRgb(value) {
+  if (typeof value !== 'string') return null
+  const match = value.match(/rgba?\(([^)]+)\)/i)
+  if (!match) return null
+  const parts = match[1]
+    .split(/[,\s/]+/)
+    .filter(Boolean)
+    .map((part) => Number.parseFloat(part))
+  if (parts.length < 3 || parts.slice(0, 3).some((part) => !Number.isFinite(part))) return null
+  return {
+    r: parts[0],
+    g: parts[1],
+    b: parts[2],
+    a: parts.length > 3 && Number.isFinite(parts[3]) ? parts[3] : 1,
+  }
+}
+
+function relativeLuminance({ r, g, b }) {
+  const channel = (value) => {
+    const normalized = value / 255
+    return normalized <= 0.03928
+      ? normalized / 12.92
+      : ((normalized + 0.055) / 1.055) ** 2.4
+  }
+  return 0.2126 * channel(r) + 0.7152 * channel(g) + 0.0722 * channel(b)
+}
+
+/** WCAG 2.x 相对亮度对比度；解析失败返回 null，断言按失败处理。 */
+function contrastRatio(foreground, background) {
+  const fg = parseRgb(foreground)
+  const bg = parseRgb(background)
+  if (!fg || !bg) return null
+  const lighter = Math.max(relativeLuminance(fg), relativeLuminance(bg))
+  const darker = Math.min(relativeLuminance(fg), relativeLuminance(bg))
+  return (lighter + 0.05) / (darker + 0.05)
+}
+
+function rectsOverlap(first, second) {
+  if (!first || !second) return false
+  return !(
+    first.right <= second.left ||
+    first.left >= second.right ||
+    first.bottom <= second.top ||
+    first.top >= second.bottom
+  )
+}
+
+async function setViewport(client, width, height) {
+  await client.send('Emulation.setDeviceMetricsOverride', {
+    width,
+    height,
+    deviceScaleFactor: 1,
+    mobile: false,
+  })
+}
+
+async function clearViewport(client) {
+  await client.send('Emulation.clearDeviceMetricsOverride')
+}
+
+async function setTheme(client, theme) {
+  await evaluate(
+    client,
+    `document.documentElement.dataset.theme = ${JSON.stringify(theme)}`,
+  )
+}
+
+async function setLargeMode(client, enabled) {
+  await evaluate(
+    client,
+    `(() => {
+      const harness = document.querySelector('.f10-harness')
+      if (harness) harness.classList.toggle('site-shell', ${enabled})
+      if (${enabled}) document.documentElement.dataset.presentation = 'large'
+      else delete document.documentElement.dataset.presentation
+    })()`,
+  )
+}
+
 function arenaRequests(requests) {
   return requests.filter((item) => item.url.includes('/api/v1/arena/'))
 }
@@ -323,12 +402,29 @@ const SCENARIOS = [
       const nextServerRequest = mock.log.requests.find((request) => request.kind === 'next')
 
       checks.check('页面进入可投票状态', preVoteDom.pageState === 'ready', String(preVoteDom.pageState))
-      checks.check('渲染 5 张匿名卡片 A–E', preVoteDom.cards.length === 5, `${preVoteDom.cards.length}`)
+      checks.check('渲染 4 张匿名卡片 A–D', preVoteDom.cards.length === 4, `${preVoteDom.cards.length}`)
       checks.check(
-        '字母按服务端候选顺序映射 A/B/C/D/E',
+        '字母按服务端候选顺序映射 A/B/C/D',
         JSON.stringify(preVoteDom.cards.map((card) => card.letter)) ===
-          JSON.stringify(['A', 'B', 'C', 'D', 'E']),
+          JSON.stringify(['A', 'B', 'C', 'D']),
         JSON.stringify(preVoteDom.cards.map((card) => card.letter)),
+      )
+      const candidateLayout = await evaluate(client, `(() => {
+        const grid = document.querySelector('[data-arena-candidates]');
+        if (!grid) return null;
+        const cards = Array.from(grid.querySelectorAll('[data-arena-card]'));
+        const widths = cards.map((card) => card.getBoundingClientRect().width);
+        const columns = getComputedStyle(grid).gridTemplateColumns
+          .split(/\\s+/)
+          .filter(Boolean);
+        return { count: cards.length, columns: columns.length, widths };
+      })()`)
+      checks.check(
+        '四个候选卡片等宽、四列等间距',
+        candidateLayout?.count === 4 &&
+          candidateLayout.columns === 4 &&
+          Math.max(...candidateLayout.widths) - Math.min(...candidateLayout.widths) <= 1,
+        JSON.stringify(candidateLayout),
       )
       checks.check(
         '投票前卡片均为 idle 且无背面/无 model_id 属性',
@@ -430,8 +526,8 @@ const SCENARIOS = [
         JSON.stringify({ cardC, expected }),
       )
       checks.check(
-        '其他 4 张卡片保持匿名（无背面/无 model_id）',
-        otherCards.length === 4 &&
+        '其他 3 张卡片保持匿名（无背面/无 model_id）',
+        otherCards.length === 3 &&
           otherCards.every((card) => card.hasBackFace === false && card.revealedModelId === null),
         JSON.stringify(otherCards.map((card) => `${card.letter}:${card.state}`)),
       )
@@ -469,7 +565,7 @@ const SCENARIOS = [
         board.available === 'true' && board.status === 'warming_up',
         JSON.stringify({ available: board.available, status: board.status }),
       )
-      checks.check('预热态显示 5 行且参与样本 n < 50', board.rows.length === 5 && board.rows.every((row) => row.sampleSize < 50), JSON.stringify(board.rows.map((row) => row.sampleSize)))
+      checks.check('预热态显示 4 行且参与样本 n < 50', board.rows.length === 4 && board.rows.every((row) => row.sampleSize < 50), JSON.stringify(board.rows.map((row) => row.sampleSize)))
       checks.check(
         '预热态不显示名次（无 rank 属性、表头无名次列）',
         board.rows.every((row) => row.rank === null) && !board.headers.includes('名次'),
@@ -518,7 +614,7 @@ const SCENARIOS = [
       await waitFor(
         async () => {
           const dom = await domOf(client)
-          return dom.pageState === 'ready' && dom.cards.length === 5 ? dom : null
+          return dom.pageState === 'ready' && dom.cards.length === 4 ? dom : null
         },
         { timeout: 10_000, label: 'next item ready' },
       )
@@ -563,7 +659,7 @@ const SCENARIOS = [
       const ranks = board.rows.map((row) => Number(row.rank))
       checks.check('ready 状态徽标为「已就绪」', board.status === 'ready' && board.statusText === '已就绪', JSON.stringify({ status: board.status, statusText: board.statusText }))
       checks.check('ready 表头包含名次列', board.headers.includes('名次'), JSON.stringify(board.headers))
-      checks.check('ready 每行都显示名次 1..5', ranks.length === 5 && [...ranks].sort((a, b) => a - b).join(',') === '1,2,3,4,5' && ranks.every((rank) => rank >= 1), JSON.stringify(ranks))
+      checks.check('ready 每行都显示名次 1..4', ranks.length === 4 && [...ranks].sort((a, b) => a - b).join(',') === '1,2,3,4' && ranks.every((rank) => rank >= 1), JSON.stringify(ranks))
       checks.check('ready 行按名次升序排列', ranks.every((rank, index) => index === 0 || rank > ranks[index - 1]), JSON.stringify(ranks))
       checks.check('ready 每行参与样本 n ≥ 50', board.rows.every((row) => row.sampleSize >= 50), JSON.stringify(board.rows.map((row) => row.sampleSize)))
       checks.check('ready 显示模型名（允许的聚合榜身份）', board.rows.every((row) => Boolean(row.displayName)), JSON.stringify(board.rows.map((row) => row.displayName)))
@@ -591,7 +687,7 @@ const SCENARIOS = [
       const cardB = revealedDom.cards.find((card) => card.letter === 'B')
       const expected = modelOfAnon(item, cardB?.anonId)
       checks.check('partial 场景投票后可正确揭晓', cardB?.state === 'revealed' && cardB?.revealedModelId === expected?.model_id, JSON.stringify({ state: cardB?.state, expected }))
-      checks.check('partial 场景投票后榜单已加载', revealedDom.board.available === 'true' && revealedDom.board.rows.length === 5, JSON.stringify({ available: revealedDom.board.available, rows: revealedDom.board.rows.length }))
+      checks.check('partial 场景投票后榜单已加载', revealedDom.board.available === 'true' && revealedDom.board.rows.length === 4, JSON.stringify({ available: revealedDom.board.available, rows: revealedDom.board.rows.length }))
       await captureScreenshot(client, 'S3-partial')
       return { evidence: logEvidence(mock, network), dom: revealedDom }
     },
@@ -641,7 +737,7 @@ const SCENARIOS = [
     async run(client, context) {
       const { checks, network, mock } = context
       await freshPage(client, mock, 'network', network)
-      await evaluate(client, "window.__f10.clickCard('E')")
+      await evaluate(client, "window.__f10.clickCard('D')")
       const toastDom = await waitToast(client, (message) => message.includes('无法连接') || message.includes('请求没有完成'))
       const dom = await domOf(client)
       checks.check('网络错误提示可读（NETWORK_ERROR 映射）', toastDom.toastMessages.some((message) => message === '无法连接分类服务，请确认后端已启动。' || message.includes('请求没有完成')), JSON.stringify(toastDom.toastMessages))
@@ -670,7 +766,7 @@ const SCENARIOS = [
       await mock.setScenario('normal')
       await evaluate(client, 'window.__f10.clickEmptyRetry()')
       const recoveredDom = await waitPageState(client, ['ready'])
-      checks.check('空题库后重新抽取可恢复候选', recoveredDom.cards.length === 5, `${recoveredDom.cards.length}`)
+      checks.check('空题库后重新抽取可恢复候选', recoveredDom.cards.length === 4, `${recoveredDom.cards.length}`)
       return { evidence: logEvidence(mock, network), dom: emptyDom }
     },
   },
@@ -737,6 +833,89 @@ const SCENARIOS = [
       return { evidence: logEvidence(mock, network), dom: await domOf(client) }
     },
   },
+  {
+    id: 'title-readability',
+    name: 'S10 题目标题：独立整行、响应式字号、对比度、换行与无溢出（1440/760/390，亮/暗/大屏）',
+    async run(client, context) {
+      const { checks, network, mock } = context
+      const viewports = [
+        { width: 1440, height: 900, label: '1440', expectedFont: 16 },
+        { width: 760, height: 900, label: '760', expectedFont: 14 },
+        { width: 390, height: 844, label: '390', expectedFont: 14 },
+      ]
+
+      const assertTitle = (dom, item, label, expectedFont) => {
+        const title = dom.title
+        const page = dom.page
+        const contrast = contrastRatio(title.color, title.backgroundColor)
+        const lineHeightRatio = title.fontSize > 0 ? title.lineHeight / title.fontSize : 0
+
+        checks.check(`${label}：标题存在且文本等于 /arena/next 返回 title`, title.present && title.text === item.title, JSON.stringify({ text: title.text, expected: item.title }))
+        checks.check(`${label}：标题 title 属性保留完整文本`, title.titleAttr === item.title, JSON.stringify({ titleAttr: title.titleAttr, expected: item.title }))
+        checks.check(`${label}：标题字号为 ${expectedFont}px`, Math.abs(title.fontSize - expectedFont) < 0.1, `${title.fontSize}px`)
+        checks.check(`${label}：标题行高比约 1.5–1.6`, lineHeightRatio >= 1.45 && lineHeightRatio <= 1.65, `${lineHeightRatio.toFixed(3)}（${title.lineHeight}px / ${title.fontSize}px）`)
+        checks.check(`${label}：标题颜色对比度 ≥ 4.5:1`, contrast !== null && contrast >= 4.5, `${contrast === null ? 'unparsed' : contrast.toFixed(2)}:1（${title.color} on ${title.backgroundColor}）`)
+        checks.check(`${label}：标题允许换行且连续字符可断行`, title.whiteSpace === 'normal' && title.overflowWrap === 'anywhere', JSON.stringify({ whiteSpace: title.whiteSpace, overflowWrap: title.overflowWrap }))
+        checks.check(`${label}：标题最多 3 行`, title.lineClamp === '3' && title.visibleLines >= 1 && title.visibleLines <= 3, JSON.stringify({ lineClamp: title.lineClamp, visibleLines: title.visibleLines }))
+        checks.check(`${label}：长标题发生合理换行（≥2 行）`, title.visibleLines >= 2, `${title.visibleLines} 行`)
+        checks.check(`${label}：页面无横向滚动`, page.docScrollWidth <= page.innerWidth && page.bodyScrollWidth <= page.innerWidth, JSON.stringify(page))
+        checks.check(`${label}：标题不覆盖「换一题/下一题」按钮`, !rectsOverlap(title.rect, dom.nextButtonRect), JSON.stringify({ title: title.rect, next: dom.nextButtonRect }))
+        checks.check(`${label}：标题在视口与面板内`, Boolean(title.rect) && title.rect.left >= -1 && title.rect.right <= page.innerWidth + 1, JSON.stringify(title.rect))
+        checks.check(`${label}：候选卡数量与接口一致且保持可点击`, dom.cards.length === item.candidates.length && dom.cards.every((card) => card.disabled === false), JSON.stringify({ cards: dom.cards.length, expected: item.candidates.length, disabled: dom.cards.map((card) => card.disabled) }))
+        const visuallyClipped = title.scrollHeight > title.clientHeight + 1
+        checks.check(
+          `${label}：如标题被 3 行限行，title 属性仍保留完整文本`,
+          !visuallyClipped || title.titleAttr === item.title,
+          JSON.stringify({ visuallyClipped, scrollHeight: title.scrollHeight, clientHeight: title.clientHeight }),
+        )
+      }
+
+      try {
+        for (const viewport of viewports) {
+          await setTheme(client, 'light')
+          await setLargeMode(client, false)
+          await setViewport(client, viewport.width, viewport.height)
+          const { dom } = await freshPage(client, mock, 'long-title', network)
+          const item = latestItem(mock)
+          assertTitle(dom, item, viewport.label, viewport.expectedFont)
+        }
+
+        // 暗色主题：390px 下标题对比度必须仍满足 AA。
+        await setLargeMode(client, false)
+        await setViewport(client, 390, 844)
+        await setTheme(client, 'light')
+        const { dom: lightDom } = await freshPage(client, mock, 'long-title', network)
+        const item = latestItem(mock)
+        await setTheme(client, 'dark')
+        await sleep(80)
+        const darkDom = await domOf(client)
+        const darkContrast = contrastRatio(darkDom.title.color, darkDom.title.backgroundColor)
+        checks.check('390 暗色：页面应用 dark 主题', (await evaluate(client, "document.documentElement.dataset.theme")) === 'dark', 'dark')
+        checks.check('390 暗色：标题对比度 ≥ 4.5:1', darkContrast !== null && darkContrast >= 4.5, `${darkContrast === null ? 'unparsed' : darkContrast.toFixed(2)}:1（${darkDom.title.color} on ${darkDom.title.backgroundColor}）`)
+        checks.check('390 暗色：页面仍无横向滚动', darkDom.page.docScrollWidth <= darkDom.page.innerWidth && darkDom.page.bodyScrollWidth <= darkDom.page.innerWidth, JSON.stringify(darkDom.page))
+        checks.check('390 暗色：标题文本仍与接口一致', darkDom.title.text === item.title, JSON.stringify({ text: darkDom.title.text, expected: item.title }))
+        checks.check('亮/暗主题切换不改变标题文本', lightDom.title.text === darkDom.title.text, JSON.stringify({ light: lightDom.title.text, dark: darkDom.title.text }))
+
+        // 大屏：已有 .site-shell zoom:1.25；标题 CSS 字号不应再次乘 1.25。
+        await setTheme(client, 'light')
+        await setViewport(client, 1440, 900)
+        await freshPage(client, mock, 'long-title', network)
+        await setLargeMode(client, true)
+        await sleep(80)
+        const largeDom = await domOf(client)
+        checks.check('1440 大屏：shell 启用 site-shell', (await evaluate(client, "document.querySelector('.f10-harness')?.classList.contains('site-shell')")) === true, 'site-shell')
+        checks.check('1440 大屏：标题字号仍为 16px（未叠加 1.25 倍率）', Math.abs(largeDom.title.fontSize - 16) < 0.1, `${largeDom.title.fontSize}px`)
+        checks.check('1440 大屏：标题不覆盖操作按钮且无横向滚动', !rectsOverlap(largeDom.title.rect, largeDom.nextButtonRect) && largeDom.page.docScrollWidth <= largeDom.page.innerWidth, JSON.stringify({ title: largeDom.title.rect, next: largeDom.nextButtonRect, page: largeDom.page }))
+        checks.check('1440 大屏：标题文本与接口一致', largeDom.title.text === latestItem(mock).title, JSON.stringify({ text: largeDom.title.text, expected: latestItem(mock).title }))
+
+        return { evidence: logEvidence(mock, network), dom: largeDom }
+      } finally {
+        await setLargeMode(client, false)
+        await setTheme(client, 'light')
+        await clearViewport(client)
+      }
+    },
+  },
 ]
 
 function findEdgePath() {
@@ -787,6 +966,9 @@ async function main() {
   await writeFile(join(envDir, '.env.local'), `VITE_API_BASE_URL=http://127.0.0.1:${SERVER_PORT}\n`)
 
   console.log('=== F10 竞技场 UI 验收（mock B7 API + Edge headless/CDP）===')
+  // 明确覆盖继承自开发 shell 的 VITE_API_BASE_URL；否则真实的 LAN 地址会进入
+  // harness 构建，测试请求可能打到用户正在使用的网关而不是本地 mock。
+  process.env.VITE_API_BASE_URL = `http://127.0.0.1:${SERVER_PORT}`
   console.log(`[build] 构建 harness（独立 outDir: ${distDir}）`)
   await build({ configFile: join(here, 'vite.harness.config.mjs'), logLevel: 'warn' })
   console.log('[build] OK')

@@ -18,13 +18,23 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 import uuid
 from typing import Any, AsyncIterator, Mapping
 
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse
 
-from ..errors import ApiError, ERROR_INTERNAL, ERROR_INVALID_MODELS, ERROR_INVALID_TITLE
+from ..errors import (
+    ApiError,
+    ERROR_ACCESS_EXPIRED,
+    ERROR_INTERNAL,
+    ERROR_INVALID_MODELS,
+    ERROR_INVALID_TITLE,
+    ERROR_LLM_QUOTA_EXHAUSTED,
+    ERROR_LLM_QUOTA_IDENTITY_INVALID,
+    ERROR_LLM_QUOTA_UNAVAILABLE,
+)
 from ...services.classification import (
     StreamHeartbeatEvent,
     StreamModelEvent,
@@ -44,6 +54,31 @@ SSE_HEADERS = {
 
 #: 心跳注释行：不是事件，EventSource 解析时忽略（不会触发 onmessage）。
 HEARTBEAT_LINE = ": heartbeat\n\n"
+
+
+class _AccessExpired(Exception):
+    """SSE 租约到期内部信号；转成 SSE error 事件，不伪装网络错误。"""
+
+
+async def _iter_with_access_deadline(
+    stream: AsyncIterator[Any],
+    deadline: float | None,
+) -> AsyncIterator[Any]:
+    """在 access active 租约截止时终止流；None 表示访问控制未启用。"""
+    if deadline is None:
+        async for event in stream:
+            yield event
+        return
+    iterator = stream.__aiter__()
+    while True:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise _AccessExpired()
+        try:
+            event = await asyncio.wait_for(anext(iterator), timeout=remaining)
+        except asyncio.TimeoutError as exc:
+            raise _AccessExpired() from exc
+        yield event
 
 
 def _format_sse(event: str, data: Mapping[str, Any]) -> str:
@@ -72,6 +107,27 @@ async def compare_stream(
 ) -> StreamingResponse:
     """SSE 渐进式多模型对比；参数走 query（EventSource 不能带 body）。"""
     request_id = getattr(request.state, "request_id", None) or str(uuid.uuid4())
+    client_ip = getattr(request.state, "client_ip", None)
+    access_remaining = getattr(request.state, "access_remaining_seconds", None)
+    access_deadline = (
+        time.monotonic() + max(0.0, float(access_remaining))
+        if isinstance(access_remaining, (int, float))
+        else None
+    )
+
+    # SSE 一旦开始就不能再改 HTTP 状态。显式 LLM 请求的额度预检必须在
+    # StreamingResponse/任何 model task 之前完成；非法模型/query 仍保持原有
+    # “流内 error 事件”行为，不在这里改成普通 HTTP 错误。
+    try:
+        parsed_models = _parse_models(models)
+        request.app.state.classifier.preflight_llm_request(parsed_models, client_ip)
+    except ApiError as exc:
+        if exc.code in {
+            ERROR_LLM_QUOTA_EXHAUSTED,
+            ERROR_LLM_QUOTA_IDENTITY_INVALID,
+            ERROR_LLM_QUOTA_UNAVAILABLE,
+        }:
+            raise
 
     async def event_source() -> AsyncIterator[str]:
         stream = None
@@ -88,8 +144,9 @@ async def compare_stream(
                 models=model_ids,
                 request_id=request_id,
                 is_disconnected=request.is_disconnected,
+                client_ip=client_ip,
             )
-            async for event in stream:
+            async for event in _iter_with_access_deadline(stream, access_deadline):
                 if isinstance(event, StreamHeartbeatEvent):
                     yield HEARTBEAT_LINE
                 elif isinstance(event, StreamModelEvent):
@@ -143,6 +200,16 @@ async def compare_stream(
         except asyncio.CancelledError:
             # 客户端断连由 Starlette 取消流任务，交给 finally 清理。
             raise
+        except _AccessExpired:
+            # 访问租约到期：SSE 已开始，只能以流内 error 事件结束。
+            yield _format_sse(
+                "error",
+                {
+                    "request_id": request_id,
+                    "code": ERROR_ACCESS_EXPIRED,
+                    "message": "访问租约已到期，请重新入场后再试。",
+                },
+            )
         except ApiError as exc:
             # 请求级致命错误：流已开始也用 error 事件返回（不记录标题）。
             yield _format_sse(

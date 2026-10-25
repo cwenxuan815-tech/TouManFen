@@ -1,8 +1,8 @@
 # TMF 前端
 
-TMF 新闻标题分类验证页面，使用 Vue 3、TypeScript 和 Vite。当前包含单模型/多模型对比、SSE 流式、反馈、竞技场、PK 榜、主题/大屏与演示来源/离线快照；热搜功能仍暂缓。
+TMF 新闻标题分类验证页面，使用 Vue 3、TypeScript 和 Vite。当前包含单模型/多模型对比、SSE 流式、**多条标题分类（阶段 2B，每 10 条串行提交）**、**TXT/CSV 本地文件导入（阶段 3B，浏览器本地解析、预览、CSV 表头/列选择）**、反馈、竞技场、PK 榜、主题/大屏与演示来源/离线快照；热搜仍暂缓。
 
-> **最终状态（2026-10-22）**：已完成 F1–F16 中与本阶段相关的前端能力（分类/对比/SSE/反馈/竞技场/PK/主题/大屏/可访问性/F15 来源）；`vue-tsc`/`pnpm build` 通过；F14/F15/F10/F11/F9 浏览器 harness 有记录。F13/D4 设备为 Edge headless 模拟，**未做真实投影/手机人工视觉验收**。
+> **最终状态（2026-10-22，阶段 3B 更新）**：已完成 F1–F16 中与本阶段相关的前端能力（分类/对比/SSE/反馈/竞技场/PK/主题/大屏/可访问性/F15 来源）；阶段 3B 增加 TXT/CSV 文件导入，F17/F18/F19 浏览器 harness 有记录；`vue-tsc` 通过。F13/D4 设备为 Edge headless 模拟，**未做真实投影/手机人工视觉验收**。
 >
 > **运行方式**：本地开发默认 `127.0.0.1:5173`。从仓库根目录运行 `启动TMF.bat` 可检测活动 Wi-Fi/以太网接口上的多个私有 IPv4，启动后端与前端并等待各地址就绪；电脑和手机分别访问所在网段对应的脚本输出 URL。前端 API hostname 跟随当前页面访问地址。停止时运行根目录 `停止TMF.bat`。真实手机视觉验收仍需在目标设备上完成。
 
@@ -79,3 +79,19 @@ pnpm dev
 - 质量：F14 skip link、`:focus-visible`、反馈面板焦点循环/Escape、移动菜单 Escape、aria-live 单次播报、reduced-motion、50 卡与 6× CPU 模拟验收；F16 安全上下文复制降级。
 - 数据真实性：页面启动即请求 `GET /api/v1/demo/state`（服务端 metadata 判定 mock/live；混合/缺失=unknown+来源明细）；结果 `data_source` 来自后端 worker metadata；不根据 URL/可达性猜 live；`public/snapshot.json` 为 cached 演示数据，页面级自动 cached 回退已接线（显示离线快照+生成时间，恢复后退出）。
 - 限制：F13 设备验收为 Edge headless 模拟；无真实浏览器人工视觉验收；未调用真实 LLM/用户服务。详细命令见 D1 文档与 `frontend/tests/f9-f14`。
+
+## 阶段 5C：访问名额交互（2026-10-23）
+
+- 新增 `useAccess`：启动 `enter`、ready 自动 `claim`、active 倒计时、queued position/ahead 轮询、cooling 倒计时、queue_full 手动重试、expired/无效 ticket 清理并重新 enter、`ACCESS_UNAVAILABLE`/身份错误 fail-closed。
+- 新增 `AccessGatePanel` / `AccessActiveBadge`；未 active/disabled 时业务内容不挂载、不调用业务 API；active 显示全局倒计时和提前离开。
+- ticket 使用 `localStorage`（不可用回退 sessionStorage/内存）保存 opaque 值；业务 API 自动注入 `X-Access-Ticket`，access API 不递归注入旧 ticket；ticket 不进入 URL、日志、错误文案。
+- 轮询约 2s + jitter，隐藏页约 8s；`storage` 事件支持同源标签失效恢复；倒计时仅展示，服务端 TTL 为准，不续租。
+- **SSE 限制**：`EventSource` 不能加 `X-Access-Ticket`，access 启用时不发起 SSE，`/compare/stream` 不接入；模型对比走受门禁的 `POST /compare` fallback（带 ticket）。access 关闭时 SSE 原行为不变。未修改后端契约、未把 ticket 放进 URL。
+- 运行隔离验收（真实 App + 本地 mock API + Edge headless，不连真实网关/worker/LLM）：
+
+```powershell
+cd frontend
+node tests/f20/run-scenarios.mjs
+```
+
+- `TMF_ACCESS_CONTROL_ENABLED` 仍默认 false；本阶段未启用。详见 `docs/前端对接说明.md` 10.11。

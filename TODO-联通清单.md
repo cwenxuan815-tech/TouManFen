@@ -108,5 +108,5 @@
 - ◐ **历史工程脚本**：`run_all.py` 完整端到端流水线、`tools/evaluate_all.py` 统一评估脚本仍未固化；`PretrainedModel` 瘦身未做（历史待办，非本轮范围）。
 - ◐ **旧 D4 非隔离证据**：`artifacts/d4/` 中旧文件仍保留，文档已标注由 `*-isolated` 取代；是否归档/清理待决定。
 - ☐ **生产化**：鉴权、HTTPS、生产级数据库/迁移、队列、Docker/CI 未实现。
-- 明确未实现、不要记为已具备：calibrated confidence、批量分类、API 缓存/single-flight/级联、热搜、鉴权、生产级数据库/队列、Docker/CI。
+- 明确未实现、不要记为已具备：calibrated confidence、批量前端输入/文件导入（阶段 2A 仅后端批量 API 已实现）、API 缓存/single-flight/级联、热搜、鉴权、生产级数据库/队列、Docker/CI。
 - 已实现但不要误读：B4/B7 使用本地 SQLite 存反馈/投票；cached/mock 不进入 live 统计；B8 集成/oracle 是派生指标。

@@ -12,6 +12,7 @@ export type { RequestOptions, TimeoutProfile } from './client'
 export {
   COMPARE_STREAM_READY,
   classify,
+  classifyBatch,
   classifyRealtime,
   compare,
   compareStreamUrl,
@@ -27,6 +28,22 @@ export type {
   CompareStreamEventHandler,
   CompareStreamOptions,
 } from './classify'
+export {
+  cancelAccess,
+  claimAccess,
+  enterAccess,
+  getAccessStatus,
+  leaveAccess,
+} from './access'
+export type { AccessStateResponse, AccessWireState } from './access'
+export {
+  ACCESS_TICKET_HEADER,
+  clearAccessTicket,
+  getAccessTicket,
+  readAccessTicket,
+  saveAccessTicket,
+  setAccessErrorHandler,
+} from './accessTicket'
 export { ERROR_MESSAGES, friendlyErrorMessage } from './errors'
 export { arenaLeaderboard, arenaNext, arenaVote } from './arena'
 export {

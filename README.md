@@ -112,7 +112,7 @@ serving/adapters/
 
 ### 当前状态与边界
 
-- 当前定位是**本地/局域网验证型工程**，不是生产系统：无鉴权、无 HTTPS、无用户体系、无生产级数据库/迁移、无容器化；
+- 当前定位是**本地/局域网验证型工程**，不是生产系统：无账号认证、无 HTTPS、无用户体系、无生产级数据库/迁移、无容器化；可选的 IP 访问名额限制默认关闭，不能替代认证或生产级安全边界；
 - 反馈/投票仅存本地 SQLite，重启/清理策略为 30 天惰性清理；
 - 离线基准中 **LLM 为 missing**（外部 Provider 未授权），不得用 mock/估算分数补齐；
 - 竞技场榜单是**人类偏好**（Elo + Wilson），不是模型准确率；
@@ -218,6 +218,7 @@ python run_all.py --stage rf
 | `GET` | `/api/v1/models` | 模型清单、默认模型、10 类、状态 |
 | `GET` | `/api/v1/stats` | 进程内请求/模型调用统计 |
 | `POST` | `/api/v1/classify` | 单模型分类（默认 fasttext） |
+| `POST` | `/api/v1/classify/batch` | 多标题 × 单模型批量分类（1–100 条，v1 不含 LLM） |
 | `POST` | `/api/v1/compare` | 多模型对比（允许部分失败） |
 | `GET` | `/api/v1/compare/stream` | SSE 渐进对比（model/summary/done） |
 | `POST` | `/api/v1/feedback` | 提交纠正反馈（pending、去重） |
@@ -384,6 +385,100 @@ $env:TMF_CORS_ORIGINS='http://<LAN_IP_1>:5173,http://<LAN_IP_2>:5173'
 
 前端用 `pnpm dev` 启动后，各网段客户端访问对应网卡地址的 `http://<LAN_IP>:5173`；页面会访问同 hostname 的 `:8000` 网关。Windows 防火墙只需在相关网络配置文件放行 TCP 5173（前端）和 8000（网关）；worker 端口保留本机访问，不要向局域网开放。`0.0.0.0` 仅是监听地址，不能作为浏览器连接目标。同一 Wi-Fi 通常处于同一局域网，但访客网络、AP/客户端隔离或 VLAN 可能阻止设备互访。
 
+### 3.1 访问名额控制（可选，默认关闭）
+
+访问名额控制用于限制**同一客户端 IP 的并发使用**：最多 10 个 active/ready 唯一 IP、FIFO 最多 50 个 queued IP；active 租约 180 秒、ready 15 秒、queued 120 秒、到期后 cooling 60 秒。它不是账号认证；同一 NAT/出口 IP 下的多台设备共享同一名额，也不构成生产级安全边界。规则和 API 细节见 [`serving/README.md`](serving/README.md) 的 5A/5B 段。
+
+#### 启用前检查
+
+1. **设置 key 和开关，不要写 `.env`**：启动脚本不会从 `.env` 加载访问控制配置（`TMF_ACCESS_CONTROL_ENABLED` 和 `TMF_LLM_QUOTA_HMAC_KEY` 必须来自启动进程环境）；网关子进程继承启动它的 PowerShell/CMD 环境。必须先在启动 `启动TMF.bat` 的同一终端设置变量，或由操作员在适当的用户环境中配置后再启动。把变量写进 `.env` 不会启用访问控制。注意：`stage2.ps1` 会读取 `04-LLM/.env` 中的 `DEEPSEEK_API_KEY`，仅用于判断是否启动 LLM worker，不会把 access 配置加载到网关。
+2. **key 要求**：`TMF_LLM_QUOTA_HMAC_KEY` 至少 32 字节，使用密码管理器或本机安全随机源生成；只注入进程环境，不写入仓库、`.env`、脚本、命令行参数、聊天或日志。该 key 同时供 LLM quota 使用，access 只做 domain separation；不要随意轮换，否则 quota 的 HMAC 索引也会变化。
+3. **key 有效性检查**（只输出 VALID/INVALID，不打印 key）：
+   ```powershell
+   $key = [Environment]::GetEnvironmentVariable('TMF_LLM_QUOTA_HMAC_KEY', 'Process')
+   $valid = -not [string]::IsNullOrWhiteSpace($key) -and
+     [Text.Encoding]::UTF8.GetByteCount($key) -ge 32
+   if ($valid) { 'key: VALID' } else { 'key: INVALID' }
+   Remove-Variable key
+   ```
+4. **开关检查**：在上述同一环境确认 `TMF_ACCESS_CONTROL_ENABLED` 为 `true`；默认 false 表示不启用。
+5. **单进程检查**：网关必须保持单个 Uvicorn 进程。`serving/scripts/stage2.ps1` 当前没有 `--workers`（可用 `Select-String -Path serving\scripts\stage2.ps1 -Pattern '--workers'` 复核；应无输出），不要在启动参数中自行增加多 worker；否则名额、队列和 ticket 会分裂。
+6. **CORS 检查**：一键脚本会根据检测到的 LAN IPv4 生成 `TMF_CORS_ORIGINS`；手动启动时必须显式包含手机/电脑实际访问的前端 origin，例如 `http://<LAN_IP>:5173`。不要使用 `*`。
+7. **网络检查**：Windows 防火墙在相关网络配置文件放行 TCP 5173（前端）和 8000（网关）；worker 端口 8101/8103/8104/8105/8106 只监听 loopback，不向 LAN 开放。
+
+#### 安全生成并设置（仅示例，key 不显示）
+
+以下命令只在**当前 PowerShell 进程**生成并设置 key，不打印 key，也不写入文件。运行前请阅读命令；如操作员已有密码管理器中的 key，可直接注入环境变量，不必使用本段生成。
+
+```powershell
+$bytes = New-Object byte[] 32
+$rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+$rng.GetBytes($bytes)
+$env:TMF_LLM_QUOTA_HMAC_KEY = [Convert]::ToBase64String($bytes)
+Remove-Variable bytes, rng
+$env:TMF_ACCESS_CONTROL_ENABLED = 'true'
+# 可选：状态轮询最小间隔（毫秒，0~10000；默认 1000）
+$env:TMF_ACCESS_STATUS_MIN_INTERVAL_MS = '1000'
+```
+
+然后**在同一个 PowerShell 中**启动，变量才会被 `启动TMF.bat` 及其网关子进程继承：
+
+```powershell
+# 如已有服务，先按正常流程停止，避免旧网关继续无 access 运行
+.\停止TMF.bat
+.\启动TMF.bat
+```
+
+> 双击 `.bat` 不会继承另一个 PowerShell 会话里的临时变量。若必须双击启动，应由操作员在 Windows 用户环境变量中安全配置后再启动；不要把 key 写入仓库或提交到聊天。
+
+#### 启用后的验证
+
+1. **网关启动与 health**：确认启动脚本报告 gateway ready，并在运行网关的机器上检查：
+   ```powershell
+   Invoke-WebRequest http://127.0.0.1:8000/api/v1/healthz -UseBasicParsing
+   ```
+   手机/电脑应从各自的 `http://<LAN_IP>:8000/api/v1/healthz` 验证连通。
+2. **access enter → ready/claim → active**：以下 PowerShell 只输出状态，不打印 ticket；`enter` 可能直接返回 active（刷新恢复）或 queued/cooling，此时按前端排队/冷却提示等待：
+   ```powershell
+   $base = 'http://127.0.0.1:8000/api/v1'
+   $enter = Invoke-RestMethod -Method Post -Uri "$base/access/enter" -ContentType 'application/json' -Body '{}'
+   "enter.state=$($enter.state)"
+   if ($enter.state -eq 'ready') {
+     $headers = @{ 'X-Access-Ticket' = $enter.ticket }
+     $claim = Invoke-RestMethod -Method Post -Uri "$base/access/claim" -Headers $headers
+     "claim.state=$($claim.state)"
+     $models = Invoke-RestMethod -Uri "$base/models" -Headers $headers
+     "models.default_model=$($models.default_model)"
+   }
+   try {
+     Invoke-WebRequest "$base/models" -UseBasicParsing -ErrorAction Stop | Out-Null
+     'no-ticket: unexpected success'
+   } catch {
+     "no-ticket status=$([int]$_.Exception.Response.StatusCode)"
+   }
+   Remove-Variable enter, claim, headers, models -ErrorAction SilentlyContinue
+   ```
+3. **无 ticket 业务请求应被拒绝**：不带 `X-Access-Ticket` 请求业务 API 时应得到 403 `ACCESS_REQUIRED`，不能拿到业务结果；上面的 `no-ticket status` 应显示 403。
+4. **前端状态可见**：浏览器应显示 ready/claim 自动进入、active 倒计时与“提前离开”、queued 排位、cooling 倒计时、queue_full 手动重试；关闭/重开标签不应在不必要的情况下重复制造名额。
+5. **手机与电脑分别验收**：使用各自实际前端 URL 打开页面，确认 CORS 预检、进入/排队、业务调用和离开均正常；不要只用 `localhost` 或 mock 结果代替真实 LAN 验收。
+6. **隔离验收与真实验收分开报告**：现有 5A/5B/5C mock/离线脚本通过，不等于真实网关、真实 LAN、真实手机验收通过。
+
+#### 关闭与回滚
+
+1. 在启动网关的同一环境把 `TMF_ACCESS_CONTROL_ENABLED` 设为 `false`（或删除该进程环境变量），然后**重启网关**；只重启 Vite 不会改变网关开关。
+2. access 关闭后，旧 ticket 不应再被使用；前端会在下次 `enter` 收到 404 `ACCESS_DISABLED` 时清理本地 ticket。建议刷新/重新打开前端页面，确保不沿用旧状态。
+3. 不要删除或重置 LLM quota SQLite 数据库；访问状态只在进程内存中，gateway 重启自然清空，与 quota 数据是两套状态。
+4. 回滚不需要轮换 key；保留 key 可继续支持 quota。若确实轮换 key，需另行评估 quota 的 HMAC 索引迁移，不能把轮换当成普通回滚。
+5. 如果启用后只重启前端、未重启网关，开关不会变化；以网关进程的环境和启动时间作为判断依据。
+
+#### 已知限制
+
+- 启用后 SSE 不接入：浏览器 `EventSource` 不能带 `X-Access-Ticket`，前端 compare 使用受同一门禁保护的 `POST /compare` fallback；access 关闭时 SSE 原行为不变。
+- 状态保存在单进程内存：重启网关会清空 active/queued/cooling，旧 ticket 全部失效；不要配置多 Uvicorn worker。
+- CORS 必须覆盖实际前端 origin；LAN 访问还受 Windows 防火墙、AP/VLAN 隔离、NAT 和手机路由影响。
+- 访问名额限制不是认证、授权、HTTPS 或生产级限流；对外暴露仍需反向代理和更强的安全控制。
+- 当前真实 LAN/手机启用验收尚未完成，不能把 mock harness 结果表述为正式验收通过。
+
 ### 4. 训练（可选）
 
 ```powershell
@@ -430,7 +525,14 @@ pnpm build
 | `TMF_FRONTEND_HOST` / `TMF_FRONTEND_PORT` | 前端监听地址/端口 | `127.0.0.1` / `5173` |
 | `TMF_WORKER_HOST` / `TMF_WORKER_URL_<ID>` | 网关调用 worker 的主机/完整 URL 覆盖 | 取 YAML |
 | `TMF_CORS_ORIGINS` | 追加 CORS 来源（禁止 `*`） | 由前端地址推导 |
+| `TMF_ACCESS_CONTROL_ENABLED` | IP 访问名额控制开关（可选；true 才启用） | `false` |
+| `TMF_LLM_QUOTA_HMAC_KEY` | access IP HMAC 与 LLM quota 共用的机密 key；至少 32 字节；只从进程环境读取 | 未设置（启用 access/quota 时 fail-closed） |
+| `TMF_ACCESS_STATUS_MIN_INTERVAL_MS` | access 状态轮询每 IP 最小间隔（0~10000ms） | `1000` |
 | `TMF_DB_PATH` | 反馈/竞技场 SQLite 路径 | `serving/run/tmf.db` |
+| `TMF_BATCH_MAX_ITEMS` | 批量分类每批最大条数（只能收紧） | `100` |
+| `TMF_BATCH_MAX_TOTAL_CHARS` | 批量分类每批总字符上限（只能收紧） | `20000` |
+| `TMF_BATCH_CONCURRENCY` | 批量分类进程级并发上限 | `2` |
+| `TMF_BATCH_TOTAL_TIMEOUT_MS` | 批量分类批次总时限 | `30000` |
 | `TMF_BENCH_DIR` | 离线基准产物目录 | `artifacts/bench` |
 | `TMF_LLM_PROVIDER` | `deepseek` / `qwen` / `zhipu` | `deepseek` |
 | `TMF_LLM_TOTAL_TIMEOUT_S` | LLM 上游总预算 | 12 s |
@@ -479,7 +581,7 @@ pnpm build
 - **反馈数据库**：`serving/run/tmf.db`，本地 SQLite，不入库；
 - **日志/运行态**：`serving/logs/`、`serving/run/`，不入库；
 - **证据产物**：`artifacts/` 与前端测试截图是小型验收证据，已随仓库提交；
-- **服务暴露**：当前无鉴权/HTTPS/TLS/限流，局域网使用需自行加反向代理与访问控制。
+- **服务暴露**：默认无账号认证、HTTPS/TLS 或生产级限流；可选的 IP 访问名额限制默认关闭，它是按 IP 的并发名额限制，不是账号认证，NAT 下多设备共享同一名额，也不构成生产级安全边界。局域网使用仍需自行加反向代理、认证和防火墙；详见下文「访问名额控制」。
 
 ## 项目交付成果
 

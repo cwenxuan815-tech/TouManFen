@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
-import { useModels } from './composables'
+import { useAccess, useModels } from './composables'
 import { setObservedSource, useDemoState } from './composables/useDemoState'
 import { categoryInfo } from './components/shared/meta'
+import AccessGatePanel from './components/access/AccessGatePanel.vue'
+import AccessActiveBadge from './components/access/AccessActiveBadge.vue'
 import AppShell from './components/layout/AppShell.vue'
 import NavBar from './components/layout/NavBar.vue'
 import SiteFooter from './components/layout/SiteFooter.vue'
@@ -37,6 +39,7 @@ function onHashChange(): void {
   }
 }
 
+const access = useAccess()
 const { models, defaultModel, loading, error, load } = useModels()
 const {
   displaySource,
@@ -71,7 +74,22 @@ watch([loading, error], ([isLoading, message]) => {
   }
 })
 
+let businessBootstrapped = false
+
+// 访问未确认/未 active 时不触发任何业务 API；disabled 时才直接启动旧流程。
+watch(
+  () => access.readyForBusiness.value,
+  (ready) => {
+    if (!ready || businessBootstrapped) return
+    businessBootstrapped = true
+    void refresh()
+    void load()
+  },
+  { immediate: true },
+)
+
 function retryBackend(): void {
+  if (!access.readyForBusiness.value) return
   void load()
 }
 
@@ -88,8 +106,6 @@ function cachedResultText(item: (typeof cachedTitles.value)[number]): string {
 
 onMounted(() => {
   window.addEventListener('hashchange', onHashChange)
-  void refresh()
-  void load()
 })
 
 onUnmounted(() => {
@@ -103,25 +119,44 @@ onUnmounted(() => {
       <NavBar :loading="loading" :has-error="Boolean(error)" />
     </template>
 
-    <div class="demo-status" data-testid="demo-status">
-      <DemoBadge
-        :source="displaySource"
-        :label="displaySource === 'unknown' ? '来源未确认' : undefined"
-        :detail="startupDetail"
-      />
-      <span v-if="urlDemoHint" class="demo-url-hint" role="note">{{ urlDemoHint }}</span>
-      <span v-if="snapshotLoading" class="demo-hint" role="status">正在尝试读取离线快照…</span>
-    </div>
-    <p v-if="sourceBreakdown" class="demo-source-breakdown" data-testid="demo-source-breakdown">
-      来源明细：{{ sourceBreakdown }}
-    </p>
+    <AccessGatePanel
+      v-if="access.overlayVisible.value"
+      :mode="access.mode.value"
+      :position="access.position.value"
+      :ahead="access.ahead.value"
+      :remaining-seconds="access.remainingSeconds.value"
+      :error-message="access.errorMessage.value"
+      :busy="access.busy.value"
+      @cancel="access.cancelQueue"
+      @retry="access.retry"
+    />
+    <AccessActiveBadge
+      v-else-if="access.mode.value === 'active'"
+      :remaining-seconds="access.remainingSeconds.value"
+      :busy="access.busy.value"
+      @leave="access.leaveActive"
+    />
 
-    <section
-      v-if="snapshotLoaded"
-      class="cached-snapshot"
-      data-testid="cached-snapshot"
-      aria-labelledby="cached-snapshot-title"
-    >
+    <template v-if="access.readyForBusiness.value">
+      <div class="demo-status" data-testid="demo-status">
+        <DemoBadge
+          :source="displaySource"
+          :label="displaySource === 'unknown' ? '来源未确认' : undefined"
+          :detail="startupDetail"
+        />
+        <span v-if="urlDemoHint" class="demo-url-hint" role="note">{{ urlDemoHint }}</span>
+        <span v-if="snapshotLoading" class="demo-hint" role="status">正在尝试读取离线快照…</span>
+      </div>
+      <p v-if="sourceBreakdown" class="demo-source-breakdown" data-testid="demo-source-breakdown">
+        来源明细：{{ sourceBreakdown }}
+      </p>
+
+      <section
+        v-if="snapshotLoaded"
+        class="cached-snapshot"
+        data-testid="cached-snapshot"
+        aria-labelledby="cached-snapshot-title"
+      >
       <header class="cached-head">
         <div>
           <p class="cached-kicker">OFFLINE SNAPSHOT · 非实时</p>
@@ -161,24 +196,26 @@ onUnmounted(() => {
       {{ snapshotError }}
     </p>
 
-    <template v-if="view === 'arena'">
-      <!-- 只在用户显式进入竞技场时挂载：避免默认首页触发 5 模型抽题。 -->
-      <ArenaPage />
-    </template>
-    <template v-else-if="view === 'bench'">
-      <BenchPage />
-    </template>
-    <template v-else>
-      <HeroSection />
-      <ClassifyPanel
-        :models="models"
-        :default-model="defaultModel"
-        :loading-models="loading"
-        :models-error="error"
-        @retry-models="load()"
-      />
-      <ModelMatrix :models="models" :loading="loading" />
-      <ClosingSection />
+      <template v-if="view === 'arena'">
+        <!-- 只在用户显式进入竞技场时挂载：避免默认首页触发 5 模型抽题。 -->
+        <ArenaPage />
+      </template>
+      <template v-else-if="view === 'bench'">
+        <BenchPage />
+      </template>
+      <template v-else>
+        <HeroSection />
+        <ClassifyPanel
+          :models="models"
+          :default-model="defaultModel"
+          :loading-models="loading"
+          :models-error="error"
+          :compare-stream-enabled="access.streamAllowed.value"
+          @retry-models="load()"
+        />
+        <ModelMatrix :models="models" :loading="loading" />
+        <ClosingSection />
+      </template>
     </template>
 
     <template #footer>

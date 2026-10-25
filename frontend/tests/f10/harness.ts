@@ -16,6 +16,76 @@ function clean(text: string | null | undefined): string {
   return (text || '').replace(/\s+/g, ' ').trim()
 }
 
+function rectOf(element: Element | null): RectSnapshot | null {
+  if (!element) return null
+  const rect = element.getBoundingClientRect()
+  return {
+    left: rect.left,
+    top: rect.top,
+    right: rect.right,
+    bottom: rect.bottom,
+    width: rect.width,
+    height: rect.height,
+  }
+}
+
+/** 标题自身背景多为 transparent；向上找到实际承载它的面板背景色。 */
+function effectiveBackground(element: Element): string {
+  let current: Element | null = element
+  while (current) {
+    const background = getComputedStyle(current).backgroundColor
+    if (background && background !== 'rgba(0, 0, 0, 0)' && background !== 'transparent') {
+      return background
+    }
+    current = current.parentElement
+  }
+  return getComputedStyle(document.body).backgroundColor || 'rgb(255, 255, 255)'
+}
+
+function titleSnapshot(): TitleSnapshot {
+  const element = document.querySelector('[data-arena-item-title]')
+  if (!element) {
+    return {
+      present: false,
+      text: '',
+      titleAttr: null,
+      fontSize: 0,
+      lineHeight: 0,
+      fontWeight: '',
+      color: '',
+      backgroundColor: '',
+      overflowWrap: '',
+      whiteSpace: '',
+      lineClamp: '',
+      visibleLines: 0,
+      scrollHeight: 0,
+      clientHeight: 0,
+      rect: null,
+    }
+  }
+  const style = getComputedStyle(element)
+  const fontSize = Number.parseFloat(style.fontSize)
+  const lineHeight = Number.parseFloat(style.lineHeight)
+  const rect = element.getBoundingClientRect()
+  return {
+    present: true,
+    text: clean(element.textContent),
+    titleAttr: element.getAttribute('title'),
+    fontSize,
+    lineHeight,
+    fontWeight: style.fontWeight,
+    color: style.color,
+    backgroundColor: effectiveBackground(element),
+    overflowWrap: style.overflowWrap,
+    whiteSpace: style.whiteSpace,
+    lineClamp: style.getPropertyValue('-webkit-line-clamp').trim() || 'none',
+    visibleLines: lineHeight > 0 ? Math.round(rect.height / lineHeight) : 0,
+    scrollHeight: element.scrollHeight,
+    clientHeight: element.clientHeight,
+    rect: rectOf(element),
+  }
+}
+
 interface CardSnapshot {
   letter: string | null
   anonId: string | null
@@ -58,8 +128,47 @@ interface BoardSnapshot {
   text: string
 }
 
+interface RectSnapshot {
+  left: number
+  top: number
+  right: number
+  bottom: number
+  width: number
+  height: number
+}
+
+interface TitleSnapshot {
+  present: boolean
+  text: string
+  titleAttr: string | null
+  fontSize: number
+  lineHeight: number
+  fontWeight: string
+  color: string
+  backgroundColor: string
+  overflowWrap: string
+  whiteSpace: string
+  lineClamp: string
+  visibleLines: number
+  scrollHeight: number
+  clientHeight: number
+  rect: RectSnapshot | null
+}
+
+interface PageSnapshot {
+  innerWidth: number
+  innerHeight: number
+  docScrollWidth: number
+  docClientWidth: number
+  bodyScrollWidth: number
+  bodyClientWidth: number
+}
+
 interface DomSnapshot {
   pageState: string | null
+  title: TitleSnapshot
+  nextButtonRect: RectSnapshot | null
+  page: PageSnapshot
   cards: CardSnapshot[]
   candidatesText: string
   bodyText: string
@@ -134,6 +243,16 @@ function domSnapshot(): DomSnapshot {
   return {
     pageState:
       document.querySelector('[data-arena-page-state]')?.getAttribute('data-arena-page-state') ?? null,
+    title: titleSnapshot(),
+    nextButtonRect: rectOf(document.querySelector('[data-arena-next]')),
+    page: {
+      innerWidth: window.innerWidth,
+      innerHeight: window.innerHeight,
+      docScrollWidth: document.documentElement.scrollWidth,
+      docClientWidth: document.documentElement.clientWidth,
+      bodyScrollWidth: document.body.scrollWidth,
+      bodyClientWidth: document.body.clientWidth,
+    },
     cards: cardSnapshots(),
     candidatesText: clean(candidates?.textContent),
     bodyText: clean(document.body.textContent),

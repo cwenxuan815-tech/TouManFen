@@ -7,6 +7,12 @@ default_model: "fasttext"
 api:
   # 阶段 3 分类接口的标题上限（Python Unicode 字符数）。
   max_title_chars: 200
+  # 阶段 2A：批量分类（多条标题 × 单模型）的硬上限与调度默认值。
+  # 100 条、20,000 字符为已确认上限；配置只能收紧，不能放宽。
+  batch_max_items: 100
+  batch_max_total_chars: 20000
+  batch_concurrency: 2
+  batch_total_timeout_ms: 30000
 
 # B3 软拒识：仅在模型返回**未校准分数**时生效；无分数（如 LLM）不拒识。
 # 规则：max_score < max_score_threshold OR entropy > entropy_threshold。

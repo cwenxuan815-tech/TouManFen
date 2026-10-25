@@ -51,6 +51,23 @@ DEFAULT_COMPARE_CONCURRENCY = 3
 COMPARE_CONCURRENCY_MIN = 1
 COMPARE_CONCURRENCY_MAX = 10
 
+#: 阶段 2A：批量分类（多条标题 × 单模型）的安全上限与调度默认值。
+#: 已确认规则：每批最多 100 条、总计最多 20,000 个 Unicode code point、
+#: 批次总时限 30s；配置只能在该硬上限内收紧或按默认值生效。
+DEFAULT_BATCH_MAX_ITEMS = 100
+BATCH_MAX_ITEMS_LIMIT = 100
+DEFAULT_BATCH_MAX_TOTAL_CHARS = 20000
+BATCH_MAX_TOTAL_CHARS_LIMIT = 20000
+DEFAULT_BATCH_CONCURRENCY = 2
+BATCH_CONCURRENCY_MIN = 1
+BATCH_CONCURRENCY_MAX = 10
+DEFAULT_BATCH_TOTAL_TIMEOUT_MS = 30000
+BATCH_TOTAL_TIMEOUT_MIN_MS = 1000
+BATCH_TOTAL_TIMEOUT_MAX_MS = 120000
+
+#: 批量接口 v1 的单条标题硬上限（即使 TMF_MAX_TITLE_CHARS 被调大也不放宽）。
+BATCH_TITLE_MAX_CHARS = 200
+
 
 class UniqueKeyLoader(yaml.SafeLoader):
     """拒绝重复键，避免后出现的值静默覆盖前值。"""
@@ -133,6 +150,27 @@ class ApiConfig(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     max_title_chars: int = Field(default=200, ge=1, le=1000)
+    #: 阶段 2A：批量分类硬上限（配置只能收紧；默认值即已确认上限）。
+    batch_max_items: int = Field(
+        default=DEFAULT_BATCH_MAX_ITEMS,
+        ge=1,
+        le=BATCH_MAX_ITEMS_LIMIT,
+    )
+    batch_max_total_chars: int = Field(
+        default=DEFAULT_BATCH_MAX_TOTAL_CHARS,
+        ge=1,
+        le=BATCH_MAX_TOTAL_CHARS_LIMIT,
+    )
+    batch_concurrency: int = Field(
+        default=DEFAULT_BATCH_CONCURRENCY,
+        ge=BATCH_CONCURRENCY_MIN,
+        le=BATCH_CONCURRENCY_MAX,
+    )
+    batch_total_timeout_ms: int = Field(
+        default=DEFAULT_BATCH_TOTAL_TIMEOUT_MS,
+        ge=BATCH_TOTAL_TIMEOUT_MIN_MS,
+        le=BATCH_TOTAL_TIMEOUT_MAX_MS,
+    )
 
 
 class RejectCalibrationConfig(BaseModel):
@@ -227,6 +265,11 @@ class Settings:
     compare_total_timeout_ms: int
     #: B12 /compare 与 /compare/stream 的并发上限（默认 3，§6.6）。
     compare_concurrency: int
+    #: 阶段 2A：批量分类（多条标题 × 单模型）的硬上限与调度参数。
+    batch_max_items: int
+    batch_max_total_chars: int
+    batch_concurrency: int
+    batch_total_timeout_ms: int
     reject: RejectConfig
     workers_file: Path
     models_file: Path
@@ -503,6 +546,31 @@ def load_settings(
         COMPARE_CONCURRENCY_MIN,
         COMPARE_CONCURRENCY_MAX,
     )
+    # 阶段 2A：批量分类配置；上限由已确认规则固定，环境变量只能收紧。
+    batch_max_items = _env_int(
+        "TMF_BATCH_MAX_ITEMS",
+        models_doc.api.batch_max_items,
+        1,
+        BATCH_MAX_ITEMS_LIMIT,
+    )
+    batch_max_total_chars = _env_int(
+        "TMF_BATCH_MAX_TOTAL_CHARS",
+        models_doc.api.batch_max_total_chars,
+        1,
+        BATCH_MAX_TOTAL_CHARS_LIMIT,
+    )
+    batch_concurrency = _env_int(
+        "TMF_BATCH_CONCURRENCY",
+        models_doc.api.batch_concurrency,
+        BATCH_CONCURRENCY_MIN,
+        BATCH_CONCURRENCY_MAX,
+    )
+    batch_total_timeout_ms = _env_int(
+        "TMF_BATCH_TOTAL_TIMEOUT_MS",
+        models_doc.api.batch_total_timeout_ms,
+        BATCH_TOTAL_TIMEOUT_MIN_MS,
+        BATCH_TOTAL_TIMEOUT_MAX_MS,
+    )
 
     # B3 软拒识：严格校验来源元数据（derived_for_model/类别数），并支持环境变量覆盖。
     reject = _resolve_reject_config(
@@ -527,6 +595,10 @@ def load_settings(
         status_cache_ms=status_cache_ms,
         compare_total_timeout_ms=compare_total_timeout_ms,
         compare_concurrency=compare_concurrency,
+        batch_max_items=batch_max_items,
+        batch_max_total_chars=batch_max_total_chars,
+        batch_concurrency=batch_concurrency,
+        batch_total_timeout_ms=batch_total_timeout_ms,
         reject=reject,
         workers_file=workers_path,
         models_file=models_path,

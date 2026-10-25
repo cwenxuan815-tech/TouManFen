@@ -41,6 +41,8 @@ export interface UseClassifyOptions {
   defaultModel: Ref<string>
   modelsError: Ref<string>
   maxTitleChars?: number
+  /** access 启用时 EventSource 不能带 ticket；false 时 compare 走 POST fallback。 */
+  compareStreamEnabled?: Ref<boolean>
 }
 
 export function useClassify(options: UseClassifyOptions) {
@@ -141,6 +143,7 @@ export function useClassify(options: UseClassifyOptions) {
   function submitCompareStream(): boolean {
     if (mode.value !== 'compare') return false
     if (!canSubmit.value) return false
+    if (options.compareStreamEnabled && !options.compareStreamEnabled.value) return false
     if (!supportsCompareStream()) return false
     cancelRealtime()
     activeController?.abort()
@@ -372,5 +375,6 @@ export function useClassify(options: UseClassifyOptions) {
     submitCompareStream,
     clearCompareStreamRequest,
     cancel,
+    cancelRealtime,
   }
 }

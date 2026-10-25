@@ -29,10 +29,11 @@
 - `GET /api/v1/models`：5 个模型注册信息、启用状态、版本、可用状态；
 - `GET /api/v1/stats`：单进程内存统计（重启清零，含按模型 ok/error 计数）；
 - `POST /api/v1/classify`：单模型分类（`title` 必填，`model` 可选，默认 fasttext）；
+- `POST /api/v1/classify/batch`：阶段 2A 多标题 × 单模型批量分类；1–100 条、每条 ≤200 code point、总计 ≤20,000 code point，批量为 30s 总时限；v1 在 worker 调用前拒绝 `llm`；逐条结果保留顺序，支持 partial/all_failed；不返回 `human_feedback_hint`；
 - `POST /api/v1/compare`：默认比较 4 个本地模型（**B9 起 LLM 为 opt-in**，默认不含 llm），可用 `models` 显式指定；合法请求统一 200，逐模型 ok/error；
 - 阶段 4A LLM 韧性：上游总预算默认 12 s（`TMF_LLM_TOTAL_TIMEOUT_S`，须小于网关对 8105 的 15 s 超时）、关闭 SDK 自动重试、输出 10 类白名单校验且至多重试一次；
 - request ID、结构化日志（`logs/gateway.jsonl`）、基础统计；
-- 已扩展：未校准 `scores/top_k`、B3 软拒识、B4 反馈、B6 SSE、B7 竞技场、B8 bench、B11 data_source；未实现 calibrated confidence、批量分类、缓存、single-flight、级联、热搜、鉴权、Docker、CI。
+- 已扩展：未校准 `scores/top_k`、B3 软拒识、B4 反馈、B6 SSE、B7 竞技场、B8 bench、B11 data_source、阶段 2A 批量分类（后端）；未实现 calibrated confidence、批量前端输入/文件导入、缓存、single-flight、级联、热搜、鉴权、Docker、CI。
 
 ## 配置（网络）
 
@@ -96,6 +97,116 @@ D:\Miniconda3\envs\py3109\python.exe serving/scripts/verify_stage3.py --llm-mode
 > 其他模型也支持通用 mock（用于无模型环境），必须使用临时端口：
 > `python serving/scripts/mock_worker.py --port <临时端口> --model-id rf --display-name mock-rf`
 
+
+## LLM 配额基础设施（阶段 4A）
+
+阶段 4A 当时只提供可单测的 IP 解析与 SQLite 配额存储，**尚未接入分类/compare/stream/arena 路由**；阶段 4B 已接入，见下一节。
+
+- `serving/gateway/client_ip.py`：默认只信任 socket peer；仅 `TMF_TRUSTED_PROXY_CIDRS` 中显式配置的代理可提供 `X-Forwarded-For`/`Forwarded`。默认列表为空，`/0` 被拒绝；IPv4-mapped IPv6 归一为 IPv4。
+- `serving/gateway/quota_config.py`：读取 `TMF_LLM_QUOTA_HMAC_KEY`（必需、至少 32 字节）与 `TMF_DB_PATH`（默认 `serving/run/tmf.db`）；key 缺失/过短时 fail-closed。key 轮换会改变 HMAC 索引，旧封禁记录不会自动迁移。
+- `serving/services/llm_quota.py`：SQLite 表 `llm_ip_quota` / `llm_quota_event`；按 HMAC-SHA256(IP) 原子 `BEGIN IMMEDIATE` 预留，1–3 次允许、第 4 次拒绝；超时/Provider 失败不退款；数据库异常抛 `LlmQuotaStoreError`（不得 fail-open）。审计表预留 `operation`、`used_before/after`、`admin_note` 等字段，但本阶段不提供管理员命令/API。
+- 隔离验收：`serving/scripts/verify_llm_quota_infra.py`（临时 DB/进程，不启动服务、不调用 Provider）。
+
+## LLM 配额接入（阶段 4B）
+
+4A 的存储已接入网关 LLM adapter 调用路径；每次真实 `LlmAdapter.predict` 前由 `QuotaedLlmAdapter` 原子 reserve 一次：
+
+- 覆盖 `POST /api/v1/classify`、`POST /api/v1/compare`、`GET /api/v1/compare/stream`、`GET /api/v1/arena/next` 及其经过网关的 LLM adapter 路径；批量 `/classify/batch` 仍拒绝 LLM 且不扣额度。
+- 第 1–3 次允许；第 4 次 HTTP **403 `LLM_QUOTA_EXHAUSTED`**（详情含 `limit=3`、`used=3`；不返回 IP/key）。store 配置/初始化/读写失败时 HTTP **503 `LLM_QUOTA_UNAVAILABLE`**，不调用 LLM adapter；无有效客户端身份时 403 `LLM_QUOTA_IDENTITY_INVALID`。
+- `/compare`、`/compare/stream` 在 fanout 前做只读预检：已耗尽/store 不可用时整请求 403/503，不启动任何本地模型；真正 LLM 调用仍逐次原子 reserve，并发抢最后额度由 SQLite 事务拒绝，已启动的其他本地模型正常收尾。
+- 竞技场默认只使用 4 个本地模型，刷新不触发 LLM、不消耗配额；匿名投票/Elo 不变。
+- 启动时在 lifespan 初始化/关闭 store；缺少 `TMF_LLM_QUOTA_HMAC_KEY` 或 store 初始化失败时，非 LLM 功能照常，LLM 统一 503，不会静默放开。
+- key 运行配置：`TMF_LLM_QUOTA_HMAC_KEY`，至少 32 字节，由操作员用密码管理器/安全随机源生成并注入进程环境；不要写仓库或 `.env`。key 轮换会改变全部 HMAC IP 索引，旧计数/封禁记录不会自动迁移，需离线管理员方案另行处理。
+- 隔离验收：`serving/scripts/verify_llm_quota_gateway.py`（临时 SQLite + fake adapter + TestClient，不启动真实服务/Provider）。
+
+### Uvicorn 启动身份边界（阶段 4B 收口）
+
+`serving/scripts/stage2.ps1` 的 Start-Gateway 参数已加入 `--no-proxy-headers`：
+
+```text
+-m uvicorn serving.gateway.main:app
+--host <host> --port <port>
+--no-access-log
+--no-proxy-headers
+--log-level info
+```
+
+Uvicorn 0.54.0 支持该参数。关闭 Uvicorn 自身的 `X-Forwarded-For`/`X-Forwarded-Proto` 改写后，`request.client` 始终是真实 socket peer；`serving/gateway/client_ip.py` 成为唯一转发头信任边界，且只在显式 `TMF_TRUSTED_PROXY_CIDRS` 匹配时解析 `X-Forwarded-For`/`Forwarded`。未设置 `--forwarded-allow-ips`，避免与 `--no-proxy-headers` 冲突。
+
+临时 Uvicorn 验证：`serving/scripts/verify_stage2_proxy_boundary.py`（临时 loopback 端口，不占用 8000/8101-8106，不启动用户服务）。结果覆盖：无代理时伪造 XFF/Forwarded 不改变身份；显式 `127.0.0.1/32` 时按可信链取右侧第一个非可信地址；全可信链 fail-closed。
+
+网关配额不保护管理员/本机脚本直接调用 8105；LLM worker 仍仅 loopback 监听，这是既有边界。
+
+### 离线管理员 CLI（阶段 4C）
+
+只提供本机离线命令；没有 HTTP 管理 API、Web UI 或网络服务：
+
+```powershell
+# TMF_LLM_QUOTA_HMAC_KEY 必须由操作员注入当前终端环境；不要把 key 放进命令参数/仓库。
+python serving/scripts/manage_llm_quota.py --db <quota.db> status <ip>
+python serving/scripts/manage_llm_quota.py --db <quota.db> unblock <ip> `
+  --reason "客服确认误触发，人工复核" --confirm RESET-LLM-QUOTA
+```
+
+- `status`：复用 `client_ip.py` 规范化 IP 与既有 HMAC；只显示该 IP 的 `used/limit`、`blocked`、首次/最近/封禁时间。找不到时显示“该 IP 尚无配额记录”；不列出整个 DB，不输出明文 IP。
+- `unblock`：要求精确 `--confirm RESET-LLM-QUOTA` 且 `--reason` 非空；在一个 `BEGIN IMMEDIATE` 事务中把该行 `used=0`、`blocked_at=NULL`，并写入 `llm_quota_event`：`operation=admin_unblock`、`used_before/used_after`、`created_at`、`admin_note`、`request_id=offline-cli`、`route=offline-cli`。历史 reserve 事件保留；失败回滚；解除后该 IP 可重新使用 3 次，第 4 次仍拒绝。
+- 没有 `clear`、`reset-all`、批量解除或模糊匹配；不删除任何配额/审计行。
+- `--db` 省略时使用 `TMF_DB_PATH`，再回退 `serving/run/tmf.db`。正式库路径必须显式传 `--db` **并**加 `--allow-production-db`；否则拒绝且不打开数据库。临时测试库无需该确认参数。
+- HMAC key 只从 `TMF_LLM_QUOTA_HMAC_KEY` 读取；缺失/过短返回非零且不输出 key。合法但错误的 key 无法与“新 IP”区分，会表现为无记录；轮换 key 后旧记录不会自动匹配或迁移。
+- 退出码：`0` 成功；`1` DB/IP/记录/runtime 失败；`2` 参数、key 配置、确认短语或正式 DB 保护拒绝。
+- 隔离验收：`serving/scripts/verify_llm_quota_cli.py`（临时 SQLite、运行时随机 key；不启动网关/worker、不调用 Provider、不触碰正式 DB）。
+
+## 访问管理核心状态机（阶段 5A）
+
+- 新增 `serving/services/access.py`：单进程内存 `AccessManager`，实现 active/ready/queued/cooling/expired/cancelled/queue_full 状态、FIFO、10 个 active/ready 上限、50 个 queued 上限、180/120/60/15 秒规则所需的内部 TTL 与 sweep；队列满时 `enter()` 返回 `queue_full`。
+- 新增 `serving/scripts/verify_access_state.py`：fake clock/fake ticket generator 的状态机隔离验收。
+- 进程重启后内存状态自然清空，旧 ticket 失效。
+- 该 manager 只接收调用方已脱敏的 `ip_key`，不负责 IP 解析/HMAC。
+
+## 访问管理 API 与业务门禁（阶段 5B）
+
+### Feature flag
+
+`TMF_ACCESS_CONTROL_ENABLED` 默认 **false**：
+
+- false：不创建 manager，不要求 ticket，现有 API 行为不变；access API 返回 404 `ACCESS_DISABLED`。
+- true：网关启动时用 `TMF_LLM_QUOTA_HMAC_KEY`（与 LLM quota 共用，域分离）初始化内存 manager，并对业务 API 全面门禁。缺少该 key 或初始化失败时启动失败，**不会自动降级为 false**。
+- 启用需要显式设置环境变量并重启网关；本阶段没有替用户打开开关。
+- **变量来源**：`stage2.ps1` 和根目录 `启动TMF.bat` 不会从 `.env` 加载访问控制配置（`TMF_ACCESS_CONTROL_ENABLED` 和 `TMF_LLM_QUOTA_HMAC_KEY` 必须来自启动进程环境）；必须先在启动 `启动TMF.bat` 的同一 PowerShell/CMD 环境设置，或由操作员在适当的用户环境配置后再启动。双击 `.bat` 不会继承另一个终端会话中的临时变量。注意：`stage2.ps1` 会读取 `04-LLM/.env` 中的 `DEEPSEEK_API_KEY`，仅用于判断是否启动 LLM worker，不会把 access 配置加载到网关。
+- **启用前**：确认 key 至少 32 字节（只检查有效/无效，不打印 key）、开关为 true、Uvicorn 单进程、CORS 覆盖实际前端 origin、防火墙放行 5173/8000、worker 端口保持 loopback。完整命令和检查清单见根 [README「访问名额控制」](../README.md#31-访问名额控制可选默认关闭)。
+- **回滚**：在同一环境把 `TMF_ACCESS_CONTROL_ENABLED` 设为 false 后重启网关；旧 ticket/内存队列/冷却随网关进程重建而失效，前端刷新后会检测到 `ACCESS_DISABLED`。不要删除 quota SQLite，也不要随意轮换共用 key。
+
+### Access API
+
+ticket 只通过 `X-Access-Ticket` 请求头传递，不进入 URL/query/日志。
+
+```text
+POST /api/v1/access/enter     (ticket 可选；刷新恢复时也可不带)
+GET  /api/v1/access/status    (需要 ticket)
+POST /api/v1/access/claim     (需要 ticket；ready 15s 内)
+POST /api/v1/access/leave     (需要 ticket；提前离开不冷却)
+POST /api/v1/access/cancel    (需要 ticket；取消 queued)
+```
+
+- `enter` 返回 `active/ready/queued/cooling` 及 ticket、position/ahead、remaining_seconds；队列满返回 HTTP 429 `ACCESS_QUEUE_FULL`。
+- `status` 返回当前状态但**不返回 ticket**，且不续期；阶段 5C 前端已有排队/冷却轮询客户端，目标约 2s + jitter，页面隐藏时约 8s，恢复可见立即刷新。
+- 状态轮询有每 IP 最小间隔保护（`TMF_ACCESS_STATUS_MIN_INTERVAL_MS`，默认 1000ms），超频返回 429 `ACCESS_POLL_THROTTLED`。
+- ticket 缺失/伪造/归属错误返回 403 `ACCESS_TICKET_INVALID`；不透露其他 IP 状态。
+- manager 不可用返回 503 `ACCESS_UNAVAILABLE`；不会 fail-open。
+
+### 业务门禁
+
+启用后，除以下路径外，所有业务 API 必须携带当前 IP 的 active ticket：
+
+- `/api/v1/access/*`
+- `/api/v1/healthz`、`/api/v1/readyz`
+- CORS `OPTIONS`
+
+覆盖 models/stats/demo/bench、classify/batch/compare/SSE、arena、feedback 及所有未来新增业务路由。无 ticket -> 403 `ACCESS_REQUIRED`；queued -> 429 `ACCESS_QUEUED`；ready -> 409 `ACCESS_CLAIM_REQUIRED`；cooling -> 429 `ACCESS_COOLING`；过期 -> 403 `ACCESS_TICKET_INVALID`。
+
+后台仍会在 `StreamingResponse` 前校验 ticket，并可用 active 剩余租约限制流生命周期（到期发送 `event: error` + `ACCESS_EXPIRED`）。但阶段 5C 前端在 access 启用时**不建立 EventSource**：浏览器 `EventSource` 不能添加 `X-Access-Ticket`，compare 走受同一门禁保护的 `POST /compare` fallback；access 关闭时 SSE 原行为不变。
+
+访问管理是 IP 名额限制，不是用户认证；NAT 共享名额。v1 必须保持单 Uvicorn worker（stage2 当前未设置 `--workers`），重启网关会清空内存中的 active/queued/cooling 并使旧 ticket 失效。隔离验收：`serving/scripts/verify_access_gateway.py`（临时 app/内存 manager/fake classifier，不启动服务、不调用真实 LLM）。
 
 ## 边界
 

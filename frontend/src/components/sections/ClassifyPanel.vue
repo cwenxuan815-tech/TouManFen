@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { computed, toRef, watch } from 'vue'
+import { computed, ref, toRef, watch } from 'vue'
 import { exampleTitles, categoryInfo, MAX_TITLE_CHARS, modelLabel } from '../shared/meta'
 import type { ModelInfo } from '../../types'
-import { useClassify } from '../../composables'
+import { useBatchClassify, useClassify, type ImportedBatchInput } from '../../composables'
 import InputBox from '../classify/InputBox.vue'
+import BatchInputBox from '../classify/BatchInputBox.vue'
+import FileImportPanel from '../classify/FileImportPanel.vue'
+import ImportedBatchPreview from '../classify/ImportedBatchPreview.vue'
 import ResultStage from '../result/ResultStage.vue'
+import BatchResultPanel from '../result/BatchResultPanel.vue'
 import AsyncState from '../common/AsyncState.vue'
 import { pushToast } from '../common/toast'
 
@@ -13,6 +17,8 @@ const props = defineProps<{
   defaultModel: string
   loadingModels: boolean
   modelsError: string
+  /** access 启用时 EventSource 无法带 X-Access-Ticket，关闭 SSE 走 POST fallback。 */
+  compareStreamEnabled?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -46,14 +52,160 @@ const {
   activateLlm,
   submit,
   submitCompareStream,
+  cancelRealtime,
 } = useClassify({
   models: toRef(props, 'models'),
   defaultModel: toRef(props, 'defaultModel'),
   modelsError: toRef(props, 'modelsError'),
+  compareStreamEnabled: computed(() => props.compareStreamEnabled !== false),
 })
+
+type TitleMode = 'single' | 'multiple'
+const titleMode = ref<TitleMode>('single')
+
+const batch = useBatchClassify({
+  model: selectedModel,
+  modelsError: toRef(props, 'modelsError'),
+})
+const {
+  text: batchText,
+  parsed: batchParsed,
+  validation: batchValidation,
+  rows: batchRows,
+  phase: batchPhase,
+  submitting: batchSubmitting,
+  canSubmit: batchCanSubmit,
+  progressDone: batchProgressDone,
+  progressTotal: batchProgressTotal,
+  okCount: batchOkCount,
+  errorCount: batchErrorCount,
+  batchId: batchBatchId,
+  requestId: batchRequestId,
+  lastError: batchLastError,
+  hasImported: batchHasImported,
+  imported: batchImported,
+  importedMeta: batchImportedMeta,
+  setImportedBatch,
+  clearImportedBatch,
+  submit: submitBatch,
+  retryFailed: retryBatchFailed,
+  cancel: cancelBatch,
+} = batch
 
 const defaultModelLabel = computed(() => modelLabel(props.models, props.defaultModel))
 const selectedModelLabel = computed(() => modelLabel(props.models, selectedModel.value))
+
+const labHeading = computed(() =>
+  mode.value === 'single' && titleMode.value === 'multiple'
+    ? '从一组标题开始。'
+    : '从一个标题开始。',
+)
+const singleHasNewline = computed(() => /[\r\n]/.test(title.value))
+const batchDraftNotice = computed(
+  () => mode.value === 'compare' && titleMode.value === 'multiple' && Boolean(batchText.value.trim()),
+)
+const batchValidationVisible = computed(
+  () =>
+    titleMode.value === 'multiple'
+    && !batchHasImported.value
+    && Boolean(batchText.value)
+    && !batchValidation.value.ok,
+)
+const showBatchPanel = computed(
+  () =>
+    mode.value === 'single'
+    && titleMode.value === 'multiple'
+    && (batchRows.value.length > 0 || batchPhase.value !== 'idle'),
+)
+const hasBatchContent = computed(
+  () =>
+    Boolean(batchText.value.trim())
+    || batchRows.value.length > 0
+    || batchPhase.value !== 'idle',
+)
+const batchExistingSummary = computed(() => {
+  if (!hasBatchContent.value) return ''
+  const draftCount = batchParsed.value.items.length
+  const resultCount = batchRows.value.length
+  const parts: string[] = []
+  if (draftCount) parts.push(`当前 ${draftCount} 条标题`)
+  if (resultCount) parts.push(`${resultCount} 条分类结果`)
+  return parts.length ? `${parts.join('、')}将被替换。` : ''
+})
+
+const action = computed(() => {
+  if (mode.value === 'compare') {
+    return {
+      kicker: 'SIDE BY SIDE',
+      heading: pageHeading.value,
+      description: '让多个模型并行判断，比较它们对标题的理解。',
+      summaryTitle: `${selectedModels.value.length} 个模型`,
+      summaryDetail: selectedModelNames.value.join(' · ') || '至少选择一个模型',
+      submitLabel: '开始模型对比',
+      submittingLabel: '正在分析标题',
+      submitting: submitting.value,
+      canSubmit: canSubmit.value,
+      isBatch: false,
+    }
+  }
+  if (titleMode.value === 'multiple') {
+    return {
+      kicker: 'BATCH · ONE MODEL',
+      heading: '一次读多条，逐条判断。',
+      description: '每行一条标题，分片提交；失败项可单独重试。',
+      summaryTitle: `${batchParsed.value.items.length} 条标题`,
+      summaryDetail: selectedModelLabel.value || '选择一个本地模型',
+      submitLabel: '开始批量分类',
+      submittingLabel: `正在分类 ${batchProgressDone.value}/${batchProgressTotal.value || batchParsed.value.items.length}`,
+      submitting: batchSubmitting.value,
+      canSubmit: batchCanSubmit.value,
+      isBatch: true,
+    }
+  }
+  return {
+    kicker: 'ONE MODEL',
+    heading: pageHeading.value,
+    description: '用一个模型，快速找到标题所属的新闻频道。',
+    summaryTitle: selectedModelLabel.value || '选择一个模型',
+    summaryDetail: '单模型推理',
+    submitLabel: '开始分类',
+    submittingLabel: '正在分析标题',
+    submitting: submitting.value,
+    canSubmit: canSubmit.value,
+    isBatch: false,
+  }
+})
+
+watch(titleMode, (nextMode) => {
+  if (nextMode !== 'multiple') return
+  cancelRealtime()
+  if (selectedModel.value !== 'llm') return
+  const fallback =
+    props.models.find((item) => item.enabled && item.model_id !== 'llm')?.model_id
+    || (props.defaultModel !== 'llm' ? props.defaultModel : '')
+  selectedModel.value = fallback
+})
+
+function setTitleMode(nextMode: TitleMode): void {
+  titleMode.value = nextMode
+}
+
+function onBatchTextUpdate(value: string): void {
+  batchText.value = value
+}
+
+function onFileImport(payload: ImportedBatchInput): void {
+  setImportedBatch(payload)
+}
+
+function onClearImported(): void {
+  clearImportedBatch()
+}
+
+function useSingleAsBatch(): void {
+  if (!batchText.value.trim()) batchText.value = title.value
+  titleMode.value = 'multiple'
+}
 
 /**
  * F9：对比模式优先走 SSE（ResultStage 内负责连接生命周期）；
@@ -61,7 +213,15 @@ const selectedModelLabel = computed(() => modelLabel(props.models, selectedModel
  */
 function onSubmit(): void {
   if (mode.value === 'compare' && submitCompareStream()) return
+  if (mode.value === 'single' && titleMode.value === 'multiple') {
+    void submitBatch()
+    return
+  }
   void submit()
+}
+
+function onBatchRetry(): void {
+  void retryBatchFailed()
 }
 
 // F3：页面错误状态保持完整；F4 统一以 Toaster 展示，避免与内联横幅重复。
@@ -80,9 +240,12 @@ watch(pageError, (message) => {
     <div class="section-heading">
       <div>
         <div class="eyebrow"><span class="eyebrow-line"></span> CLASSIFICATION STUDIO</div>
-        <h2 id="lab-title">从一个标题开始。</h2>
+        <h2 id="lab-title">{{ labHeading }}</h2>
       </div>
-      <p>选择模型，输入新闻标题，<br class="desktop-break" />观察分类结果与模型差异。</p>
+      <p v-if="mode === 'single' && titleMode === 'multiple'">
+        每行一条标题，逐条判断，<br class="desktop-break" />失败项可单独重试。
+      </p>
+      <p v-else>选择模型，输入新闻标题，<br class="desktop-break" />观察分类结果与模型差异。</p>
     </div>
 
     <div class="studio-card">
@@ -92,12 +255,38 @@ watch(pageError, (message) => {
       </div>
 
       <div class="mode-switch" role="tablist" aria-label="分类模式">
-        <button type="button" role="tab" :aria-selected="mode === 'single'" :class="{ active: mode === 'single' }" @click="setMode('single')">
+        <button type="button" role="tab" data-top-mode="single" :disabled="batchSubmitting" :aria-selected="mode === 'single'" :class="{ active: mode === 'single' }" @click="setMode('single')">
           <span class="mode-icon">◉</span> 单模型分类 <small>选择一个模型</small>
         </button>
-        <button type="button" role="tab" :aria-selected="mode === 'compare'" :class="{ active: mode === 'compare' }" @click="setMode('compare')">
+        <button type="button" role="tab" data-top-mode="compare" :disabled="batchSubmitting" :aria-selected="mode === 'compare'" :class="{ active: mode === 'compare' }" @click="setMode('compare')">
           <span class="mode-icon compare-icon">↗</span> 模型对比 <small>并行查看结果</small>
         </button>
+      </div>
+
+      <div v-if="mode === 'single'" class="title-mode-switch" role="group" aria-label="标题输入方式">
+        <button
+          type="button"
+          class="title-mode-option"
+          data-title-mode="single"
+          :disabled="batchSubmitting"
+          :aria-pressed="titleMode === 'single'"
+          :class="{ active: titleMode === 'single' }"
+          @click="setTitleMode('single')"
+        >
+          单条标题
+        </button>
+        <button
+          type="button"
+          class="title-mode-option"
+          data-title-mode="multiple"
+          :disabled="batchSubmitting"
+          :aria-pressed="titleMode === 'multiple'"
+          :class="{ active: titleMode === 'multiple' }"
+          @click="setTitleMode('multiple')"
+        >
+          多条标题
+        </button>
+        <span class="title-mode-hint">{{ titleMode === 'single' ? '一条标题，实时建议可用' : '每行一条，分片提交；v1 不使用大模型' }}</span>
       </div>
 
       <AsyncState
@@ -108,13 +297,40 @@ watch(pageError, (message) => {
         retry-label="重新连接"
         @retry="emit('retry-models')"
       />
-      <div v-if="includeLlm" class="inline-alert alert-warn panel-status" role="status">
+      <div v-if="includeLlm && !(mode === 'single' && titleMode === 'multiple')" class="inline-alert alert-warn panel-status" role="status">
         <span class="alert-symbol">i</span><span>已启用大模型。请确认后端 8105 当前连接的是本地 mock；若是真实供应商，调用可能产生费用。</span>
       </div>
 
       <div class="workspace-grid">
         <div class="input-column">
+          <BatchInputBox
+            v-if="mode === 'single' && titleMode === 'multiple' && !batchHasImported"
+            :model-value="batchText"
+            :items="batchParsed.items"
+            :total-chars="batchParsed.totalChars"
+            :empty-line-count="batchParsed.emptyLineCount"
+            :duplicate-extra-count="batchParsed.duplicateExtraCount"
+            :duplicate-group-count="batchParsed.duplicateGroupCount"
+            :too-long-count="batchParsed.tooLongCount"
+            :disabled="batchSubmitting"
+            @update:model-value="onBatchTextUpdate"
+          />
+          <FileImportPanel
+            v-if="mode === 'single' && titleMode === 'multiple' && !batchHasImported"
+            :disabled="batchSubmitting"
+            :has-existing-content="hasBatchContent"
+            :existing-summary="batchExistingSummary"
+            @import="onFileImport"
+          />
+          <ImportedBatchPreview
+            v-if="mode === 'single' && titleMode === 'multiple' && batchHasImported"
+            :items="batchImported?.items ?? []"
+            :meta="batchImportedMeta"
+            :disabled="batchSubmitting"
+            @clear="onClearImported"
+          />
           <InputBox
+            v-else-if="mode === 'compare' || (mode === 'single' && titleMode === 'single')"
             :model-value="title"
             :examples="exampleTitles"
             :max-chars="MAX_TITLE_CHARS"
@@ -124,7 +340,46 @@ watch(pageError, (message) => {
             @composition-end="onCompositionEnd"
           />
 
-          <div v-if="realtimeStatus === 'loading' || realtimeResult" class="realtime-strip" role="status" aria-live="polite">
+          <p
+            v-if="mode === 'single' && titleMode === 'multiple' && batchValidationVisible"
+            class="inline-alert alert-warn panel-status batch-validation"
+            role="alert"
+            data-batch-validation
+          >
+            <span class="alert-symbol">i</span><span>{{ batchValidation.message }}</span>
+          </p>
+
+          <p
+            v-if="mode === 'single' && titleMode === 'single' && singleHasNewline"
+            class="inline-alert alert-info panel-status newline-hint"
+            role="note"
+            data-single-newline-hint
+          >
+            <span class="alert-symbol">i</span>
+            <span>
+              检测到多行文本。当前仍会作为一个标题提交；如需逐条分类，请切换到「多条标题」。
+              <button type="button" class="newline-switch" data-use-single-as-batch @click="useSingleAsBatch">
+                切换并保留文本
+              </button>
+            </span>
+          </p>
+
+          <p
+            v-if="batchDraftNotice"
+            class="inline-alert alert-info panel-status"
+            role="note"
+            data-batch-draft-notice
+          >
+            <span class="alert-symbol">i</span>
+            <span>模型对比只使用单条标题；你的多条草稿已保留，切回单模型分类即可继续。</span>
+          </p>
+
+          <div
+            v-if="mode === 'single' && titleMode === 'single' && (realtimeStatus === 'loading' || realtimeResult)"
+            class="realtime-strip"
+            role="status"
+            aria-live="polite"
+          >
             <span v-if="realtimeStatus === 'loading'" class="realtime-dot"></span>
             <span v-if="realtimeStatus === 'loading'">实时分析中…</span>
             <template v-else-if="realtimeResult">
@@ -137,9 +392,14 @@ watch(pageError, (message) => {
           <div v-if="mode === 'single'" class="model-select-wrap">
             <label class="field-label" for="model-select"><span>选择分类模型</span><span class="field-hint">默认：{{ defaultModelLabel }}</span></label>
             <div class="select-shell">
-              <select id="model-select" v-model="selectedModel" :disabled="loadingModels || !!modelsError">
-                <option v-for="model in models.filter((item) => item.enabled)" :key="model.model_id" :value="model.model_id" :disabled="model.model_id === 'llm' && !includeLlm">
-                  {{ model.display_name }}{{ model.model_id === 'llm' && !includeLlm ? ' · 需手动启用' : '' }}
+              <select id="model-select" v-model="selectedModel" :disabled="loadingModels || !!modelsError || batchSubmitting">
+                <option
+                  v-for="model in models.filter((item) => item.enabled)"
+                  :key="model.model_id"
+                  :value="model.model_id"
+                  :disabled="model.model_id === 'llm' && (titleMode === 'multiple' || !includeLlm)"
+                >
+                  {{ model.display_name }}{{ model.model_id === 'llm' && titleMode === 'multiple' ? ' · 多条模式不可用' : model.model_id === 'llm' && !includeLlm ? ' · 需手动启用' : '' }}
                 </option>
               </select>
               <span class="select-chevron">⌄</span>
@@ -167,7 +427,21 @@ watch(pageError, (message) => {
             </div>
           </div>
 
-          <label class="llm-consent" :class="{ 'llm-consent-on': includeLlm }">
+          <div
+            v-if="mode === 'single' && titleMode === 'multiple'"
+            class="inline-alert alert-info panel-status batch-llm-note"
+            role="note"
+            data-batch-llm-note
+          >
+            <span class="alert-symbol">i</span>
+            <span>多条分类 v1 暂不支持大模型；本批次仅使用本地模型。单条模式和模型对比仍可按原方式使用 LLM。</span>
+          </div>
+
+          <label
+            v-if="mode === 'compare' || titleMode === 'single'"
+            class="llm-consent"
+            :class="{ 'llm-consent-on': includeLlm }"
+          >
             <input v-model="includeLlm" type="checkbox" @change="activateLlm" />
             <span class="custom-check">{{ includeLlm ? '✓' : '' }}</span>
             <span class="consent-copy"><b>本次允许调用大模型</b><small>真实供应商尚未验证；调用可能产生费用。默认关闭。</small></span>
@@ -177,19 +451,19 @@ watch(pageError, (message) => {
 
         <aside class="action-column">
           <div class="action-card">
-            <div class="action-card-kicker">{{ mode === 'single' ? 'ONE MODEL' : 'SIDE BY SIDE' }}</div>
-            <h3>{{ pageHeading }}</h3>
-            <p>{{ mode === 'single' ? '用一个模型，快速找到标题所属的新闻频道。' : '让多个模型并行判断，比较它们对标题的理解。' }}</p>
+            <div class="action-card-kicker">{{ action.kicker }}</div>
+            <h3>{{ action.heading }}</h3>
+            <p>{{ action.description }}</p>
 
             <div class="action-summary">
               <span class="summary-icon">✦</span>
-              <span><b>{{ mode === 'single' ? selectedModelLabel || '选择一个模型' : `${selectedModels.length} 个模型` }}</b><small>{{ mode === 'single' ? '单模型推理' : selectedModelNames.join(' · ') || '至少选择一个模型' }}</small></span>
+              <span><b>{{ action.summaryTitle }}</b><small>{{ action.summaryDetail }}</small></span>
             </div>
 
-            <button class="submit-button" type="button" :disabled="!canSubmit" @click="onSubmit">
-              <span v-if="submitting" class="button-spinner"></span>
-              <span>{{ submitting ? '正在分析标题' : mode === 'single' ? '开始分类' : '开始模型对比' }}</span>
-              <span v-if="!submitting" class="button-arrow">↗</span>
+            <button class="submit-button" type="button" data-submit :disabled="!action.canSubmit" @click="onSubmit">
+              <span v-if="action.submitting" class="button-spinner"></span>
+              <span>{{ action.submitting ? action.submittingLabel : action.submitLabel }}</span>
+              <span v-if="!action.submitting" class="button-arrow">↗</span>
             </button>
             <div class="privacy-note"><span class="lock-icon">⌑</span> 标题仅用于本次推理，不会显示在服务日志中</div>
           </div>
@@ -206,12 +480,28 @@ watch(pageError, (message) => {
     </div>
 
     <ResultStage
+      v-if="mode === 'compare' || (mode === 'single' && titleMode === 'single')"
       :single="singleResult"
       :compare="compareResult"
       :title="lastTitle"
       :models="models"
       :mode="mode"
       :stream-request="compareStreamRequest"
+    />
+    <BatchResultPanel
+      v-else-if="showBatchPanel"
+      :rows="batchRows"
+      :phase="batchPhase"
+      :progress-done="batchProgressDone"
+      :progress-total="batchProgressTotal"
+      :ok-count="batchOkCount"
+      :error-count="batchErrorCount"
+      :batch-id="batchBatchId"
+      :request-id="batchRequestId"
+      :last-error="batchLastError"
+      :model-label="selectedModelLabel"
+      @retry="onBatchRetry"
+      @cancel="cancelBatch"
     />
   </section>
 </template>
@@ -380,6 +670,60 @@ watch(pageError, (message) => {
 
   .compare-icon {
     font-size: 19px;
+  }
+
+  .title-mode-switch {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-8);
+    padding: 0 0 18px;
+  }
+
+  .title-mode-option {
+    min-height: 30px;
+    padding: 0 var(--space-12);
+    border: 1px solid var(--border-control);
+    border-radius: var(--radius-pill);
+    background: var(--surface-card);
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .title-mode-option.active {
+    border-color: var(--brand);
+    background: var(--brand-tint);
+    color: var(--brand-strong);
+  }
+
+  .title-mode-hint {
+    color: var(--text-faint);
+    font-size: 10px;
+  }
+
+  .newline-hint {
+    margin-top: var(--space-10);
+  }
+
+  .newline-switch {
+    margin-left: var(--space-6);
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--brand);
+    font-size: inherit;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .batch-validation {
+    margin-top: var(--space-10);
+  }
+
+  .batch-llm-note {
+    margin-top: var(--space-12);
   }
 
   .workspace-grid {

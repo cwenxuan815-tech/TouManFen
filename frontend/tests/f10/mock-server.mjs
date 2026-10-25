@@ -42,7 +42,6 @@ const MODELS = [
   { model_id: 'fasttext', display_name: 'fastText', pred_class: 'finance', elo0: 1206 },
   { model_id: 'bert', display_name: 'BERT', pred_class: 'finance', elo0: 1188 },
   { model_id: 'distill', display_name: '蒸馏模型', pred_class: 'stocks', elo0: 1212 },
-  { model_id: 'llm', display_name: 'LLM', pred_class: 'finance', elo0: 1176 },
 ]
 
 const TITLES = [
@@ -53,6 +52,10 @@ const TITLES = [
   '新片首周票房突破十亿元',
 ]
 
+/** 标题可读性场景：中英数字混排 + 长连续字符串，用于验证换行与不横向溢出。 */
+const LONG_TITLE =
+  'Zacks调升苹果目标股价至200美元，ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789机构预计人工智能与云计算需求将持续推动业绩增长'
+
 const LEADERBOARD_NOTE = '人类偏好投票强度，仅作演示参考；票数可被本机清除。'
 const WARMUP_MIN_VOTES = 50
 /** 预热场景初始战绩（票数均 < 50，不足以排序）。 */
@@ -61,7 +64,6 @@ const WARMING_SEED = {
   fasttext: { wins: 1, losses: 2 },
   bert: { wins: 0, losses: 3 },
   distill: { wins: 1, losses: 1 },
-  llm: { wins: 0, losses: 2 },
 }
 /** ready 场景初始战绩（票数均 ≥ 50，可显示名次）。 */
 const READY_SEED = {
@@ -69,7 +71,6 @@ const READY_SEED = {
   fasttext: { wins: 58, losses: 47 },
   bert: { wins: 52, losses: 53 },
   distill: { wins: 55, losses: 50 },
-  llm: { wins: 51, losses: 54 },
 }
 
 const WILSON_Z = 1.96
@@ -255,7 +256,7 @@ export async function createMockServer({ port, staticDir }) {
         return
       }
       log.itemCounter += 1
-      const limit = log.scenario === 'partial' ? 3 : 5
+      const limit = log.scenario === 'partial' ? 3 : 4
       const picked = shuffle(MODELS).slice(0, limit)
       const usedAnon = new Set()
       const itemId = newItemId(log.itemCounter)
@@ -265,20 +266,24 @@ export async function createMockServer({ port, staticDir }) {
         return {
           anon_id: anonId,
           pred_class: model.pred_class,
-          latency_ms: model.model_id === 'llm' ? 1380 : 90 + Math.round(Math.random() * 260),
+          latency_ms: 90 + Math.round(Math.random() * 260),
           model_id: model.model_id,
           display_name: model.display_name,
         }
       })
+      const title =
+        log.scenario === 'long-title'
+          ? LONG_TITLE
+          : TITLES[log.itemCounter % TITLES.length]
       log.items[itemId] = {
         item_id: itemId,
-        title: TITLES[log.itemCounter % TITLES.length],
+        title,
         candidates,
       }
       entry.response = {
         request_id: `mock-${Date.now()}`,
         item_id: itemId,
-        title: TITLES[log.itemCounter % TITLES.length],
+        title,
         candidates: candidates.map((candidate) => ({
           anon_id: candidate.anon_id,
           pred_class: candidate.pred_class,

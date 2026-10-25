@@ -104,6 +104,54 @@ export interface CompareResponse {
 export type ClassifyResult = ClassifyResponse | CompareResponse
 
 // ---------------------------------------------------------------------------
+// 阶段 2B：POST /api/v1/classify/batch（多条标题 × 单模型）
+// ---------------------------------------------------------------------------
+export interface BatchClassifyItemRequest {
+  item_id: string
+  title: string
+}
+
+export interface BatchClassifyRequest {
+  model: string
+  batch_id?: string
+  items: BatchClassifyItemRequest[]
+}
+
+export interface BatchSummary {
+  total: number
+  ok: number
+  failed: number
+  status: 'ok' | 'partial' | 'all_failed'
+  elapsed_ms: number
+  total_timeout_ms: number
+}
+
+export interface BatchItemResult {
+  item_id: string
+  index: number
+  status: 'ok' | 'error'
+  pred_class?: string | null
+  latency_ms?: number
+  model_version?: string | null
+  data_source?: DemoSource | null
+  scores?: Record<string, number> | null
+  score_kind?: ScoreKind | null
+  top_k?: TopKEntry[] | null
+  rejected?: boolean
+  reject_reason?: string | null
+  threshold_meta?: ThresholdMeta | null
+  error?: ApiError
+}
+
+export interface BatchClassifyResponse {
+  request_id: string
+  batch_id?: string | null
+  model_id: string
+  summary: BatchSummary
+  results: BatchItemResult[]
+}
+
+// ---------------------------------------------------------------------------
 // B6/F9：GET /api/v1/compare/stream（SSE）事件契约
 //
 // 统一契约（B6 后端与 F9 前端一致）：

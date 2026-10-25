@@ -34,6 +34,13 @@ class JsonFormatter(logging.Formatter):
             "error_code",
             "data_source",
             "stats_counted",
+            # 阶段 2A：批量分类关联/汇总字段（不记录标题）。
+            "batch_id",
+            "batch_total",
+            "batch_ok",
+            "batch_failed",
+            "batch_status",
+            "item_id",
         ):
             value = getattr(record, key, None)
             if value is not None:

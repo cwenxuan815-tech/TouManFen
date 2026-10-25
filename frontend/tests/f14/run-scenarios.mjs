@@ -393,22 +393,24 @@ const SCENARIOS = [
         await evaluate(client, 'window.location.hash'),
       )
 
-      // Tab 顺序：从 skip link 起连续 Tab，前 6 个应依次是品牌/导航 5 项。
+      // Tab 顺序：从 skip link 起连续 Tab，前 8 个应依次是品牌/导航 7 项。
       await focusSelector(client, '[data-skip-link]')
       const sequence = []
-      for (let index = 0; index < 8; index += 1) {
+      for (let index = 0; index < 10; index += 1) {
         await press(client, 'Tab')
         sequence.push(await active(client))
       }
       const hrefs = sequence.map((item) => item?.href)
       checks.check(
-        'Tab 顺序：品牌 → 分类实验台 → 模型矩阵 → 竞技场 → PK 榜单 → 关于',
+        'Tab 顺序：品牌 → 分类实验台 → 模型矩阵 → 竞技场 → PK 榜单 → OCR 识别 → 微博热搜 → 关于',
         hrefs[0] === '#top' &&
           hrefs[1] === '#lab' &&
           hrefs[2] === '#models' &&
           hrefs[3] === '#arena' &&
           hrefs[4] === '#bench' &&
-          hrefs[5] === '#about',
+          hrefs[5] === 'http://192.168.12.82:8000/#image' &&
+          hrefs[6] === 'http://192.168.12.54:8080/' &&
+          hrefs[7] === '#about',
         JSON.stringify(hrefs),
       )
       const labActive = sequence[1]

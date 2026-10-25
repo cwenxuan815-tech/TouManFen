@@ -656,12 +656,19 @@ class ArenaService:
 
     # -- 基础信息 ----------------------------------------------------------
     def _model_ids(self) -> list[str]:
-        """参赛模型：注册表中启用的模型，顺序沿用配置顺序（固定 5 个）。"""
+        """参赛模型：注册表中启用的**本地**模型，默认排除 LLM。
+
+        阶段 4B：竞技场刷新不得隐式触发 LLM/消耗每 IP 配额；匿名投票/Elo
+        仍只使用这些候选。未来若需要竞技场显式 opt-in，应另行授权。
+        """
         model_ids: list[str] = []
         for model_id in self._registry.all_model_ids():
             spec = self._registry.get(model_id)
-            if spec is not None and spec.enabled:
-                model_ids.append(model_id)
+            if spec is None or not spec.enabled:
+                continue
+            if spec.model_id == "llm" or spec.worker_id == "llm":
+                continue
+            model_ids.append(model_id)
         return model_ids
 
     def _display_name(self, model_id: str) -> str:

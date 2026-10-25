@@ -21,7 +21,7 @@ import { pushToast } from '../common/toast'
 import ArenaAnonymousCard from '../arena/ArenaAnonymousCard.vue'
 import ArenaLeaderboard from '../arena/ArenaLeaderboard.vue'
 
-const LETTERS = ['A', 'B', 'C', 'D', 'E'] as const
+const LETTERS = ['A', 'B', 'C', 'D'] as const
 
 const {
   item,
@@ -45,13 +45,15 @@ const {
   loadLeaderboard,
 } = useArena()
 
-/** 服务端 candidates 顺序 → 本地字母锚点（A/B/C/D/E）；不参与任何模型身份推断。 */
+/** 服务端 candidates 顺序 → 本地字母锚点（A/B/C/D）；不参与任何模型身份推断。 */
 const candidates = computed(() =>
   (item.value?.candidates ?? []).map((candidate, index) => ({
     candidate,
     letter: LETTERS[index] ?? String(index + 1),
   })),
 )
+/** 正常为 4 列；partial 候选更少时仍等间距铺满，不留下空列。 */
+const gridColumns = computed(() => Math.max(1, Math.min(4, candidates.value.length || 4)))
 
 const loadPhase = computed<'loading' | 'empty' | 'error' | 'ready'>(() => {
   if (nextLoading.value) return 'loading'
@@ -145,7 +147,7 @@ onMounted(() => {
         <h2 id="arena-title">匿名投票，偏好可读。</h2>
       </div>
       <p>
-        从 5 个匿名结果里选出更像正确标签的一个，<br class="desktop-break" />
+        从 4 个匿名结果里选出更像正确标签的一个，<br class="desktop-break" />
         投票后翻牌揭晓你选中的模型。
       </p>
     </div>
@@ -156,7 +158,6 @@ onMounted(() => {
           <div class="arena-panel-title">
             <span class="arena-step">01</span>
             <b>匿名候选</b>
-            <small v-if="item" class="arena-item-title">{{ item.title }}</small>
           </div>
           <div class="arena-panel-actions">
             <button
@@ -170,6 +171,13 @@ onMounted(() => {
             </button>
           </div>
         </div>
+
+        <p
+          v-if="item"
+          class="arena-item-title"
+          data-arena-item-title
+          :title="item.title"
+        >{{ item.title }}</p>
 
         <AsyncState
           v-if="loadPhase === 'loading'"
@@ -212,7 +220,12 @@ onMounted(() => {
             点击卡片投下偏好票；投票前不会显示任何模型名称。
           </p>
 
-          <div class="arena-cards" data-arena-candidates :data-arena-item-id="item.item_id">
+          <div
+            class="arena-cards"
+            data-arena-candidates
+            :data-arena-item-id="item.item_id"
+            :style="{ '--arena-columns': gridColumns }"
+          >
             <ArenaAnonymousCard
               v-for="entry in candidates"
               :key="entry.candidate.anon_id"
@@ -319,12 +332,18 @@ onMounted(() => {
 }
 
 .arena-item-title {
-  min-width: 0;
+  max-width: 100%;
+  margin: var(--space-14) 0 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--text-quiet);
-  font-size: 10px;
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .arena-panel-actions {
@@ -369,7 +388,7 @@ onMounted(() => {
 
 .arena-cards {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(var(--arena-columns, 4), minmax(0, 1fr));
   gap: var(--space-10);
   margin: var(--space-14) 0 var(--space-12);
 }
@@ -428,6 +447,12 @@ onMounted(() => {
   .arena-panel-head {
     align-items: flex-start;
     gap: var(--space-10);
+  }
+
+  .arena-item-title {
+    margin-top: var(--space-12);
+    font-size: 14px;
+    line-height: 1.55;
   }
 
   .arena-panel-actions {

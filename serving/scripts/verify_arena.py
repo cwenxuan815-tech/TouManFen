@@ -7,7 +7,7 @@
 
 覆盖点：
 1. Elo 纯函数 2 组手算对拍（1200 vs 1200、1200 vs 1400）与 K 默认值；
-2. 10 次投票 -> vote_item 恰好 40 行（每票 4 场）；Elo 可从 vote_item 从头复算；
+2. 10 次投票 -> vote_item 恰好 30 行（每票 3 场，竞技场排除 LLM）；Elo 可从 vote_item 从头复算；
 3. /arena/next 序列化文本、响应头中都 grep 不到 model_id/display_name/
    model_version/真实标签；投票后才揭晓被选中的模型（且不泄露其他候选身份）；
 4. 同 client+item 重复投票 409；同一 client 21 票/分钟触发 429；
@@ -63,20 +63,18 @@ except Exception:  # pragma: no cover
 FAILURES: list[str] = []
 TOTAL = 0
 
-# 5 个参赛模型：测试用 fake adapter 让每个模型返回不同（合法）类别，便于检查泄露。
-MODEL_IDS = ("rf", "fasttext", "bert", "llm", "distill")
+# 阶段 4B：竞技场默认只召集 4 个本地模型；LLM 不再隐式参与。
+MODEL_IDS = ("rf", "fasttext", "bert", "distill")
 MODEL_CLASSES = {
     "rf": "finance",
     "fasttext": "realty",
     "bert": "stocks",
-    "llm": "education",
     "distill": "science",
 }
 DISPLAY_NAMES = {
     "rf": "随机森林",
     "fasttext": "fastText",
     "bert": "BERT",
-    "llm": "大模型",
     "distill": "蒸馏 BiLSTM",
 }
 IDENTITY_PATTERNS = [f'"{model_id}"' for model_id in MODEL_IDS] + [
@@ -86,7 +84,11 @@ IDENTITY_PATTERNS = [f'"{model_id}"' for model_id in MODEL_IDS] + [
 SETTINGS = load_settings()
 REGISTRY = ModelRegistry(SETTINGS)
 CLASSES = SETTINGS.classes
-MODEL_ORDER = REGISTRY.all_model_ids()
+MODEL_ORDER = [
+    model_id
+    for model_id in REGISTRY.all_model_ids()
+    if model_id in MODEL_IDS
+]
 LOGGER = logging.getLogger("verify-arena")
 LOGGER.setLevel(logging.INFO)
 LOGGER.addHandler(logging.NullHandler())
@@ -355,14 +357,14 @@ def flow_checks(tmp: Path) -> None:
 
     test_file = write_sample_file(flow_dir / "arena_test.txt")
 
-    # 空库榜单：无投票时 5 个模型均为 warming_up、rank=null、win_rate=null、
+    # 空库榜单：无投票时 4 个本地模型均为 warming_up、rank=null、win_rate=null、
     # Wilson 区间退化为 (0,1)，不暗示任何倾向。
     fresh = make_service(flow_dir, "fresh.db", test_file=test_file)
     fresh_board = asyncio.run(fresh.leaderboard("req-fresh"))
     check(
         "leaderboard fresh db: all warming_up, rank null, win_rate null, wilson (0,1)",
         fresh_board.status == "warming_up"
-        and len(fresh_board.entries) == 5
+        and len(fresh_board.entries) == 4
         and all(entry.votes == 0 for entry in fresh_board.entries)
         and all(entry.rank is None and entry.warming_up for entry in fresh_board.entries)
         and all(entry.win_rate is None for entry in fresh_board.entries)
@@ -384,8 +386,8 @@ def flow_checks(tmp: Path) -> None:
     outcomes = _async_vote_flow(service, 10, picker=random.Random(7))
 
     check(
-        "flow: 10 votes all applied 4 games",
-        len(outcomes) == 10 and all(outcome.games_applied == 4 for outcome in outcomes),
+        "flow: 10 votes all applied 3 games",
+        len(outcomes) == 10 and all(outcome.games_applied == 3 for outcome in outcomes),
         str([outcome.games_applied for outcome in outcomes]),
     )
 
@@ -404,7 +406,7 @@ def flow_checks(tmp: Path) -> None:
             row[0]
             for row in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
         }
-        # 每票的对手集合：应为其他 4 个模型，且顺序 = model_id 升序（确定性）。
+        # 每票的对手集合：应为其他 3 个本地模型，且顺序 = model_id 升序（确定性）。
         order_ok = True
         order_detail = ""
         for vote_row in conn.execute(
@@ -423,7 +425,7 @@ def flow_checks(tmp: Path) -> None:
             if (
                 winner != vote_row["model_id"]
                 or opponents != expected_opponents
-                or len(rows) != 4
+                or len(rows) != 3
             ):
                 order_ok = False
                 order_detail = f"vote={vote_row['vote_id']} winner={winner} opponents={opponents}"
@@ -436,10 +438,10 @@ def flow_checks(tmp: Path) -> None:
         conn.close()
 
     check("flow: vote rows == 10", vote_count == 10, str(vote_count))
-    check("flow: vote_item rows == 40", vote_item_count == 40, str(vote_item_count))
+    check("flow: vote_item rows == 30", vote_item_count == 30, str(vote_item_count))
     check(
-        "flow: each vote has exactly 4 games",
-        len(per_vote) == 10 and all(row["n"] == 4 for row in per_vote),
+        "flow: each vote has exactly 3 games",
+        len(per_vote) == 10 and all(row["n"] == 3 for row in per_vote),
         str([row["n"] for row in per_vote]),
     )
     check("flow: journal_mode is wal", str(journal_mode).lower() == "wal", journal_mode)
@@ -480,7 +482,7 @@ def flow_checks(tmp: Path) -> None:
     }
     check(
         "persistence: vote/vote_item still present after reopen",
-        _count_rows(db_path, "vote") == 10 and _count_rows(db_path, "vote_item") == 40,
+        _count_rows(db_path, "vote") == 10 and _count_rows(db_path, "vote_item") == 30,
         f"vote={_count_rows(db_path, 'vote')} vote_item={_count_rows(db_path, 'vote_item')}",
     )
     check(
@@ -661,8 +663,8 @@ def _http_contract_checks(
     )
     candidates = body.get("candidates") or []
     check(
-        "http next: 5 anonymous candidates with only anon_id/pred_class/latency_ms",
-        len(candidates) == 5
+        "http next: 4 anonymous candidates with only anon_id/pred_class/latency_ms",
+        len(candidates) == 4
         and all(
             set(candidate) == {"anon_id", "pred_class", "latency_ms"}
             for candidate in candidates
@@ -758,8 +760,8 @@ def _http_contract_checks(
         str(selected),
     )
     check(
-        "http vote: games_applied=4 for 5 candidates",
-        vote_body.get("games_applied") == 4,
+        "http vote: games_applied=3 for 4 candidates",
+        vote_body.get("games_applied") == 3,
         str(vote_body.get("games_applied")),
     )
     check(
@@ -887,7 +889,7 @@ def _http_contract_checks(
         note,
     )
     check(
-        "http leaderboard: entries fixed config order, 5 models",
+        "http leaderboard: entries fixed config order, 4 local models",
         [entry["model_id"] for entry in entries] == MODEL_ORDER,
         str([entry["model_id"] for entry in entries]),
     )
@@ -919,11 +921,11 @@ def _http_contract_checks(
     )
 
     # --- 部分模型失败：partial + 可投子集 -----------------------------------
-    # 混合两种失败形态：一个抛异常（llm），一个返回 status=error（distill）。
+    # 混合两种失败形态：一个抛异常（bert），一个返回 status=error（distill）。
     partial_service = make_service(
         http_dir,
         "http-partial.db",
-        adapters=make_fake_adapters(raising=("llm",), erroring=("distill",)),
+        adapters=make_fake_adapters(raising=("bert",), erroring=("distill",)),
         test_file=test_file,
     )
     app.state.arena = partial_service  # type: ignore[attr-defined]
@@ -931,10 +933,10 @@ def _http_contract_checks(
     partial_body = partial_response.json()
     partial_candidates = partial_body.get("candidates") or []
     check(
-        "http partial: 3 candidates and partial=true",
+        "http partial: 2 candidates and partial=true",
         partial_response.status_code == 200
         and partial_body.get("partial") is True
-        and len(partial_candidates) == 3,
+        and len(partial_candidates) == 2,
         str(partial_body)[:300],
     )
     partial_vote = client.post(
@@ -946,9 +948,9 @@ def _http_contract_checks(
         },
     )
     check(
-        "http partial: vote applied against available opponents only (2 games)",
+        "http partial: vote applied against available opponents only (1 game)",
         partial_vote.status_code == 200
-        and partial_vote.json().get("games_applied") == 2,
+        and partial_vote.json().get("games_applied") == 1,
         str(partial_vote.text)[:300],
     )
 
@@ -956,7 +958,7 @@ def _http_contract_checks(
     one_service = make_service(
         http_dir,
         "http-one.db",
-        adapters=make_fake_adapters(raising=("rf", "fasttext", "bert", "llm")),
+        adapters=make_fake_adapters(raising=("rf", "fasttext", "bert")),
         test_file=test_file,
     )
     app.state.arena = one_service  # type: ignore[attr-defined]
@@ -1125,8 +1127,8 @@ def ranking_checks(tmp: Path) -> None:
     )
     ranks = sorted(entry.rank for entry in entries)
     check(
-        "ranking: rank assigned as 1..5",
-        ranks == [1, 2, 3, 4, 5],
+        "ranking: rank assigned as 1..4",
+        ranks == [1, 2, 3, 4],
         str([(entry.model_id, entry.elo, entry.rank) for entry in entries]),
     )
     ordered = sorted(entries, key=lambda entry: entry.rank)

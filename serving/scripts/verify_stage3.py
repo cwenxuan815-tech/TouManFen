@@ -16,7 +16,7 @@
   **不含 LLM**（B9 opt-in），显式传 models 仍可请求 LLM；
 - LLM mock 的成功/错误/非法输出/超时映射；
 - 类别来自 class.txt；禁用模型（离线单元检查）；
-- 日志/统计之外的阶段边界（无 confidence、无批量接口、mock 统计排除）。
+- 日志/统计之外的阶段边界（无 confidence、批量端点预检、mock 统计排除）。
 
 B10：新增 ``--isolate-mock``（必须配合 ``--llm-mode mock``）：本轮自行启动
 **临时端口**的 5 个 ``mock_worker.py`` + 临时端口网关，然后以子进程方式运行本
@@ -754,12 +754,19 @@ def main() -> int:
             f"live={sorted(live_models)} model_calls={body.get('model_calls')}",
         )
 
+        # 阶段 2A：批量端点已实现；空 items 必须是请求级 400，且不触发 worker。
         response = request(
-            "POST", f"{base_url}/api/v1/classify/batch", json={"items": []}
+            "POST",
+            f"{base_url}/api/v1/classify/batch",
+            json={"model": "fasttext", "items": []},
         )
         check(
-            "batch endpoint not implemented",
-            response is not None and response.status_code == 404,
+            "batch endpoint rejects empty items (BATCH_INVALID, no worker)",
+            response is not None
+            and response.status_code == 400
+            and response.json().get("error", {}).get("code") == "BATCH_INVALID",
+            f"{getattr(response, 'status_code', None)} "
+            f"{getattr(response, 'text', '')[:200]}",
         )
 
         if args.llm_mode == "mock":

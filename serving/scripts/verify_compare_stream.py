@@ -29,6 +29,7 @@ import asyncio
 import json
 import logging
 import os
+import secrets
 import socket
 import sys
 import tempfile
@@ -64,11 +65,14 @@ from serving.services.classification import (  # noqa: E402
 
 FAILURES: list[str] = []
 DEMO_TITLE = "北京二手房成交量创年内新高"
+# 运行时临时 key；仅用于启动 quota infra，不写仓库、不输出。
+TEST_HMAC_KEY = secrets.token_hex(32)
 
 ENV_KEYS = (
     "TMF_COMPARE_TOTAL_TIMEOUT_MS",
     "TMF_COMPARE_CONCURRENCY",
     "TMF_DB_PATH",
+    "TMF_LLM_QUOTA_HMAC_KEY",
     "TMF_MAX_TITLE_CHARS",
     "TMF_WORKER_HOST",
     "TMF_WORKER_URL_RF",
@@ -753,6 +757,8 @@ def api_checks() -> None:
 
     with tempfile.TemporaryDirectory() as temp_dir:
         os.environ["TMF_DB_PATH"] = str(Path(temp_dir) / "verify_b6.db")
+        # quota infra 需要显式临时 key；本测试不调用 LLM。
+        os.environ["TMF_LLM_QUOTA_HMAC_KEY"] = TEST_HMAC_KEY
         # 环境变量 -> Settings -> create_app -> ClassificationService 的装配链。
         os.environ["TMF_COMPARE_TOTAL_TIMEOUT_MS"] = "4321"
         try:
@@ -856,6 +862,7 @@ def real_server_checks() -> None:
     async def run() -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             os.environ["TMF_DB_PATH"] = str(Path(temp_dir) / "verify_b6_http.db")
+            os.environ["TMF_LLM_QUOTA_HMAC_KEY"] = TEST_HMAC_KEY
             try:
                 from serving.gateway.main import create_app
 

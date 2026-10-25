@@ -1,5 +1,7 @@
 /** F3：分类/模型相关 API（保持既有 HTTP 契约）。 */
 import type {
+  BatchClassifyRequest,
+  BatchClassifyResponse,
   ClassifyResponse,
   CompareResponse,
   CompareStreamEventName,
@@ -38,6 +40,18 @@ export function classifyRealtime(
     '/classify',
     { method: 'POST', body: JSON.stringify({ title, model }) },
     { timeoutProfile: 'realtime', signal },
+  )
+}
+
+/** 阶段 2B：多条标题 × 单模型批量分类；35s 客户端超时。 */
+export function classifyBatch(
+  payload: BatchClassifyRequest,
+  signal?: AbortSignal,
+): Promise<BatchClassifyResponse> {
+  return request<BatchClassifyResponse>(
+    '/classify/batch',
+    { method: 'POST', body: JSON.stringify(payload) },
+    { timeoutProfile: 'batch', signal },
   )
 }
 

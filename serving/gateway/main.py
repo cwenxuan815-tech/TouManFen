@@ -27,18 +27,36 @@ from .errors import (
     ApiError,
     ConfigError,
     ERROR_INTERNAL,
+    ERROR_ACCESS_UNAVAILABLE,
     ERROR_INVALID_REQUEST,
     ERROR_INVALID_REQUEST_ID,
     ERROR_METHOD_NOT_ALLOWED,
     ERROR_NOT_FOUND,
     error_payload,
 )
+from .client_ip import ClientIpError, resolve_client_ip
+from .access_config import AccessConfigError, load_access_settings
+from .access_gate import (
+    ACCESS_TICKET_HEADER,
+    AccessDenied,
+    AccessGate,
+    AccessGateUnavailable,
+    is_access_exempt,
+)
 from .logging_utils import log_startup_error, setup_logging
+from .quota_config import (
+    LlmQuotaConfigError,
+    load_llm_quota_settings,
+)
+from ..services.access import AccessManager
 from ..adapters.http_worker import HttpWorkerAdapter
 from ..adapters.llm import LlmAdapter
 from ..adapters.protocol import ModelAdapter
+from ..adapters.quotaed_llm import QuotaedLlmAdapter
+from ..services.llm_quota import LlmQuotaStore, LlmQuotaStoreError
 from ..models.registry import ModelRegistry
 from .probes import WorkerProber
+from .routers import access as access_router
 from .routers import arena as arena_router
 from .routers import bench as bench_router
 from .routers import demo as demo_router
@@ -67,17 +85,27 @@ def _cors_origins() -> list[str]:
 
 
 def _build_adapters(
-    settings, registry: ModelRegistry, client: httpx.AsyncClient
+    settings,
+    registry: ModelRegistry,
+    client: httpx.AsyncClient,
+    llm_quota: LlmQuotaStore | None,
 ) -> dict[str, ModelAdapter]:
-    """composition root：在这里选择具体适配器，业务层只依赖 ModelAdapter 协议。"""
+    """composition root：在这里选择具体适配器，业务层只依赖 ModelAdapter 协议。
+
+    LLM 唯一入口统一包一层 QuotaedLlmAdapter；缺少配额 store 时包装器也会
+    fail-closed，而不是退回未受保护的 LlmAdapter。
+    """
     adapters: dict[str, ModelAdapter] = {}
     for model_id in settings.models:
         spec = registry.get(model_id)
         if spec is None:
             raise ConfigError(f"模型注册缺失: {model_id}")
-        if model_id == "llm":
+        if spec.worker_id == "llm":
             # LLM 仍是本地 worker；Provider/密钥只存在于 04-LLM 进程。
-            adapters[model_id] = LlmAdapter(spec, settings.classes, client)
+            adapters[model_id] = QuotaedLlmAdapter(
+                LlmAdapter(spec, settings.classes, client),
+                llm_quota,
+            )
         else:
             adapters[model_id] = HttpWorkerAdapter(spec, settings.classes, client)
     return adapters
@@ -96,10 +124,50 @@ def create_app() -> FastAPI:
         app.state.settings = settings
         app.state.stats = StatsCollector()
         app.state.prober = WorkerProber(settings)
+        app.state.trusted_proxies = ()
+        app.state.access_enabled = False
+        app.state.access_gate = None
+        try:
+            access_settings = load_access_settings()
+        except AccessConfigError:
+            logger.error("access_control_config_invalid", extra={"event": "error"})
+            raise ConfigError(
+                "访问控制配置无效；检查 TMF_ACCESS_CONTROL_ENABLED / "
+                "TMF_LLM_QUOTA_HMAC_KEY"
+            ) from None
+        if access_settings.enabled:
+            try:
+                app.state.access_gate = AccessGate(
+                    AccessManager(),
+                    access_settings.hmac_key,
+                    status_min_interval_seconds=access_settings.status_min_interval_seconds,
+                )
+            except Exception:
+                logger.error("access_control_init_failed", extra={"event": "error"})
+                raise ConfigError("访问控制初始化失败") from None
+            app.state.access_enabled = True
+        app.state.llm_quota = None
+        try:
+            quota_settings = load_llm_quota_settings()
+            app.state.trusted_proxies = quota_settings.trusted_proxies
+            app.state.llm_quota = LlmQuotaStore(
+                quota_settings.db_path,
+                quota_settings.hmac_key,
+            )
+        except (LlmQuotaConfigError, LlmQuotaStoreError):
+            # 不输出 key/SQL 细节；LLM 路径由包装器 fail-closed，其他模型仍可用。
+            logger.error("llm_quota_unavailable", extra={"event": "error"})
+            app.state.llm_quota = None
+            app.state.trusted_proxies = ()
         # 只调用配置的 worker；显式忽略系统代理，避免内网直连被代理拦截。
         app.state.http_client = httpx.AsyncClient(trust_env=False)
         registry = ModelRegistry(settings)
-        adapters = _build_adapters(settings, registry, app.state.http_client)
+        adapters = _build_adapters(
+            settings,
+            registry,
+            app.state.http_client,
+            app.state.llm_quota,
+        )
         app.state.registry = registry
         app.state.adapters = adapters
         app.state.classifier = ClassificationService(
@@ -109,12 +177,21 @@ def create_app() -> FastAPI:
             max_title_chars=settings.max_title_chars,
             stats=app.state.stats,
             logger=logger,
+            # 阶段 4B：所有 LLM adapter 已由 QuotaedLlmAdapter 包装；
+            # 即使 store 初始化失败也启用强制预检，使 LLM 请求 fail-closed。
+            llm_quota=app.state.llm_quota,
+            llm_quota_enforced=True,
             # B3 软拒识：阈值/来源元数据来自 models.yaml 的 reject 段（严格校验）。
             reject=settings.reject,
             # B6：SSE 渐进式对比总截止（TMF_COMPARE_TOTAL_TIMEOUT_MS，默认 18000）。
             compare_total_timeout_ms=settings.compare_total_timeout_ms,
             # B12：/compare 与 /compare/stream 并发上限（TMF_COMPARE_CONCURRENCY，默认 3）。
             compare_concurrency=settings.compare_concurrency,
+            # 阶段 2A：批量分类硬上限、进程级并发与 30s 总时限。
+            batch_max_items=settings.batch_max_items,
+            batch_max_total_chars=settings.batch_max_total_chars,
+            batch_concurrency=settings.batch_concurrency,
+            batch_total_timeout_ms=settings.batch_total_timeout_ms,
         )
         # B7 竞技场：复用同一注册表与适配器，不重复加载模型；DB 默认
         # serving/run/tmf.db，可由 TMF_DB_PATH 覆盖（表用 CREATE TABLE IF NOT
@@ -163,6 +240,8 @@ def create_app() -> FastAPI:
             app.state.arena.close()
             await app.state.prober.close()
             await app.state.http_client.aclose()
+            if getattr(app.state, "llm_quota", None) is not None:
+                app.state.llm_quota.close()
             logger.info("gateway_stopped", extra={"event": "shutdown"})
 
     app = FastAPI(
@@ -206,6 +285,81 @@ def create_app() -> FastAPI:
 
         request_id = incoming_request_id or str(uuid.uuid4())
         request.state.request_id = request_id
+        # 只解析一次可信客户端 IP；不可信来源的转发头不会改变它。
+        # 解析失败时保留 None，让唯一需要身份的 LLM 路径 fail-closed，
+        # 不阻塞本地模型/健康检查等非 LLM 请求。
+        try:
+            request.state.client_ip = resolve_client_ip(
+                request.client.host if request.client is not None else None,
+                request.headers,
+                getattr(request.app.state, "trusted_proxies", ()),
+            )
+        except ClientIpError:
+            request.state.client_ip = None
+        if getattr(request.app.state, "access_enabled", False) and not is_access_exempt(
+            request.url.path, request.method
+        ):
+            gate = getattr(request.app.state, "access_gate", None)
+            if not isinstance(gate, AccessGate):
+                logger.error(
+                    "access_unavailable",
+                    extra={"event": "error", "request_id": request_id},
+                )
+                return JSONResponse(
+                    status_code=503,
+                    content=error_payload(
+                        request_id,
+                        ERROR_ACCESS_UNAVAILABLE,
+                        "访问管理暂时不可用，请稍后重试。",
+                    ),
+                    headers={"X-Request-ID": request_id},
+                )
+            try:
+                access_result = gate.authorize(
+                    request.state.client_ip,
+                    request.headers.get(ACCESS_TICKET_HEADER),
+                )
+            except AccessDenied as exc:
+                logger.info(
+                    "access_denied",
+                    extra={
+                        "event": "access",
+                        "request_id": request_id,
+                        "path": request.url.path,
+                        "status": exc.status_code,
+                        "error_code": exc.code,
+                    },
+                )
+                headers = {"X-Request-ID": request_id}
+                if exc.retry_after_seconds is not None:
+                    headers["Retry-After"] = str(
+                        max(1, int(round(exc.retry_after_seconds)))
+                    )
+                return JSONResponse(
+                    status_code=exc.status_code,
+                    content=error_payload(
+                        request_id,
+                        exc.code,
+                        exc.message,
+                        exc.details,
+                    ),
+                    headers=headers,
+                )
+            except AccessGateUnavailable:
+                logger.error(
+                    "access_unavailable",
+                    extra={"event": "error", "request_id": request_id},
+                )
+                return JSONResponse(
+                    status_code=503,
+                    content=error_payload(
+                        request_id,
+                        ERROR_ACCESS_UNAVAILABLE,
+                        "访问管理暂时不可用，请稍后重试。",
+                    ),
+                    headers={"X-Request-ID": request_id},
+                )
+            request.state.access_remaining_seconds = access_result.remaining_seconds
         started = time.perf_counter()
 
         try:
@@ -232,18 +386,20 @@ def create_app() -> FastAPI:
         response.headers["X-Request-ID"] = request_id
         route = getattr(request.scope.get("route"), "path", None) or "unmatched"
         stats.record(route, response.status_code, duration_ms)
-        logger.info(
-            "request",
-            extra={
-                "event": "request",
-                "request_id": request_id,
-                "method": request.method,
-                "path": request.url.path,
-                "route": route,
-                "status": response.status_code,
-                "duration_ms": duration_ms,
-            },
-        )
+        # 排队前端会按约 2s 轮询 status；不把每条轮询写满日志。
+        if request.url.path != "/api/v1/access/status":
+            logger.info(
+                "request",
+                extra={
+                    "event": "request",
+                    "request_id": request_id,
+                    "method": request.method,
+                    "path": request.url.path,
+                    "route": route,
+                    "status": response.status_code,
+                    "duration_ms": duration_ms,
+                },
+            )
         return response
 
     @app.exception_handler(StarletteHTTPException)
@@ -299,6 +455,8 @@ def create_app() -> FastAPI:
         )
 
     app.include_router(health_router.router)
+    # 阶段 5B：access API 必须在业务 gate 之前可用；业务 gate 在 middleware 中。
+    app.include_router(access_router.router)
     app.include_router(models_router.router)
     app.include_router(stats_router.router)
     app.include_router(classify_router.router)
@@ -318,8 +476,8 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=_cors_origins(),
         allow_methods=["GET", "POST", "OPTIONS"],
-        allow_headers=["Content-Type", "X-Request-ID"],
-        expose_headers=["X-Request-ID"],
+        allow_headers=["Content-Type", "X-Request-ID", ACCESS_TICKET_HEADER],
+        expose_headers=["X-Request-ID", "Retry-After"],
         allow_credentials=False,
         max_age=600,
     )

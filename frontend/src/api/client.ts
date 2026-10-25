@@ -1,13 +1,20 @@
 /** F3：统一 HTTP 客户端（超时分级、AbortSignal、错误归一化、request id）。 */
+import {
+  ACCESS_TICKET_HEADER,
+  getAccessTicket,
+  notifyAccessError,
+} from './accessTicket'
 
-export type TimeoutProfile = 'realtime' | 'classify' | 'compare' | 'arena'
+export type TimeoutProfile = 'realtime' | 'classify' | 'compare' | 'arena' | 'batch' | 'access'
 
-/** 清单 F3 的超时口径（毫秒）。 */
+/** 清单 F3 的超时口径（毫秒）；batch 30s 服务端截止 + 5s 传输余量。 */
 export const TIMEOUT_MS: Record<TimeoutProfile, number> = {
   realtime: 10_000,
   classify: 20_000,
   compare: 25_000,
   arena: 25_000,
+  batch: 35_000,
+  access: 5_000,
 }
 
 function resolveApiBase(): string {
@@ -106,6 +113,18 @@ export const ERROR_MESSAGES: Record<string, string> = {
   // 离线基准（B8/F11）
   BENCH_ARTIFACT_NOT_FOUND: '离线基准产物不存在，请先运行离线评估脚本生成。',
   BENCH_ARTIFACT_INVALID: '离线基准产物结构不合法，请重新生成后再试。',
+  // 访问管理（5B/5C）
+  ACCESS_REQUIRED: '需要先进入访问名额。',
+  ACCESS_QUEUED: '当前 IP 正在排队，请等待轮到后进入。',
+  ACCESS_CLAIM_REQUIRED: '已轮到当前 IP，正在进入。',
+  ACCESS_COOLING: '访问名额正在冷却，请稍后再试。',
+  ACCESS_QUEUE_FULL: '排队人数已满，请稍后再试。',
+  ACCESS_TICKET_INVALID: '访问票据已失效，请重新进入。',
+  ACCESS_EXPIRED: '访问租约已到期，请重新进入。',
+  ACCESS_POLL_THROTTLED: '状态刷新过快，请稍后再试。',
+  ACCESS_UNAVAILABLE: '访问管理暂时不可用，请稍后重试。',
+  ACCESS_IDENTITY_INVALID: '无法确认当前网络身份。',
+  ACCESS_DISABLED: '访问控制未启用。',
   HTTP_ERROR: '服务暂时不可用，请稍后重试。',
 }
 
@@ -149,6 +168,8 @@ export interface RequestOptions {
   timeoutMs?: number
   /** 按清单分级超时；默认 classify(20s)。 */
   timeoutProfile?: TimeoutProfile
+  /** 是否自动注入全局 X-Access-Ticket；access API 自身必须传 false。 */
+  includeAccessTicket?: boolean
 }
 
 /**
@@ -186,14 +207,19 @@ export async function request<T>(
     controller.abort()
   }, timeoutMs)
 
+  const accessTicket =
+    options.includeAccessTicket === false ? null : getAccessTicket()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'X-Request-ID': requestId(),
+    ...(accessTicket ? { [ACCESS_TICKET_HEADER]: accessTicket } : {}),
+    ...(init.headers as Record<string, string> | undefined),
+  }
+
   try {
     const response = await fetch(`${API_BASE}${API_PREFIX}${path}`, {
       ...init,
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Request-ID': requestId(),
-        ...init.headers,
-      },
+      headers,
       signal: controller.signal,
     })
 
@@ -226,9 +252,17 @@ export async function request<T>(
 
     if (!response.ok) {
       const payload = body as { request_id?: string; error?: { code?: string; message?: string } } | null
+      const code = payload?.error?.code || 'HTTP_ERROR'
+      if (
+        options.includeAccessTicket !== false
+        && code.startsWith('ACCESS_')
+        && code !== 'ACCESS_DISABLED'
+      ) {
+        notifyAccessError(code)
+      }
       throw new ApiClientError(
         response.status,
-        payload?.error?.code || 'HTTP_ERROR',
+        code,
         payload?.error?.message || '服务暂时不可用，请稍后重试。',
         payload?.request_id || response.headers.get('X-Request-ID') || undefined,
       )

@@ -84,6 +84,8 @@ onUnmounted(() => window.removeEventListener('hashchange', syncActiveNav))
       <a :class="{ 'nav-active': activeNav === 'models' }" :aria-current="activeNav === 'models' ? 'page' : undefined" href="#models" @click="closeMobileMenu">模型矩阵</a>
       <a :class="{ 'nav-active': activeNav === 'arena' }" :aria-current="activeNav === 'arena' ? 'page' : undefined" href="#arena" @click="closeMobileMenu">竞技场</a>
       <a :class="{ 'nav-active': activeNav === 'bench' }" :aria-current="activeNav === 'bench' ? 'page' : undefined" href="#bench" @click="closeMobileMenu">PK 榜单</a>
+      <a href="http://192.168.12.82:8000/#image" @click="closeMobileMenu">OCR 识别</a>
+      <a href="http://192.168.12.54:8080/" @click="closeMobileMenu">微博热搜</a>
       <a :class="{ 'nav-active': activeNav === 'about' }" :aria-current="activeNav === 'about' ? 'page' : undefined" href="#about" @click="closeMobileMenu">关于 TMF</a>
     </nav>
 
